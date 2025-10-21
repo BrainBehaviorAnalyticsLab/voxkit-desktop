@@ -1,0 +1,13 @@
+[project]
+name = "pypllr-gui"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "pyqt6>=6.9.1",
+    "torch==2.8.0",
+    "torchaudio==2.8.0",
+    "pypllrcomputer @ git+https://github.com/BrainBehaviorAnalyticsLab/PyPLLRComputer.git",
+    "wav2textgrid @ git+https://github.com/pkadambi/Wav2TextGrid.git"
+]
