@@ -32,27 +32,31 @@ def human_readable_date(date_str: str) -> str:
 
 def list_models(mode: Mode, add_date=False) -> list[str]:
     """List available model names for the given mode."""
-    mode_path = f"{get_storage_root()}/{TRAIN_ROOT}/{mode}"
+    try:
+        mode_path = f"{get_storage_root()}/{TRAIN_ROOT}/{mode}"
 
-    if not os.path.exists(mode_path):
-        print(f"Mode path does not exist: {mode_path}")
+        if not os.path.exists(mode_path):
+            print(f"Mode path does not exist: {mode_path}")
+            return {}
+        
+        models = {}
+        # Scan each subdirectory for a folder that starts with MODEL_PREFIX
+        for entry in os.scandir(mode_path):
+            if entry.is_dir():
+                for subentry in os.scandir(entry.path):
+                    if subentry.is_dir() and subentry.name.startswith(MODEL_PREFIX):
+                        print(f"Found model: {subentry.name} at {subentry.path}")
+                        model_name = subentry.name[len(MODEL_PREFIX):]
+                        if add_date:
+                            label = f"{model_name} ({human_readable_date(entry.name)})"
+                        else:
+                            label = model_name
+                        models[label] = subentry.path
+                        
+        return models 
+    except Exception as e:
+        print(f"Error listing models: {e}")
         return {}
-    
-    models = {}
-    # Scan each subdirectory for a folder that starts with MODEL_PREFIX
-    for entry in os.scandir(mode_path):
-        if entry.is_dir():
-            for subentry in os.scandir(entry.path):
-                if subentry.is_dir() and subentry.name.startswith(MODEL_PREFIX):
-                    print(f"Found model: {subentry.name} at {subentry.path}")
-                    model_name = subentry.name[len(MODEL_PREFIX):]
-                    if add_date:
-                        label = f"{model_name} ({human_readable_date(entry.name)})"
-                    else:
-                        label = model_name
-                    models[label] = subentry.path
-                    
-    return models 
 
 
 def create_train_destination(model_name: str, mode: Mode) -> str:

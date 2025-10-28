@@ -1,7 +1,7 @@
 AppName = "TPE - PLLR Pipeline"
 Dimensions = {
-    "min_width": 1000,
-    "min_height": 600,
+    "min_width": 1100,
+    "min_height": 800,
     "max_width": 200,
     "max_height": None
 }
