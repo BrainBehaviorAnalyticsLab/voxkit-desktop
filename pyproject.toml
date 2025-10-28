@@ -9,5 +9,7 @@ dependencies = [
     "torch==2.8.0",
     "torchaudio==2.8.0",
     "pypllrcomputer @ git+https://github.com/BrainBehaviorAnalyticsLab/PyPLLRComputer.git@65a8e87",
-    "wav2textgrid @ git+https://github.com/pkadambi/Wav2TextGrid.git@430e8f8"
+    "wav2textgrid @ git+https://github.com/pkadambi/Wav2TextGrid.git@544287c",
+    "datasets>=4.3.0",
+    "accelerate>=1.11.0",
 ]
