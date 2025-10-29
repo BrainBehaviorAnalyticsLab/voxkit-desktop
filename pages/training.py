@@ -24,7 +24,7 @@ class TrainingSettingsDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Training Settings")
-        self.setFixedSize(400, 300)
+        self.setFixedSize(400, 350)
         self.setModal(True)
         
         # Remove window frame for custom styling
@@ -75,7 +75,7 @@ class TrainingSettingsDialog(QDialog):
         header_layout.addWidget(close_btn)
         
         container_layout.addLayout(header_layout)
-        container_layout.addSpacing(20)
+        container_layout.addSpacing(15)
         
         # Settings form
         form_layout = QFormLayout()
@@ -88,7 +88,7 @@ class TrainingSettingsDialog(QDialog):
         self.batch_size.setValue(32)
         self.batch_size.setStyleSheet("""
             QSpinBox {
-                padding: 5px;
+                padding: 4px;
                 border: 2px solid #d0d0d0;
                 border-radius: 4px;
                 color: #000000;
@@ -103,8 +103,8 @@ class TrainingSettingsDialog(QDialog):
         self.num_epochs.setValue(100)
         self.num_epochs.setStyleSheet("""
             QSpinBox {
-                padding: 2px;
-                border: 1px solid #d0d0d0;
+                padding: 4px;
+                border: 2px solid #d0d0d0;
                 border-radius: 4px;
                 color: #000000;
                 selection-background-color: transparent;
@@ -114,26 +114,26 @@ class TrainingSettingsDialog(QDialog):
         """)
         form_layout.addRow("Number of Epochs:", self.num_epochs)
         
-        self.use_gpu = QCheckBox("Use GPU if available")
+        self.use_gpu = QCheckBox()
         self.use_gpu.setToolTip("Enable to use GPU for training if available.")
         self.use_gpu.setStyleSheet("""
             QCheckBox {
                 spacing: 8px;
-                color: #000000;
+                color: black;
             }
             QCheckBox::indicator {
                 width: 18px;
-                height: 18px;
+                height: 18px;         
             }
         """)
-        form_layout.addRow("CUDA:", self.use_gpu)
+        form_layout.addRow("Use GPU if aval:", self.use_gpu)
         
-        self.save_checkpoints = QCheckBox("Save checkpoints")
+        self.save_checkpoints = QCheckBox()
         self.save_checkpoints.setToolTip("Enable to save model checkpoints during training.")
         self.save_checkpoints.setStyleSheet("""
             QCheckBox {
                 spacing: 8px;
-                color: #000000;
+                color: black;     
             }
             QCheckBox::indicator {
                 width: 18px;
@@ -141,10 +141,10 @@ class TrainingSettingsDialog(QDialog):
             }
         """)
         self.save_checkpoints.setChecked(True)
-        form_layout.addRow("Checkpoints:", self.save_checkpoints)
+        form_layout.addRow("Save Checkpoints:", self.save_checkpoints)
         
         container_layout.addLayout(form_layout)
-        container_layout.addStretch()
+        container_layout.setSpacing(20)
         
         # Buttons
         button_box = QDialogButtonBox(
@@ -243,7 +243,7 @@ class TrainingPage(QWidget):
         # Validate inputs
         paths = {
             "Training Audio Directory": self.train_audio_path.text(),
-            "Training Text Grid Directory": self.train_textgrid_path.text()
+            "Training TextGrid Directory": self.train_textgrid_path.text()
         }
         
         if not validate_paths(self, paths):
@@ -268,7 +268,7 @@ class TrainingPage(QWidget):
         print("Start Training clicked!")
         print(f"Model: {mode}")
         print(f"Training Audio Directory: {audio_path}")
-        print(f"Training Text Grid Directory: {textgrid_path}")
+        print(f"Training TextGrid Directory: {textgrid_path}")
         print(f"Model Name: {model_name}")
         
         # Update UI
@@ -366,7 +366,7 @@ class TrainingPage(QWidget):
         header_layout = QHBoxLayout()
         
         # Title
-        title = QLabel("Training")
+        title = QLabel("Train Aligner")
         title.setStyleSheet("font-size: 24px; font-weight: bold; color: #2c3e50;")
         header_layout.addWidget(title)
         
@@ -483,8 +483,8 @@ class TrainingPage(QWidget):
         layout.addSpacing(10)
         
         # Training Audio Directory
-        audio_label = QLabel("Training Audio Directory:")
-        audio_label.setStyleSheet("font-weight: bold; color: #2c3e50; margin-bottom: 5px;")
+        audio_label = QLabel("Training Audio Corpus")
+        audio_label.setStyleSheet("font-weight: bold; color: #2c3e50;")
         layout.addWidget(audio_label)
         
         train_audio_layout = QHBoxLayout()
@@ -497,11 +497,9 @@ class TrainingPage(QWidget):
         train_audio_layout.addWidget(self.train_audio_browse)
         layout.addLayout(train_audio_layout)
         
-        layout.addSpacing(10)
-        
         # Training Text Grid Directory
-        textgrid_label = QLabel("Training Text Grid Directory:")
-        textgrid_label.setStyleSheet("font-weight: bold; color: #2c3e50; margin-bottom: 5px;")
+        textgrid_label = QLabel("Training TextGrid Corpus")
+        textgrid_label.setStyleSheet("font-weight: bold; color: #2c3e50;")
         layout.addWidget(textgrid_label)
         
         train_textgrid_layout = QHBoxLayout()
@@ -514,17 +512,15 @@ class TrainingPage(QWidget):
         train_textgrid_layout.addWidget(self.train_textgrid_browse)
         layout.addLayout(train_textgrid_layout)
         
-        layout.addSpacing(10)
-        
         # Model Name
-        model_name_label = QLabel("Model Name:")
-        model_name_label.setStyleSheet("font-weight: bold; color: #2c3e50; margin-bottom: 5px;")
+        model_name_label = QLabel("Model Name")
+        model_name_label.setStyleSheet("font-weight: bold; color: #2c3e50;")
         layout.addWidget(model_name_label)
         
         self.train_model_name = QLineEdit("my_custom_model")
         layout.addWidget(self.train_model_name)
         
-        layout.addSpacing(15)
+        layout.addSpacing(10)
         
         # Train Button
         self.train_btn = QPushButton("Start Training")

@@ -83,7 +83,7 @@ class PredictingPage(QWidget):
         
         layout.addLayout(header_layout)
         
-        layout.addSpacing(10)
+        layout.addSpacing(20)
         
         # Model selection group
         model_group = QGroupBox()
@@ -91,7 +91,7 @@ class PredictingPage(QWidget):
         model_layout.setSpacing(8)
         
         # Info label
-        info_label = QLabel("ⓘ Select alignment model")
+        info_label = QLabel("ⓘ Select alignment method")
         info_label.setStyleSheet("font-size: 12px; color: #7f8c8d;")
         model_layout.addWidget(info_label)
         # ----------------------------------------------------------------------
@@ -133,7 +133,7 @@ class PredictingPage(QWidget):
         model_layout.addLayout(mfa_layout)
 
         # Info
-        mfa_info = QLabel("Default phonetic alignment model")
+        mfa_info = QLabel("Default phonetic alignment method")
         mfa_info.setStyleSheet("color: #95a5a6; font-size: 11px; margin-left: 25px;")
         model_layout.addWidget(mfa_info)
         model_layout.addSpacing(5)
@@ -190,7 +190,7 @@ class PredictingPage(QWidget):
         layout.addSpacing(10)
         
         # Data Corpus Path
-        corpus_label = QLabel("Data Corpus Path")
+        corpus_label = QLabel("Audio Path")
         corpus_label.setStyleSheet("font-weight: bold; color: #34495e;")
         layout.addWidget(corpus_label)
         
@@ -221,7 +221,7 @@ class PredictingPage(QWidget):
         output_layout.addWidget(self.textgrid_browse)
         layout.addLayout(output_layout)
         
-        layout.addSpacing(15)
+        layout.addSpacing(10)
         
         # Predict Alignments Button
         self.predict_btn = QPushButton("Predict Alignments")

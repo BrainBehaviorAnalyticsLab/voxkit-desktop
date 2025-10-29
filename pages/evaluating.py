@@ -79,13 +79,13 @@ class EvaluatingPage(QWidget):
         layout.addLayout(textgrid_layout)
         
         # Wav/lab Path
-        wavlab_label = QLabel("Wav/Lab Path")
+        wavlab_label = QLabel("Audio Path")
         wavlab_label.setStyleSheet("font-weight: bold; color: #34495e;")
         layout.addWidget(wavlab_label)
         
         wavlab_layout = QHBoxLayout()
         wavlab_layout.setSpacing(8)
-        self.wavlab_path = QLineEdit("/path/to/data/corpus")
+        self.wavlab_path = QLineEdit(Defaults['audio_path'])
         self.wavlab_browse = QPushButton("Browse")
         self.wavlab_browse.setFixedWidth(100)
         self.wavlab_browse.clicked.connect(lambda: self.browse_directory(self.wavlab_path))
