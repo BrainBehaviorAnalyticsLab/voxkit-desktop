@@ -1,4 +1,4 @@
-# PyPLLR GUI
+# TODO : Update README
 
 A modern PyQt6-based graphical user interface for phonetic alignment and PLLR (Phoneme-Level Likelihood Ratios) score extraction. This application provides an intuitive workflow for researchers working with speech data.
 

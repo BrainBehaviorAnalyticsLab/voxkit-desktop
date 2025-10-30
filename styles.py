@@ -1,11 +1,13 @@
+
 GlobalStyleSheet = """
     QMainWindow {
-        background-color: #f5f5f5;
+        background-color: transparent;
     }
     QWidget {
         background-color: #f5f5f5;
-        font-family: 'Segoe UI', Arial, sans-serif;
+        color: #333;
         font-size: 13px;
+        border:     none;
     }
     QGroupBox {
         background-color: white;
@@ -29,7 +31,7 @@ GlobalStyleSheet = """
     QLineEdit:focus {
         border: 2px solid #4a90e2;
     }
-    QPushButton {
+    QPushButton#primaryButton {
         background-color: white;
         border: 1px solid #d0d0d0;
         border-radius: 5px;
@@ -85,4 +87,34 @@ GlobalStyleSheet = """
     QListWidget::item:hover {
         background-color: #b0cef2;
     }
-"""
+    QWidget#centralWidget {
+        background-color: #f5f7fa;
+    }
+
+    """
+
+ToolBarStyle = """
+    QToolBar#globalToolbar {
+        background: #2f3542;
+        spacing: 6px;
+        padding: 4px;
+    }
+    QToolBar#globalToolbar QToolButton {
+        color: #eceff4;
+        background: transparent;
+        border: 1px solid transparent;
+        padding: 6px 10px;
+        border-radius: 6px;
+        margin: 2px;
+    }
+    QToolBar#globalToolbar QToolButton:hover {
+        background: #3b4252;
+        border-color: #4c566a;
+    }
+    QToolBar#globalToolbar QToolButton:pressed {
+        background: #2b6fa2;
+    }
+    QToolBar#globalToolbar QToolButton:disabled {
+        color: #7f8c8d;
+    }
+    """

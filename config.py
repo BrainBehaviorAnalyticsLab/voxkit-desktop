@@ -1,3 +1,5 @@
+from typing import Literal
+
 AppName = "TPE - PLLR Pipeline"
 Dimensions = {
     "min_width": 1100,
@@ -11,3 +13,5 @@ Defaults = {
     "audio_path": "/path/to/audio",
     "textgrid_path": "/path/to/textgrids",
 }
+
+Mode = Literal['MFA', 'W2TG']
