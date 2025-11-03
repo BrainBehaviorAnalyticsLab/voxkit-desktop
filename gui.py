@@ -7,8 +7,9 @@ from styles import GlobalStyleSheet, ToolBarStyle
 from config import AppName, Dimensions
 from pages.manage import ManageAlignersWidget
 from pages.pipeline import PipelineFormStack as PipelineContainer
+from pages.discussion import DiscussionsStack
 from ui.widgets import DNAStrandWidget
-
+import webbrowser
 
 class AlignmentGUI(QMainWindow):
     def __init__(self):
@@ -150,6 +151,7 @@ class AlignmentGUI(QMainWindow):
         self.update_active_tab_style("discussions")
     
     def open_help(self):
+        webbrowser.open("https://support.google.com/")
         print("Open Help...")
     
     def init_ui(self):
@@ -182,13 +184,10 @@ class AlignmentGUI(QMainWindow):
         self.manage_widget = ManageAlignersWidget({}, self)
         self.content_stack.addWidget(self.manage_widget)
         
-        # Discussions view: placeholder widget
-        self.discussions_widget = QWidget()
-        self.discussions_widget.setObjectName("discussionsWidget")
-        discussions_layout = QHBoxLayout(self.discussions_widget)
-        discussions_label = QLabel("Discussions View - Coming Soon")
-        discussions_label.setStyleSheet("font-size: 24px; color: #666;")
-        discussions_layout.addWidget(discussions_label)
+        # Discussions view: DiscussionsStack widget
+        self.discussions_widget = DiscussionsStack(parent=self)
+        
+        
         self.content_stack.addWidget(self.discussions_widget)
         
         # Start with Pipeline view

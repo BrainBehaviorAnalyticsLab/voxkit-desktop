@@ -1,6 +1,6 @@
 from typing import Literal
 
-AppName = "TPE - PLLR Pipeline"
+AppName = "VoxKit"
 Dimensions = {
     "min_width": 1100,
     "min_height": 800,

@@ -1,6 +1,7 @@
 # TODO : Add module docstring
 
-from PyQt6.QtWidgets import QWidget, QHBoxLayout, QListWidget, QLabel
+from PyQt6.QtWidgets import QWidget, QHBoxLayout, QListWidget, QLabel, QVBoxLayout, QSizePolicy
+from PyQt6.QtCore import Qt
 from ui.widgets import AnimatedStackedWidget
 from .training import TrainingPage
 from .predicting import PredictingPage
@@ -17,9 +18,15 @@ class PipelineFormStack(QWidget):
         self.init_ui()
     
     def init_ui(self):
-        layout = QHBoxLayout(self)
-        layout.setSpacing(20)
-        layout.setContentsMargins(0, 0, 0, 0)
+        # Main vertical layout: top content + footer at the bottom
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(10)
+        
+        # Top area: horizontal layout with navigation and pages
+        content_layout = QHBoxLayout()
+        content_layout.setSpacing(20)
+        content_layout.setContentsMargins(0, 0, 0, 0)
         
         # Left side - Navigation menu
         self.menu_list = QListWidget()
@@ -28,7 +35,7 @@ class PipelineFormStack(QWidget):
         self.menu_list.addItem("Ⓑ  Evaluate Aligner")
         self.menu_list.addItem("Ⓒ  Predict Alignments")
         self.menu_list.addItem("ⓩ  Extract PLLR Scores")
-        layout.addWidget(self.menu_list)
+        content_layout.addWidget(self.menu_list)
         
         # Right side - Stacked widget for different pipeline pages
         self.stacked_widget = AnimatedStackedWidget()
@@ -45,7 +52,11 @@ class PipelineFormStack(QWidget):
         
         self.stacked_widget.addWidget(PredictingPage(self.parent_window))
         self.stacked_widget.addWidget(EvaluatingPage(self.parent_window))
-        layout.addWidget(self.stacked_widget, stretch=1)
+        content_layout.addWidget(self.stacked_widget, stretch=1)
+        
+        # Make top content expand to take available space
+        main_layout.addLayout(content_layout, stretch=1)
+        
         
         # Connect navigation
         self.menu_list.currentRowChanged.connect(self.change_page)

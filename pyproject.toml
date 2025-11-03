@@ -12,4 +12,5 @@ dependencies = [
     "wav2textgrid @ git+https://github.com/pkadambi/Wav2TextGrid.git@544287c",
     "datasets>=4.3.0",
     "accelerate>=1.11.0",
+    "keyring>=25.6.0",
 ]
