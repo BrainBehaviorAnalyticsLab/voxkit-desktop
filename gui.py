@@ -4,11 +4,10 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtGui import QAction, QIcon
 from styles import GlobalStyleSheet, ToolBarStyle
-from config import AppName, Dimensions
-from pages.manage import ManageAlignersWidget
-from pages.pipeline import PipelineFormStack as PipelineContainer
-from pages.discussion import DiscussionsStack
-from ui.widgets import DNAStrandWidget
+from voxkit.config import AppName, Dimensions
+from voxkit.gui.pages.manage import ManageAlignersWidget
+from voxkit.gui.pages.pipeline import PipelineFormStack as PipelineContainer
+from voxkit.gui.components.widgets import DNAStrandWidget
 import webbrowser
 
 class AlignmentGUI(QMainWindow):
@@ -44,10 +43,9 @@ class AlignmentGUI(QMainWindow):
                 widget.setCursor(widget.cursor())  # ensure widget exists; can set more props here
             return action
         
-        # Store actions for Pipeline, Manage, and Discussions so we can update their styles
+        # Store actions for Pipeline, Manage so we can update their styles
         self.pipeline_action = _add_button("Pipeline", self.open_models_dashboard, tooltip="Main Pipeline Dashboard")
         self.manage_action = _add_button("Manage", self.open_preferences, tooltip="Manage Aligners and Models")
-        self.discussions_action = _add_button("Discussions", self.open_discussions, tooltip="View and Create Discussions")
         # Help button
         _add_button("Help", self.open_help, tooltip="Get Help")
         
@@ -95,7 +93,6 @@ class AlignmentGUI(QMainWindow):
         # Get the actual button widgets
         pipeline_widget = self.toolbar.widgetForAction(self.pipeline_action)
         manage_widget = self.toolbar.widgetForAction(self.manage_action)
-        discussions_widget = self.toolbar.widgetForAction(self.discussions_action)
         
         # Apply styles based on which button is active
         if active_button == "pipeline":
@@ -103,22 +100,11 @@ class AlignmentGUI(QMainWindow):
                 pipeline_widget.setStyleSheet(active_style)
             if manage_widget:
                 manage_widget.setStyleSheet(inactive_style)
-            if discussions_widget:
-                discussions_widget.setStyleSheet(inactive_style)
         elif active_button == "manage":
             if pipeline_widget:
                 pipeline_widget.setStyleSheet(inactive_style)
             if manage_widget:
                 manage_widget.setStyleSheet(active_style)
-            if discussions_widget:
-                discussions_widget.setStyleSheet(inactive_style)
-        elif active_button == "discussions":
-            if pipeline_widget:
-                pipeline_widget.setStyleSheet(inactive_style)
-            if manage_widget:
-                manage_widget.setStyleSheet(inactive_style)
-            if discussions_widget:
-                discussions_widget.setStyleSheet(active_style)
     
     def open_models_dashboard(self):
         """Switch to Pipeline view with menu and stacked pages"""
@@ -139,16 +125,6 @@ class AlignmentGUI(QMainWindow):
         self.content_stack.setCurrentIndex(1)  # Show manage widget
         # Update active tab styling
         self.update_active_tab_style("manage")
-    
-    def open_discussions(self):
-        """Switch to Discussions view"""
-        print("Open Discussions...")
-        # Remember current pipeline page
-        self.last_pipeline_page = self.pipeline_container.get_current_page_index()
-        self.pipeline_container.menu_list.setVisible(False)
-        self.content_stack.setCurrentIndex(2)  # Show discussions widget
-        # Update active tab styling
-        self.update_active_tab_style("discussions")
     
     def open_help(self):
         webbrowser.open("https://support.google.com/")
@@ -172,7 +148,7 @@ class AlignmentGUI(QMainWindow):
         main_layout.setSpacing(20)
         main_layout.setContentsMargins(20, 20, 20, 20)
         
-        # Master stacked widget to switch between Pipeline, Manage, and Discussions views
+        # Master stacked widget to switch between Pipeline and Manage views
         self.content_stack = QStackedWidget()
         main_layout.addWidget(self.content_stack, stretch=1)
 
@@ -183,12 +159,6 @@ class AlignmentGUI(QMainWindow):
         # Manage view: categorical list widget
         self.manage_widget = ManageAlignersWidget(self)
         self.content_stack.addWidget(self.manage_widget)
-        
-        # Discussions view: DiscussionsStack widget
-        self.discussions_widget = DiscussionsStack(parent=self)
-        
-        
-        self.content_stack.addWidget(self.discussions_widget)
         
         # Start with Pipeline view
         self.content_stack.setCurrentIndex(0)
