@@ -1,13 +1,23 @@
-from pathlib import Path
 import subprocess
-from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout,
-    QLabel, QLineEdit, QPushButton, QFileDialog,
-    QMessageBox, QGroupBox, QComboBox
-)
+from pathlib import Path
+
 from PyQt6.QtCore import Qt
-from voxkit.workers.worker_thread import WorkerThread
+from PyQt6.QtWidgets import (
+    QComboBox,
+    QFileDialog,
+    QGroupBox,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QMessageBox,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
+)
+
 from voxkit.storage.validation import validate_paths
+from voxkit.workers.worker_thread import WorkerThread
+
 from .styles import BrowseButtonStyle
 
 
@@ -135,7 +145,7 @@ class EvalPage(QWidget):
         directory = QFileDialog.getExistingDirectory(
             self,
             "Select Directory",
-            line_edit.text() if Path(line_edit.text()).exists() else str(Path.home())
+            line_edit.text() if Path(line_edit.text()).exists() else str(Path.home()),
         )
         if directory:
             line_edit.setText(directory)
@@ -172,7 +182,7 @@ class EvalPage(QWidget):
                 f'python scripts/evaluate_aligner.py --method "{method}" '
                 f'--reference "{ref_path}" --predicted "{pred_path}" --output "{out_path}"',
                 shell=True,
-                check=True
+                check=True,
             )
             return f"Evaluation completed successfully using {method}"
         except subprocess.CalledProcessError as e:

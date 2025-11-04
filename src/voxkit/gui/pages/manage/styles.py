@@ -37,7 +37,7 @@ SpinBoxStyle = """
         border-radius: 4px;
         color: #000000;
         selection-background-color: transparent;
-        selection-color: #000000;   
+        selection-color: #000000;
     }
     QSpinBox::up-button, QSpinBox::down-button {
         width: 16px;

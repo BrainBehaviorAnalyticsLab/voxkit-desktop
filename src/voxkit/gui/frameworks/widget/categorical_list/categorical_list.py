@@ -1,29 +1,37 @@
-from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QPushButton, 
-    QListWidget, QListWidgetItem, QCheckBox, QLabel,
-    QInputDialog, QMessageBox
-)
 from PyQt6.QtCore import Qt, pyqtSignal
-from .styles import Buttons, Labels, Colors
+from PyQt6.QtWidgets import (
+    QCheckBox,
+    QHBoxLayout,
+    QInputDialog,
+    QLabel,
+    QListWidget,
+    QListWidgetItem,
+    QMessageBox,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
+)
+
+from .styles import Buttons, Colors, Labels
 
 
 class CategoryListItem(QWidget):
     """Custom widget for each list item with checkbox, date, and info button"""
-    
+
     def __init__(self, item_key, item_data, parent=None):
         super().__init__(parent)
         self.item_key = item_key
         self.item_data = item_data
         self.setMinimumHeight(30)  # Adjust the number as needed
-        
+
         # Extract path and date from item_data dict
-        self.path = item_data.get('path', '') if isinstance(item_data, dict) else ''
-        self.date = item_data.get('date', '') if isinstance(item_data, dict) else ''
-        
+        self.path = item_data.get("path", "") if isinstance(item_data, dict) else ""
+        self.date = item_data.get("date", "") if isinstance(item_data, dict) else ""
+
         layout = QHBoxLayout()
         layout.setContentsMargins(8, 5, 8, 5)
         layout.setSpacing(5)
-        
+
         # Checkbox
         self.checkbox = QCheckBox()
         self.checkbox.setStyleSheet(f"""
@@ -49,7 +57,7 @@ class CategoryListItem(QWidget):
             }}
         """)
         layout.addWidget(self.checkbox)
-        
+
         # Item label
         self.label = QLabel(item_key)
         self.label.setMinimumWidth(150)
@@ -61,7 +69,7 @@ class CategoryListItem(QWidget):
             }}
         """)
         layout.addWidget(self.label)
-        
+
         # Date label
         self.date_label = QLabel(str(self.date))
         self.date_label.setMinimumWidth(100)
@@ -83,7 +91,6 @@ class CategoryListItem(QWidget):
             }}
         """)
         layout.addWidget(separator, stretch=2)
-        
 
         self.info_btn = QPushButton("i")
         self.info_btn.setFixedSize(50, 24)
@@ -105,9 +112,9 @@ class CategoryListItem(QWidget):
         self.info_btn.clicked.connect(self.on_info_clicked)
 
         layout.addWidget(self.info_btn)
-        
+
         self.setLayout(layout)
-        
+
         # Style the item widget
         self.setStyleSheet("""
             CategoryListItem {
@@ -131,52 +138,52 @@ class CategoryListItem(QWidget):
         <b>Date:</b> {self.date}
         """
         QMessageBox.information(self, "Item Information", info_text)
-    
+
     def is_checked(self):
         return self.checkbox.isChecked()
-    
+
     def set_checked(self, checked):
         self.checkbox.setChecked(checked)
 
 
 class CategoricalListWidget(QWidget):
     """Widget for viewing and managing categorical lists"""
-    
+
     # Signals for export, delete, and import actions
     export_requested = pyqtSignal(str, list)  # folder_name, selected_items
     delete_requested = pyqtSignal(str, dict)  # category, selected_items
     import_requested = pyqtSignal(str)  # category
-    
+
     def __init__(self, data=None, parent=None):
         super().__init__(parent)
         self.data = data if data else {}
         self.current_category_index = 0
         self.category_keys = list(self.data.keys())
-        
+
         self.init_ui()
         self.update_display()
-    
+
     def init_ui(self):
         main_layout = QVBoxLayout(self)
         main_layout.setSpacing(15)
         main_layout.setContentsMargins(20, 20, 20, 20)
-        
+
         # Title
         title = QLabel("Model Manager")
         title.setStyleSheet(Labels.TITLE)
         main_layout.addWidget(title)
-        
+
         main_layout.addSpacing(10)
-        
+
         # Category navigation section
         nav_layout = QHBoxLayout()
         nav_layout.setSpacing(10)
-        
+
         self.prev_btn = QPushButton("← Previous")
         self.prev_btn.setStyleSheet(Buttons.SECONDARY)
         self.prev_btn.clicked.connect(self.prev_category)
         nav_layout.addWidget(self.prev_btn)
-        
+
         self.category_label = QLabel("Category")
         self.category_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.category_label.setStyleSheet(f"""
@@ -191,18 +198,18 @@ class CategoricalListWidget(QWidget):
             }}
         """)
         nav_layout.addWidget(self.category_label, stretch=1)
-        
+
         self.next_btn = QPushButton("Next →")
         self.next_btn.setStyleSheet(Buttons.SECONDARY)
         self.next_btn.clicked.connect(self.next_category)
         nav_layout.addWidget(self.next_btn)
-        
+
         main_layout.addLayout(nav_layout)
-        
+
         # Selection controls
         selection_layout = QHBoxLayout()
         selection_layout.setSpacing(10)
-        
+
         self.select_all_btn = QPushButton("Select All")
         self.select_all_btn.setStyleSheet(f"""
             QPushButton {{
@@ -221,7 +228,7 @@ class CategoricalListWidget(QWidget):
         """)
         self.select_all_btn.clicked.connect(self.select_all)
         selection_layout.addWidget(self.select_all_btn)
-        
+
         self.deselect_all_btn = QPushButton("Deselect All")
         self.deselect_all_btn.setStyleSheet(f"""
             QPushButton {{
@@ -240,11 +247,11 @@ class CategoricalListWidget(QWidget):
         """)
         self.deselect_all_btn.clicked.connect(self.deselect_all)
         selection_layout.addWidget(self.deselect_all_btn)
-        
+
         selection_layout.addStretch()
-        
+
         main_layout.addLayout(selection_layout)
-        
+
         # List widget container
         list_container = QWidget()
         list_container.setStyleSheet(f"""
@@ -256,7 +263,7 @@ class CategoricalListWidget(QWidget):
         """)
         list_container_layout = QVBoxLayout(list_container)
         list_container_layout.setContentsMargins(10, 10, 10, 10)
-        
+
         self.list_widget = QListWidget()
         self.list_widget.setStyleSheet("""
             QListWidget {
@@ -275,7 +282,7 @@ class CategoricalListWidget(QWidget):
         """)
         self.list_widget.setSpacing(5)
         list_container_layout.addWidget(self.list_widget)
-        
+
         # Add empty state label (overlays the list widget)
         self.empty_label = QLabel("No items in this category")
         self.empty_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -288,15 +295,15 @@ class CategoricalListWidget(QWidget):
         """)
         self.empty_label.hide()  # Hidden by default
         list_container_layout.addWidget(self.empty_label)
-        
+
         # Stack them using absolute positioning
         self.list_widget.raise_()
         main_layout.addWidget(list_container, stretch=1)
-        
+
         # Action buttons
         action_layout = QHBoxLayout()
         action_layout.setSpacing(10)
-        
+
         self.import_btn = QPushButton("Import")
         self.import_btn.setStyleSheet(f"""
             QPushButton {{
@@ -320,7 +327,7 @@ class CategoricalListWidget(QWidget):
         """)
         self.import_btn.clicked.connect(self.on_import)
         action_layout.addWidget(self.import_btn)
-        
+
         self.export_btn = QPushButton("Export Selected")
         self.export_btn.setStyleSheet(f"""
             QPushButton {{
@@ -342,7 +349,7 @@ class CategoricalListWidget(QWidget):
         """)
         self.export_btn.clicked.connect(self.on_export)
         action_layout.addWidget(self.export_btn)
-        
+
         self.delete_btn = QPushButton("Delete Selected")
         self.delete_btn.setStyleSheet(f"""
             QPushButton {{
@@ -364,20 +371,20 @@ class CategoricalListWidget(QWidget):
         """)
         self.delete_btn.clicked.connect(self.on_delete)
         action_layout.addWidget(self.delete_btn)
-        
+
         main_layout.addLayout(action_layout)
-    
+
     def set_data(self, data):
         """Update the widget with new data"""
         self.data = data
         self.category_keys = list(self.data.keys())
         self.current_category_index = 0
         self.update_display()
-    
+
     def update_display(self):
         """Update the display for the current category"""
         self.list_widget.clear()
-    
+
         self.list_widget.clear()
         if not self.category_keys:
             self.category_label.setText("No Categories")
@@ -386,47 +393,49 @@ class CategoricalListWidget(QWidget):
             self.list_widget.hide()
             self.empty_label.show()
             return
-        
+
         # Update category label
         current_category = self.category_keys[self.current_category_index]
-        category_display = f"{current_category} ({self.current_category_index + 1}/{len(self.category_keys)})"
+        category_display = (
+            f"{current_category} ({self.current_category_index + 1}/{len(self.category_keys)})"
+        )
         self.category_label.setText(category_display)
-        
+
         # Update navigation buttons
         self.prev_btn.setEnabled(self.current_category_index > 0)
         self.next_btn.setEnabled(self.current_category_index < len(self.category_keys) - 1)
-        
+
         # Populate list with items
         category_data = self.data[current_category]
-    
+
         if not category_data:
             self.list_widget.hide()
             self.empty_label.show()
             return
-        
+
         # If we have items, show list and hide empty label
         self.empty_label.hide()
         self.list_widget.show()
-    
+
         for item_key, item_data in category_data.items():
             list_item = QListWidgetItem(self.list_widget)
             item_widget = CategoryListItem(item_key, item_data)
             list_item.setSizeHint(item_widget.sizeHint())
             self.list_widget.addItem(list_item)
             self.list_widget.setItemWidget(list_item, item_widget)
-    
+
     def prev_category(self):
         """Navigate to previous category"""
         if self.current_category_index > 0:
             self.current_category_index -= 1
             self.update_display()
-    
+
     def next_category(self):
         """Navigate to next category"""
         if self.current_category_index < len(self.category_keys) - 1:
             self.current_category_index += 1
             self.update_display()
-    
+
     def select_all(self):
         """Select all items in the current list"""
         for i in range(self.list_widget.count()):
@@ -434,7 +443,7 @@ class CategoricalListWidget(QWidget):
             widget = self.list_widget.itemWidget(item)
             if widget and isinstance(widget, CategoryListItem):
                 widget.set_checked(True)
-    
+
     def deselect_all(self):
         """Deselect all items in the current list"""
         for i in range(self.list_widget.count()):
@@ -442,7 +451,7 @@ class CategoricalListWidget(QWidget):
             widget = self.list_widget.itemWidget(item)
             if widget and isinstance(widget, CategoryListItem):
                 widget.set_checked(False)
-    
+
     def get_selected_items(self):
         """Get list of selected item keys"""
         selected = {}
@@ -452,134 +461,137 @@ class CategoricalListWidget(QWidget):
             if widget and isinstance(widget, CategoryListItem) and widget.is_checked():
                 selected[widget.item_key] = widget.item_data
         return selected
-    
+
     def on_export(self):
         """Handle export button click"""
         selected_items = self.get_selected_items()
-        
+
         if not selected_items:
             QMessageBox.warning(
-                self, 
-                "No Selection", 
+                self,
+                "No Selection",
                 "Please select at least one item to export.",
-                QMessageBox.StandardButton.Ok
+                QMessageBox.StandardButton.Ok,
             )
             return
-        
+
         # Ask for folder name with styled dialog
         folder_name, ok = QInputDialog.getText(
-            self, 
-            "Export Selected Items", 
-            f"Enter folder name for exporting {len(selected_items)} item(s):"
+            self,
+            "Export Selected Items",
+            f"Enter folder name for exporting {len(selected_items)} item(s):",
         )
-        
+
         if ok and folder_name:
             self.export_requested.emit(folder_name, selected_items)
             QMessageBox.information(
                 self,
                 "Export Started",
                 f"Exporting {len(selected_items)} item(s) to '{folder_name}'",
-                QMessageBox.StandardButton.Ok
+                QMessageBox.StandardButton.Ok,
             )
-    
+
     def on_delete(self):
         """Handle delete button click"""
         selected_items = self.get_selected_items()
-        
+
         if not selected_items:
             QMessageBox.warning(
-                self, 
-                "No Selection", 
+                self,
+                "No Selection",
                 "Please select at least one item to delete.",
-                QMessageBox.StandardButton.Ok
+                QMessageBox.StandardButton.Ok,
             )
             return
-        
+
         # Confirm deletion with styled message box
         reply = QMessageBox.question(
             self,
             "Confirm Deletion",
             f"Are you sure you want to delete {len(selected_items.keys())} item(s)?\n\nThis action cannot be undone.",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            QMessageBox.StandardButton.No
+            QMessageBox.StandardButton.No,
         )
-        
+
         if reply == QMessageBox.StandardButton.Yes:
             current_category = self.category_keys[self.current_category_index]
             print("Emmitting: ", selected_items)
             self.delete_requested.emit(current_category, selected_items)
-            
+
             # Remove deleted items from display
             for item_key in selected_items:
                 if item_key in self.data[current_category]:
                     del self.data[current_category][item_key]
-            
+
             self.update_display()
-            
+
             QMessageBox.information(
                 self,
                 "Deletion Complete",
                 f"Successfully deleted {len(selected_items.keys())} item(s)",
-                QMessageBox.StandardButton.Ok
+                QMessageBox.StandardButton.Ok,
             )
-    
+
     def on_import(self):
         """Handle import button click"""
         if not self.category_keys:
             QMessageBox.warning(
-                self, 
-                "No Category", 
+                self,
+                "No Category",
                 "No categories available for import.",
-                QMessageBox.StandardButton.Ok
+                QMessageBox.StandardButton.Ok,
             )
             return
-        
+
         current_category = self.category_keys[self.current_category_index]
         self.import_requested.emit(current_category)
-        
+
         # Show info message
         QMessageBox.information(
             self,
             "Import",
             f"Import functionality for category '{current_category}' will be implemented here.",
-            QMessageBox.StandardButton.Ok
+            QMessageBox.StandardButton.Ok,
         )
 
 
 # Example usage
 if __name__ == "__main__":
-    from PyQt6.QtWidgets import QApplication
     import sys
-    
+
+    from PyQt6.QtWidgets import QApplication
+
     app = QApplication(sys.argv)
-    
+
     # Sample data
     sample_data = {
-        'MFA Models': {
-            'english_us_arpa': {'path': '/models/mfa/english_us_arpa', 'date': '2025-01-15'},
-            'german_mfa': {'path': '/models/mfa/german_mfa', 'date': '2025-02-20'},
-            'french_prosodylab': {'path': '/models/mfa/french_prosodylab', 'date': '2025-03-10'}
+        "MFA Models": {
+            "english_us_arpa": {"path": "/models/mfa/english_us_arpa", "date": "2025-01-15"},
+            "german_mfa": {"path": "/models/mfa/german_mfa", "date": "2025-02-20"},
+            "french_prosodylab": {"path": "/models/mfa/french_prosodylab", "date": "2025-03-10"},
         },
-        'W2TG Models': {
-            'charsiu_en': {'path': '/models/w2tg/charsiu_en', 'date': '2025-04-05'},
-            'custom_model_v1': {'path': '/models/w2tg/custom_v1', 'date': '2025-05-12'},
-            'custom_model_v2': {'path': '/models/w2tg/custom_v2', 'date': '2025-06-18'}
+        "W2TG Models": {
+            "charsiu_en": {"path": "/models/w2tg/charsiu_en", "date": "2025-04-05"},
+            "custom_model_v1": {"path": "/models/w2tg/custom_v1", "date": "2025-05-12"},
+            "custom_model_v2": {"path": "/models/w2tg/custom_v2", "date": "2025-06-18"},
         },
-        'Dictionaries': {
-            'english_us': {'path': '/dicts/en_us.dict', 'date': '2025-01-01'},
-            'german': {'path': '/dicts/de.dict', 'date': '2025-02-01'}
-        }
+        "Dictionaries": {
+            "english_us": {"path": "/dicts/en_us.dict", "date": "2025-01-01"},
+            "german": {"path": "/dicts/de.dict", "date": "2025-02-01"},
+        },
     }
-    
+
     widget = CategoricalListWidget(sample_data)
-    
+
     # Connect signals to see output
-    widget.export_requested.connect(lambda folder, items: print(f"Export signal: {folder}, {items}"))
+    widget.export_requested.connect(
+        lambda folder, items: print(f"Export signal: {folder}, {items}")
+    )
     widget.delete_requested.connect(lambda cat, items: print(f"Delete signal: {cat}, {items}"))
     widget.import_requested.connect(lambda cat: print(f"Import signal: {cat}"))
-    
+
     widget.setWindowTitle("Model Manager")
     widget.resize(700, 600)
     widget.show()
-    
+
     sys.exit(app.exec())

@@ -11,6 +11,7 @@ license = {text = "MIT"}
 authors = [
     {name = "Your Name", email = "your.email@example.com"}
 ]
+
 dependencies = [
     "pyqt6>=6.9.1",
     "torch==2.8.0",
@@ -20,11 +21,73 @@ dependencies = [
     "datasets>=4.3.0",
     "accelerate>=1.11.0",
     "keyring>=25.6.0",
+    "pre-commit>=4.3.0",
 ]
+
+[dependency-groups]
+security = [
+    "safety>=3.6.2",
+]
+dev = [
+    "pre-commit>=4.3.0",
+    "ruff>=0.14.0",
+    "mypy>=1.18.2",
+]
+installation = [
+    "pyinstaller>=5.10.1",
+]
+
 [project.urls]
 Homepage = "https://github.com/yourusername/your-app-name"
 Repository = "https://github.com/yourusername/your-app-name"
 Issues = "https://github.com/yourusername/your-app-name/issues"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+src = ["src"]
+
+exclude = [
+    ".git",
+    ".mypy_cache",
+    ".ruff_cache",
+    ".venv",
+    "venv",
+    "build",
+    "dist",
+    "examples",
+    "__pycache__",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "F",   # pyflakes
+    "I",   # isort (import sorting)
+    "S",   # bandit (security)
+]
+
+ignore = [
+    "S101",   # Use of assert (OK in tests)
+    "S301",   # Pickle usage (needed for ML)
+]
+
+fixable = ["ALL"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["S101"]
+"scripts/**/*.py" = ["S101","S603"] # Allow subprocess in scripts
+
+[tool.ruff.lint.isort]
+known-first-party = ["Wav2TextGrid"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.mypy]
+python_version = "3.10"
+ignore_missing_imports = true
 
 [tool.setuptools.packages.find]
 where = ["src"]

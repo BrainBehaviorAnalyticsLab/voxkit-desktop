@@ -1,29 +1,30 @@
 class Colors:
     """Color palette for consistent theming"""
+
     # Primary colors
     PRIMARY = "#3498db"
     PRIMARY_HOVER = "#2980b9"
     PRIMARY_PRESSED = "#21618c"
     PRIMARY_DISABLED = "#aed6f1"
-    
+
     # Text colors
     TEXT_PRIMARY = "#2c3e50"
     TEXT_SECONDARY = "#7f8c8d"
     TEXT_TERTIARY = "#95a5a6"
-    
+
     # Status colors
     SUCCESS = "#27ae60"
     WARNING = "#f39c12"
     ERROR = "#e74c3c"
     INFO = "#3498db"
-    
+
     # Neutral colors
     WHITE = "#ffffff"
     LIGHT_GRAY = "#f0f0f0"
     GRAY = "#d0d0d0"
     DARK_GRAY = "#e0e0e0"
     BORDER = "#e0e0e0"
-    
+
     # Background colors
     BG_PRIMARY = "#ffffff"
     BG_SECONDARY = "#f8f9fa"
@@ -32,7 +33,7 @@ class Colors:
 
 class Buttons:
     """Button styles"""
-    
+
     PRIMARY = f"""
         QPushButton {{
             background-color: {Colors.PRIMARY};
@@ -53,7 +54,7 @@ class Buttons:
             background-color: {Colors.PRIMARY_DISABLED};
         }}
     """
-    
+
     SECONDARY = f"""
         QPushButton {{
             background-color: {Colors.WHITE};
@@ -69,7 +70,7 @@ class Buttons:
             background-color: {Colors.GRAY};
         }}
     """
-    
+
     ICON_BUTTON = f"""
         QPushButton {{
             border: 1px solid {Colors.GRAY};
@@ -85,7 +86,7 @@ class Buttons:
             background-color: {Colors.DARK_GRAY};
         }}
     """
-    
+
     CLOSE_BUTTON = f"""
         QPushButton {{
             border: none;
@@ -98,7 +99,7 @@ class Buttons:
             color: {Colors.ERROR};
         }}
     """
-    
+
     BROWSE_BUTTON = """
         QPushButton {
             background-color: white;
@@ -120,7 +121,7 @@ class Buttons:
 
 class Inputs:
     """Input field styles"""
-    
+
     LINE_EDIT = f"""
         QLineEdit {{
             padding: 6px;
@@ -137,7 +138,7 @@ class Inputs:
             color: {Colors.TEXT_TERTIARY};
         }}
     """
-    
+
     SPINBOX = f"""
         QSpinBox {{
             padding: 4px;
@@ -151,7 +152,7 @@ class Inputs:
             border-color: {Colors.PRIMARY};
         }}
     """
-    
+
     DOUBLE_SPINBOX = f"""
         QDoubleSpinBox {{
             padding: 4px;
@@ -165,7 +166,7 @@ class Inputs:
             border-color: {Colors.PRIMARY};
         }}
     """
-    
+
     CHECKBOX = """
         QCheckBox {
             spacing: 8px;
@@ -176,7 +177,7 @@ class Inputs:
             height: 18px;
         }
     """
-    
+
     COMBOBOX = f"""
         QComboBox {{
             padding: 4px;
@@ -195,7 +196,7 @@ class Inputs:
 
 class Labels:
     """Label styles"""
-    
+
     TITLE = f"""
         QLabel {{
             font-size: 24px;
@@ -203,7 +204,7 @@ class Labels:
             color: {Colors.TEXT_PRIMARY};
         }}
     """
-    
+
     HEADER = f"""
         QLabel {{
             font-size: 18px;
@@ -211,21 +212,21 @@ class Labels:
             color: {Colors.TEXT_PRIMARY};
         }}
     """
-    
+
     SECTION_HEADER = f"""
         QLabel {{
             font-weight: bold;
             color: {Colors.TEXT_PRIMARY};
         }}
     """
-    
+
     INFO = f"""
         QLabel {{
             font-size: 12px;
             color: {Colors.TEXT_SECONDARY};
         }}
     """
-    
+
     STATUS_READY = f"""
         QLabel {{
             color: {Colors.TEXT_SECONDARY};
@@ -233,7 +234,7 @@ class Labels:
             margin-top: 5px;
         }}
     """
-    
+
     STATUS_WORKING = f"""
         QLabel {{
             color: {Colors.WARNING};
@@ -241,7 +242,7 @@ class Labels:
             margin-top: 5px;
         }}
     """
-    
+
     STATUS_SUCCESS = f"""
         QLabel {{
             color: {Colors.SUCCESS};
@@ -249,7 +250,7 @@ class Labels:
             margin-top: 5px;
         }}
     """
-    
+
     STATUS_ERROR = f"""
         QLabel {{
             color: {Colors.ERROR};
@@ -257,4 +258,3 @@ class Labels:
             margin-top: 5px;
         }}
     """
-

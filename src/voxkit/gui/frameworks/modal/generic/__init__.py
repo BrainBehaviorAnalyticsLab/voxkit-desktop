@@ -1,7 +1,7 @@
 # TODO: Module docstring
 
+from .api import FieldConfig, FieldType
 from .generic import GenericDialog
-from .api import FieldType, FieldConfig
 
 __all__ = [
     "GenericDialog",

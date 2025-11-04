@@ -2,4 +2,4 @@
 
 from .manage import ManageAlignersWidget
 
-__all__ = ['ManageAlignersWidget']
+__all__ = ["ManageAlignersWidget"]
