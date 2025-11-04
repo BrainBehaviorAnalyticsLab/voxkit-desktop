@@ -6,6 +6,7 @@ from ui.widgets import AnimatedStackedWidget
 from .training import TrainingPage
 from .predicting import PredictingPage
 from .evaluating import EvaluatingPage
+from .model_eval import EvalPage
 from config import Dimensions
 
 
@@ -42,14 +43,7 @@ class PipelineFormStack(QWidget):
         self.stacked_widget.addWidget(TrainingPage(self.parent_window))
         
         # Placeholder for Evaluate page
-        placeholder_widget = QWidget()
-        placeholder_widget.setObjectName("placeholderPage")
-        placeholder_layout = QHBoxLayout(placeholder_widget)
-        placeholder_label = QLabel("Placeholder Page - Coming Soon")
-        placeholder_label.setStyleSheet("font-size:18px; color:#666;")
-        placeholder_layout.addWidget(placeholder_label)
-        self.stacked_widget.addWidget(placeholder_widget)
-        
+        self.stacked_widget.addWidget(EvalPage(self.parent_window))
         self.stacked_widget.addWidget(PredictingPage(self.parent_window))
         self.stacked_widget.addWidget(EvaluatingPage(self.parent_window))
         content_layout.addWidget(self.stacked_widget, stretch=1)

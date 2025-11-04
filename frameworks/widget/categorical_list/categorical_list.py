@@ -144,7 +144,7 @@ class CategoricalListWidget(QWidget):
     
     # Signals for export, delete, and import actions
     export_requested = pyqtSignal(str, list)  # folder_name, selected_items
-    delete_requested = pyqtSignal(str, list)  # category, selected_items
+    delete_requested = pyqtSignal(str, dict)  # category, selected_items
     import_requested = pyqtSignal(str)  # category
     
     def __init__(self, data=None, parent=None):
@@ -276,6 +276,21 @@ class CategoricalListWidget(QWidget):
         self.list_widget.setSpacing(5)
         list_container_layout.addWidget(self.list_widget)
         
+        # Add empty state label (overlays the list widget)
+        self.empty_label = QLabel("No items in this category")
+        self.empty_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.empty_label.setStyleSheet(f"""
+            QLabel {{
+                color: {Colors.TEXT_TERTIARY};
+                font-style: italic;
+                font-size: 14px;
+            }}
+        """)
+        self.empty_label.hide()  # Hidden by default
+        list_container_layout.addWidget(self.empty_label)
+        
+        # Stack them using absolute positioning
+        self.list_widget.raise_()
         main_layout.addWidget(list_container, stretch=1)
         
         # Action buttons
@@ -362,11 +377,14 @@ class CategoricalListWidget(QWidget):
     def update_display(self):
         """Update the display for the current category"""
         self.list_widget.clear()
-        
+    
+        self.list_widget.clear()
         if not self.category_keys:
             self.category_label.setText("No Categories")
             self.prev_btn.setEnabled(False)
             self.next_btn.setEnabled(False)
+            self.list_widget.hide()
+            self.empty_label.show()
             return
         
         # Update category label
@@ -380,24 +398,16 @@ class CategoricalListWidget(QWidget):
         
         # Populate list with items
         category_data = self.data[current_category]
-        
+    
         if not category_data:
-            # Show empty state
-            empty_item = QListWidgetItem(self.list_widget)
-            empty_widget = QLabel("No items in this category")
-            empty_widget.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            empty_widget.setStyleSheet(f"""
-                QLabel {{
-                    color: {Colors.TEXT_TERTIARY};
-                    padding: 40px;
-                    font-style: italic;
-                }}
-            """)
-            empty_item.setSizeHint(empty_widget.sizeHint())
-            self.list_widget.addItem(empty_item)
-            self.list_widget.setItemWidget(empty_item, empty_widget)
+            self.list_widget.hide()
+            self.empty_label.show()
             return
         
+        # If we have items, show list and hide empty label
+        self.empty_label.hide()
+        self.list_widget.show()
+    
         for item_key, item_data in category_data.items():
             list_item = QListWidgetItem(self.list_widget)
             item_widget = CategoryListItem(item_key, item_data)
@@ -435,12 +445,12 @@ class CategoricalListWidget(QWidget):
     
     def get_selected_items(self):
         """Get list of selected item keys"""
-        selected = []
+        selected = {}
         for i in range(self.list_widget.count()):
             item = self.list_widget.item(i)
             widget = self.list_widget.itemWidget(item)
             if widget and isinstance(widget, CategoryListItem) and widget.is_checked():
-                selected.append(widget.item_key)
+                selected[widget.item_key] = widget.item_data
         return selected
     
     def on_export(self):
@@ -489,13 +499,14 @@ class CategoricalListWidget(QWidget):
         reply = QMessageBox.question(
             self,
             "Confirm Deletion",
-            f"Are you sure you want to delete {len(selected_items)} item(s)?\n\nThis action cannot be undone.",
+            f"Are you sure you want to delete {len(selected_items.keys())} item(s)?\n\nThis action cannot be undone.",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.No
         )
         
         if reply == QMessageBox.StandardButton.Yes:
             current_category = self.category_keys[self.current_category_index]
+            print("Emmitting: ", selected_items)
             self.delete_requested.emit(current_category, selected_items)
             
             # Remove deleted items from display
@@ -508,7 +519,7 @@ class CategoricalListWidget(QWidget):
             QMessageBox.information(
                 self,
                 "Deletion Complete",
-                f"Successfully deleted {len(selected_items)} item(s)",
+                f"Successfully deleted {len(selected_items.keys())} item(s)",
                 QMessageBox.StandardButton.Ok
             )
     

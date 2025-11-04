@@ -1,6 +1,7 @@
 import os
 from config import Mode
 from datetime import datetime
+import shutil
 
 STORAGE_ROOT = "~/.tpe-speech-analysis"
 # Models are stored with this prefix for a more ceertain means of identification, set later
@@ -27,6 +28,14 @@ def human_readable_date(date_str: str) -> str:
         hour, minute = time_part.split(":")
         hour = hour.lstrip("0")
         return f"{date_part} {hour}:{minute} {ampm.lower()}"
+    except ValueError:
+        return date_str
+    
+def machine_readable_date(date_str: str) -> str:
+    """Convert 'MM-DD-YYYY H:MM am/pm' back to 'YYYYMMDD_HHMMSS'."""
+    try:
+        dt = datetime.strptime(date_str.strip(), "%m-%d-%Y %I:%M %p")
+        return dt.strftime("%Y%m%d_%H%M%S")
     except ValueError:
         return date_str
 
@@ -104,12 +113,12 @@ def list_modelz(mode: Mode, add_date=False) -> list[str]:
                             print(f"Found model: {subentry.name} at {subentry.path}")
                             model_name = subentry.name[len(MODEL_PREFIX):]
                             if add_date:
-                                date = human_readable_date(entry.name)
+                                date_time = human_readable_date(entry.name).split(' ')
                                 label = f"{model_name}"
-                                models[label] = {"path": subentry.path, "date": date}
+                                models[label] = {"path": subentry.path, "date": date_time[0], 'time': date_time[1], 'train_root': entry.name}
                             else:
                                 label = model_name
-                                models[label] = {"path": subentry.path}
+                                models[label] = {"path": subentry.path, "train_root": entry.name}
                             
             return models 
         
@@ -130,19 +139,26 @@ def list_modelz(mode: Mode, add_date=False) -> list[str]:
                                 print(f"Error -- Model zip not found at: {subentry.path}/model.zip")
                                 continue
                             if add_date:
-                                label = f"{model_name} ({human_readable_date(entry.name)})"
-                                date = human_readable_date(entry.name)
-                                models[label] = {"path": subentry.path + "/model.zip", "date": date}
+                                label = f"{model_name}"
+                                date_time = human_readable_date(entry.name).split(' ')
+                                print(subentry.path)
+                                models[label] = {"path": subentry.path + "/model.zip", "date": date_time[0], 'time': date_time[1], 'train_root': entry.name}
                             else:
                                 label = model_name
-                                models[label] = {"path": subentry.path + "/model.zip"}
+                                models[label] = {"path": subentry.path + "/model.zip", "train_root": entry.name}
             return models 
 
     except Exception as e:
         print(f"Error listing models: {e}")
         return {}
 
-
+def delete_training_run(mode: Mode, train_root: str):
+    """Delete a training run given its mode and root directory."""
+    train_path = f"{get_storage_root()}/{TRAIN_ROOT}/{mode}/{train_root}"
+    if os.path.exists(train_path):
+        shutil.rmtree(train_path)
+    else:
+        raise FileNotFoundError(f"Training run path does not exist: {train_path}")
 
 def create_train_destination(model_name: str, mode: Mode) -> str:
     """Create a directory for storing a new trained model and it information."""

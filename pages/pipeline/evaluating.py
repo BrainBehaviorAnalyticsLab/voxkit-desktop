@@ -96,7 +96,7 @@ class EvaluatingPage(QWidget):
         layout.addWidget(wavlab_label)
         
         wavlab_layout = QHBoxLayout()
-        wavlab_layout.setSpacing(8)
+        wavlab_layout.setSpacing(5)
         self.wavlab_path = QLineEdit(Defaults['audio_path'])
         self.wavlab_browse = QPushButton("Browse")
         self.wavlab_browse.setFixedWidth(100)
@@ -112,7 +112,7 @@ class EvaluatingPage(QWidget):
         layout.addWidget(extract_output_label)
         
         extract_output_layout = QHBoxLayout()
-        extract_output_layout.setSpacing(8)
+        extract_output_layout.setSpacing(5)
         self.extract_output_path = QLineEdit(Defaults['output_path'])
         self.extract_browse = QPushButton("Browse")
         self.extract_browse.setFixedWidth(100)

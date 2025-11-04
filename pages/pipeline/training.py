@@ -118,6 +118,7 @@ class TrainingPage(QWidget):
                 capture_output=True
             )
         elif model == 'W2TG':
+            
             train_aligner(
                 train_audio_dir=audio_path,
                 train_textgrid_dir=textgrid_path,
@@ -125,6 +126,7 @@ class TrainingPage(QWidget):
                 model_output_dir=model_path,
                 tg_output_dir=eval_path,
                 dataset_dir=data_path,
+                ntrain_epochs=self.num_epochs
             )
         else:
             raise ValueError(f"Unknown model type: {model}")
@@ -158,13 +160,13 @@ class TrainingPage(QWidget):
         
         if result == QDialog.DialogCode.Accepted:
             # Apply settings
-            batch_size = settings_dialog.batch_size.value()
-            num_epochs = settings_dialog.num_epochs.value()
-            use_gpu = settings_dialog.use_gpu.isChecked()
-            save_checkpoints = settings_dialog.save_checkpoints.isChecked()
+            self.batch_size = settings_dialog.batch_size.value()
+            self.num_epochs = settings_dialog.num_epochs.value()
+            self.use_gpu = settings_dialog.use_gpu.isChecked()
+            self.save_checkpoints = settings_dialog.save_checkpoints.isChecked()
             
-            print(f"Settings saved: Batch Size={batch_size}, Epochs={num_epochs}, "
-                  f"GPU={use_gpu}, Checkpoints={save_checkpoints}")
+            print(f"Settings saved: Batch Size={self.batch_size}, Epochs={self.num_epochs}, "
+                  f"GPU={self.use_gpu}, Checkpoints={self.save_checkpoints}")
             
     def init_ui(self):
         """Create the training page"""

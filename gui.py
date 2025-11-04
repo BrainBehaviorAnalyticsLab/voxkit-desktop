@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QHBoxLayout,
-    QStackedWidget, QToolBar, QLabel
+    QStackedWidget, QToolBar
 )
 from PyQt6.QtGui import QAction, QIcon
 from styles import GlobalStyleSheet, ToolBarStyle
@@ -181,7 +181,7 @@ class AlignmentGUI(QMainWindow):
         self.content_stack.addWidget(self.pipeline_container)
         
         # Manage view: categorical list widget
-        self.manage_widget = ManageAlignersWidget({}, self)
+        self.manage_widget = ManageAlignersWidget(self)
         self.content_stack.addWidget(self.manage_widget)
         
         # Discussions view: DiscussionsStack widget

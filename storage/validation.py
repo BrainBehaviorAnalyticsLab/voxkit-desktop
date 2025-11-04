@@ -6,7 +6,7 @@ from PyQt6.QtWidgets import (
 def validate_path(parent, path):
     """Validate if a path exists"""
     return Path(path).exists()
-
+    
 def validate_paths(parent, paths_dict):
     """Validate multiple paths and show error if any are invalid"""
     invalid_paths = []
