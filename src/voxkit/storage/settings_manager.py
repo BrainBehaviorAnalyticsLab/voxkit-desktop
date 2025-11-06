@@ -1,1 +1,0 @@
-# TODO : Implement logic for QSettings management for the application.

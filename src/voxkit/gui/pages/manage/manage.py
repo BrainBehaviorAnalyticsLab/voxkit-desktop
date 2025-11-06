@@ -1,8 +1,9 @@
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QLabel
 
+from voxkit.gui.components.modals.import_model_dialog.import_model_dialog import ImportModelDialog
 from voxkit.gui.frameworks.widget.categorical_list import CategoricalListWidget
-from voxkit.storage.paths import delete_training_run, list_modelz
+from voxkit.storage.paths import list_modelz, scrub_training_run
 
 from .utils import handle_export_lambda
 
@@ -15,15 +16,15 @@ class ManageAlignersWidget(CategoricalListWidget):
     def __init__(self, parent=None):
         mfa_models = list_modelz("MFA", True)
         w2tg_models = list_modelz("W2TG", True)
-
+        self.parent = parent
         data = {"MFA Models": mfa_models, "W2TG Models": w2tg_models}
 
         super().__init__(data, parent)
 
         self.export_requested.connect(handle_export_lambda(self, data))
 
-        self.delete_requested.connect(lambda cat, items: self.delete_training_runs(cat, items))
-        self.import_requested.connect(lambda cat: print(f"Import signal: {cat}"))
+        self.delete_requested.connect(lambda cat, items: self.scrub_training_runs(cat, items))
+        self.import_requested.connect(lambda cat: self.open_import_dialog(cat))
 
         self.setWindowTitle("Model Manager")
 
@@ -35,8 +36,8 @@ class ManageAlignersWidget(CategoricalListWidget):
         credit.setStyleSheet("color: #999; font-size: 10px; padding: 5px;")
         credit.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.layout().addWidget(credit)
-
-    def delete_training_runs(self, mode, items: dict):
+    
+    def scrub_training_runs(self, mode, items: dict):
         for model in items.keys():
             if "MFA" in mode:
                 mode = "MFA"
@@ -44,11 +45,18 @@ class ManageAlignersWidget(CategoricalListWidget):
                 mode = "W2TG"
             else:
                 raise ValueError("Invalid mode")
-            delete_training_run(mode, items[model]["train_root"])
+            scrub_training_run(mode, items[model]["train_root"])
             # Implement deletion logic here
             # Example: delete files or database entries associated with the model
             # You might want to add error handling and confirmation dialogs
 
+    def open_import_dialog(self, category):
+        dialog = ImportModelDialog(parent=self, engine_id=category)
+        if dialog.exec():
+            path = dialog.field_widgets["model_path"].text()
+            print(f"Importing {category} Model from {path}")
+        # Clean up
+        self.parent.setGraphicsEffect(None)
 
 #  Example usage
 # if __name__ == "__main__":

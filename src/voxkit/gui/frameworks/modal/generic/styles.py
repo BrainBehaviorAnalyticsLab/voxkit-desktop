@@ -16,7 +16,7 @@ SpinBoxStyle = """
         padding: 4px;
         border: 2px solid #d0d0d0;
         border-radius: 4px;
-        color: #000000;
+        color: #000000; 
         selection-background-color: transparent;
         selection-color: #000000;
     }

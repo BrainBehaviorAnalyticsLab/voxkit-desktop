@@ -2,10 +2,10 @@
 
 from voxkit.gui.frameworks.modal.generic import FieldConfig, FieldType
 
-from .training_settings import TrainingSettingsDialog
+from .w2tg_training_settings import W2TGTrainingSettingsDialog
 
 __all__ = [
-    "TrainingSettingsDialog",
+    "W2TGTrainingSettingsDialog",
     "FieldConfig",
     "FieldType",
 ]

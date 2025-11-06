@@ -50,11 +50,10 @@ lint-check: ## Check linting with Ruff
 	@echo "$(BLUE)Checking linting with Ruff...$(RESET)"
 	uv run --only-group dev ruff check .
 
-mypy-check: ## Run mypy for type checking	
+mypy-check: ## Run mypy for type checking
 	@echo "$(BLUE)Running mypy for type checking...$(RESET)"
 	uv run --only-group dev mypy .
 
 fresh-slate: ## Remove virtual environment and lock file
 	@echo "$(BLUE)Removing virtual environment and lock file...$(RESET)"
 	@read -p "Are you sure you want to proceed? [y/N] " confirm && [ $${confirm} = "y" ] || [ $${confirm} = "Y" ] && rm -rf uv.lock .venv || echo "Aborted."
-

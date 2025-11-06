@@ -17,11 +17,13 @@ dependencies = [
     "torch==2.8.0",
     "torchaudio==2.8.0",
     "pypllrcomputer @ git+https://github.com/BrainBehaviorAnalyticsLab/PyPLLRComputer.git@65a8e87",
-    "wav2textgrid @ git+https://github.com/pkadambi/Wav2TextGrid.git@544287c",
+    "wav2textgrid @ git+https://github.com/pkadambi/Wav2TextGrid.git@8db3afd",
     "datasets>=4.3.0",
     "accelerate>=1.11.0",
     "keyring>=25.6.0",
     "pre-commit>=4.3.0",
+    "pytest>=8.4.2",
+    "pydantic>=2.12.3",
 ]
 
 [dependency-groups]
@@ -31,7 +33,7 @@ security = [
 dev = [
     "pre-commit>=4.3.0",
     "ruff>=0.14.0",
-    "mypy>=1.18.2",
+    "mypy>=1.18.2"
 ]
 installation = [
     "pyinstaller>=5.10.1",

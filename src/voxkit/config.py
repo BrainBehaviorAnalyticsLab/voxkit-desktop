@@ -7,6 +7,7 @@ Defaults = {
     "output_path": "/path/to/output",
     "audio_path": "/path/to/audio",
     "textgrid_path": "/path/to/textgrids",
+    "num_epochs": 10
 }
 
 Mode = Literal["MFA", "W2TG"]

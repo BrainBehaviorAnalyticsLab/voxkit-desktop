@@ -19,12 +19,13 @@ from PyQt6.QtWidgets import (
 )
 
 from voxkit.config import Defaults
-from voxkit.gui.components.modals.training_settings import TrainingSettingsDialog
+from voxkit.engines.w2tg_engine import W2TGEngine
+from voxkit.gui.components.modals.training_settings import W2TGTrainingSettingsDialog
+from voxkit.gui.pages.pipeline.model_eval import QComboBox
 from voxkit.services.mfa import run_mfa_adapt
-from voxkit.storage.paths import create_train_destination, list_models
+from voxkit.storage.paths import create_train_destination, get_storage_root, list_models
 from voxkit.storage.validation import validate_path, validate_paths
 from voxkit.workers.worker_thread import WorkerThread
-from Wav2TextGrid.wav2textgrid_train import train_aligner
 
 from .styles import BrowseButtonStyle
 
@@ -36,16 +37,22 @@ class TrainingPage(QWidget):
         self.train_textgrid_path = Defaults["textgrid_path"]
         self.train_model_name = "default_model"
         self.selected_mode = Defaults["mode"]
+        self.w2tg_train_settings = None
         self.parent = parent
         self.init_ui()
+    
 
     def on_mode_changed(self):
         """Handle model selection change"""
         # Check which radio button is actually checked
         if self.mfa_radio.isChecked():
             self.selected_mode = "MFA"
+            self.mfa_dropdown.setVisible(True)
+            self.w2tg_dropdown.setVisible(False)
         elif self.wav2text_radio.isChecked():
             self.selected_mode = "W2TG"
+            self.w2tg_dropdown.setVisible(True)
+            self.mfa_dropdown.setVisible(False)
 
         print(f"Model changed to: {self.selected_mode}")
 
@@ -121,8 +128,9 @@ class TrainingPage(QWidget):
         )
 
         data_path, model_path, root_path, eval_path = create_train_destination(model_name, model)
-
+        
         print(f"Created training run directories at: {root_path}")
+
         if model == "MFA":
             # Call MFA adaptation function
             run_mfa_adapt(
@@ -133,15 +141,20 @@ class TrainingPage(QWidget):
                 timeout=None,
                 capture_output=True,
             )
+
         elif model == "W2TG":
-            train_aligner(
-                train_audio_dir=audio_path,
-                train_textgrid_dir=textgrid_path,
-                tokenizer_name="charsiu/tokenizer_en_cmu",
-                model_output_dir=model_path,
-                tg_output_dir=eval_path,
-                dataset_dir=data_path,
-                ntrain_epochs=self.num_epochs,
+            if self.w2tg_train_settings is None:
+                self.w2tg_train_settings = W2TGTrainingSettingsDialog(store_values_path=get_storage_root() + "/train/W2TG/stored_settings.json").capture_settings
+            selected_w2tg_model = self.w2tg_dropdown.currentText() or None
+            print("Selected W2TG model:", selected_w2tg_model)
+            models = list_models("W2TG", add_date=True)
+            self.w2tg_train_settings["base_model"] = models.get(selected_w2tg_model, None)
+            print("Training with settings:", self.w2tg_train_settings)
+            W2TGEngine().train_aligner(
+                audio_root=audio_path,
+                textgrid_root=textgrid_path,
+                model_id=model_name,
+                settings=self.w2tg_train_settings
             )
         else:
             raise ValueError(f"Unknown model type: {model}")
@@ -163,26 +176,18 @@ class TrainingPage(QWidget):
 
     def on_training_settings(self):
         """Handle settings button click on training page"""
-
-        # Create and show settings dialog
-        settings_dialog = TrainingSettingsDialog(self)
-
-        result = settings_dialog.exec()
-
-        # Clean up
-        self.parent.setGraphicsEffect(None)
+      
+        self.settings_dialog = W2TGTrainingSettingsDialog(self, store_values_path=get_storage_root() + "/train/W2TG/stored_settings.json")
+        result = self.settings_dialog.exec()
 
         if result == QDialog.DialogCode.Accepted:
-            # Apply settings
-            self.batch_size = settings_dialog.batch_size.value()
-            self.num_epochs = settings_dialog.num_epochs.value()
-            self.use_gpu = settings_dialog.use_gpu.isChecked()
-            self.save_checkpoints = settings_dialog.save_checkpoints.isChecked()
-
-            print(
-                f"Settings saved: Batch Size={self.batch_size}, Epochs={self.num_epochs}, "
-                f"GPU={self.use_gpu}, Checkpoints={self.save_checkpoints}"
-            )
+            try:
+                self.w2tg_train_settings = self.settings_dialog.capture_settings
+                self.settings_dialog.save()
+            except Exception as e:
+                print("Error syncing training settings:", e)
+        # Clean up
+        self.parent.setGraphicsEffect(None)
 
     def init_ui(self):
         """Create the training page"""
@@ -261,6 +266,16 @@ class TrainingPage(QWidget):
         radio_widget_mfa.setStyleSheet("background-color: white;")
         mfa_layout.addWidget(radio_widget_mfa)
 
+        # Dropdown
+        self.mfa_dropdown = QComboBox()
+        self.mfa_dropdown.setToolTip("Select the MFA base to train/tune")
+        self.mfa_dropdown.setPlaceholderText("Select BASE Model")
+        self.mfa_dropdown.setStyleSheet("color: #95a5a6;")
+        model_names_mfa = list_models("MFA", add_date=True).keys()
+        self.mfa_dropdown.addItems(list(model_names_mfa) if model_names_mfa else [])
+        self.mfa_dropdown.setFixedWidth(300)
+        self.mfa_dropdown.setVisible(True)
+        mfa_layout.addWidget(self.mfa_dropdown)
         mfa_layout.addStretch()
 
         model_layout.addLayout(mfa_layout)
@@ -270,6 +285,7 @@ class TrainingPage(QWidget):
         mfa_info.setStyleSheet("color: #95a5a6; font-size: 11px; margin-left: 25px;")
         model_layout.addWidget(mfa_info)
         model_layout.addSpacing(5)
+
 
         # ----------------------------------------------------------------------
         # W2TG block (IDENTICAL alignment)
@@ -297,6 +313,17 @@ class TrainingPage(QWidget):
         radio_widget_w2tg.setFixedWidth(280)  # <-- MUST match MFA
         radio_widget_w2tg.setStyleSheet("background-color: white;")
         w2tg_layout.addWidget(radio_widget_w2tg)
+
+        # Dropdown
+        self.w2tg_dropdown = QComboBox()
+        self.w2tg_dropdown.setToolTip("Select the W2TG model to use for alignment")
+        self.w2tg_dropdown.setPlaceholderText("Select BASE Model")
+        self.w2tg_dropdown.setStyleSheet("color: #95a5a6;")
+        model_names_w2tg = list_models("W2TG", add_date=True).keys()
+        self.w2tg_dropdown.addItems(list(model_names_w2tg) if model_names_w2tg else [])
+        self.w2tg_dropdown.setFixedWidth(300)
+        self.w2tg_dropdown.setVisible(False)
+        w2tg_layout.addWidget(self.w2tg_dropdown)
 
         w2tg_layout.addStretch()
 

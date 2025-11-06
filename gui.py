@@ -170,3 +170,15 @@ class AlignmentGUI(QMainWindow):
 
         # Set initial active tab style
         self.update_active_tab_style("pipeline")
+
+if __name__ == "__main__":
+    from voxkit.services.hf import download_and_copy_huggingface_model
+    from voxkit.storage.paths import create_train_destination
+
+    data_path, model_path, train_path, eval_path = create_train_destination("prads model","W2TG")
+    
+    print(data_path)
+    download_and_copy_huggingface_model(
+        model_path="pkadambi/Wav2TextGrid",
+        destination=model_path
+    )

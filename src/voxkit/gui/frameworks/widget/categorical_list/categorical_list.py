@@ -546,13 +546,13 @@ class CategoricalListWidget(QWidget):
         current_category = self.category_keys[self.current_category_index]
         self.import_requested.emit(current_category)
 
-        # Show info message
-        QMessageBox.information(
-            self,
-            "Import",
-            f"Import functionality for category '{current_category}' will be implemented here.",
-            QMessageBox.StandardButton.Ok,
-        )
+        # # Show info message
+        # QMessageBox.information(
+        #     self,
+        #     "Import",
+        #     f"Import functionality for category '{current_category}' will be implemented here.",
+        #     QMessageBox.StandardButton.Ok,
+        # )
 
 
 # Example usage

@@ -1,3 +1,8 @@
+"""
+Until compatible exports are avalible through the MFA package this will serve as the alterative 
+entrypoint for MFA logic bootstrapping the cli
+"""
+
 import logging
 import subprocess
 from typing import Optional
@@ -51,3 +56,18 @@ def run_mfa_adapt(
         logging.debug("MFA adapt output:\n%s", completed.stdout)
 
     return completed
+
+
+def run_mfa_evaluate(
+    corpus_dir: str,
+    dictionary_path: str,
+    acoustic_model_path: str,
+    output_model_path: str,
+    timeout: Optional[float] = None,
+    capture_output: bool = True,
+) -> subprocess.CompletedProcess:
+    """
+    Run the Montreal Forced Aligner 'evaluate' subcommand as a subprocess.
+    """
+    pass
+    

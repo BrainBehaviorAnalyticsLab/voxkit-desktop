@@ -1,3 +1,5 @@
+import json
+import os
 from typing import Any
 
 from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, Qt
@@ -17,6 +19,9 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+
+from voxkit.gui.components.widgets.toggle_switch import ToggleSwitch
+from voxkit.storage.paths import get_storage_root
 
 from .api import FieldConfig, FieldType
 from .styles import (
@@ -41,9 +46,13 @@ class GenericDialog(QDialog):
         dims: tuple[int, int] = (400, 350),
         fields: list[FieldConfig] = None,
         apply_blur: bool = True,
+        store_values_path: str = "/Users/beckett/.tpe-speech-analysis/test.json",
     ):
         super().__init__(parent)
-
+        self.store_values_path = store_values_path
+        if not self.store_values_path or get_storage_root() not in self.store_values_path:
+            raise ValueError("File path must be within the storage root directory.")
+        
         self.field_configs = fields or []
         self.field_widgets = {}
         self._apply_blur = apply_blur
@@ -54,6 +63,7 @@ class GenericDialog(QDialog):
 
         self._setup_ui(title, dims)
         self._create_fields()
+        self._load_saved_values()
         self.fade_in()
 
     def _setup_overlay(self, parent):
@@ -75,6 +85,30 @@ class GenericDialog(QDialog):
         except (AttributeError, ImportError):
             # Gracefully handle if overlay utils aren't available
             pass
+
+    def _load_saved_values(self):
+        if not os.path.exists(self.store_values_path):
+            print("Saved values json doesn't exist yet.")
+            return
+        try:
+            with open(self.store_values_path, "r") as f:
+                saved_values = json.load(f)
+                for name, value in saved_values.items():
+                    print(f"Loading saved value for {name}: {value}")
+                    if name in self.field_widgets:
+                        widget = self.field_widgets[name]
+                        if isinstance(widget, (QCheckBox, ToggleSwitch)):
+                            widget.setChecked(value)
+                        elif isinstance(widget, (QSpinBox, QDoubleSpinBox)):
+                            widget.setValue(value)
+                        elif isinstance(widget, QLineEdit):
+                            widget.setText(value)
+                        elif isinstance(widget, QComboBox):
+                            index = widget.findText(value)
+                            if index != -1:
+                                widget.setCurrentIndex(index)
+        except (FileNotFoundError, json.JSONDecodeError):
+            print("Error loading saved values.")
 
     def _setup_ui(self, title: str, dims: tuple[int, int]):
         """Setup the basic dialog UI structure"""
@@ -157,11 +191,12 @@ class GenericDialog(QDialog):
         elif config.field_type == FieldType.DOUBLE_SPINBOX:
             widget = self._create_double_spinbox(config)
         elif config.field_type == FieldType.CHECKBOX:
-            widget = self._create_checkbox(config)
+            widget = ToggleSwitch(checked=bool(config.default_value))
         elif config.field_type == FieldType.LINEEDIT:
             widget = self._create_lineedit(config)
         elif config.field_type == FieldType.COMBOBOX:
             widget = self._create_combobox(config)
+        
         else:
             raise ValueError(f"Unsupported field type: {config.field_type}")
 
@@ -263,6 +298,9 @@ class GenericDialog(QDialog):
                 values[name] = widget.text()
             elif isinstance(widget, QComboBox):
                 values[name] = widget.currentText()
+            elif isinstance(widget, ToggleSwitch):
+                values[name] = widget.isChecked()
+
         return values
 
     def set_values(self, values: dict[str, Any]):
@@ -280,3 +318,11 @@ class GenericDialog(QDialog):
                     index = widget.findText(str(value))
                     if index >= 0:
                         widget.setCurrentIndex(index)
+                elif isinstance(widget, ToggleSwitch):
+                    widget.setChecked(value)
+
+    def save(self):
+        values = self.get_values()
+        with open(self.store_values_path, "w") as f:
+            json.dump(values, f, indent=4)
+            print(f"Settings saved to {self.store_values_path}")

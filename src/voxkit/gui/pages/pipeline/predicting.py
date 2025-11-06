@@ -19,11 +19,12 @@ from PyQt6.QtWidgets import (
 )
 
 from voxkit.config import Defaults
+from voxkit.engines.w2tg_engine import AlignmentSettings as W2TGAlignmentSettings
+from voxkit.engines.w2tg_engine import W2TGEngine
 from voxkit.gui.components.modals.aligning_settings import AlignmentSettingsDialog
 from voxkit.storage.paths import list_models
 from voxkit.storage.validation import validate_path, validate_paths
 from voxkit.workers.worker_thread import WorkerThread
-from Wav2TextGrid.wav2textgrid import align_dirs
 
 from .styles import BrowseButtonStyle
 
@@ -346,17 +347,17 @@ class PredictingPage(QWidget):
             )
         elif model == "W2TG":
             # Get the selected model from dropdown
-            selected_w2tg_model = self.w2tg_dropdown.currentText()
-            models = list_models("W2TG", add_date=True)
+            selected_w2tg_model = self.w2tg_dropdown.currentText() or None
             print(f"Using W2TG model: {selected_w2tg_model}")
 
-            # Call Wav2TextGrid alignment function here
-            align_dirs(
-                wavfile_or_dir=wav_files_path,
-                transcriptfile_or_dir=wav_files_path,
-                outfile_or_dir=textgrid_output_path,
-                aligner_model=models[selected_w2tg_model],
+            settings = W2TGAlignmentSettings(
+                aligner_model=selected_w2tg_model,
+                use_speaker_adaptation=False,
+                use_gpu=False,
+                file_type="wav"
             )
+            engine = W2TGEngine()
+            engine.run_alignment(wav_files_path, textgrid_output_path, settings)
         else:
             raise ValueError(f"Unknown model selected: {model}")
 

@@ -8,12 +8,11 @@ APPLY_BLUR = True
 
 FIELDS = [
     FieldConfig(
-        name="batch_size",
-        label="Batch Size:",
-        field_type=FieldType.SPINBOX,
-        default_value=32,
-        min_value=1,
-        max_value=128,
+        name="tokenizer_id",
+        label="Tokenizer:",
+        field_type=FieldType.LINEEDIT,
+        default_value="charsiu/tokenizer_en_cmu",
+        tooltip="Specify the tokenizer ID to use for training.",
     ),
     FieldConfig(
         name="num_epochs",
@@ -37,4 +36,11 @@ FIELDS = [
         default_value=True,
         tooltip="Enable to save model checkpoints during training.",
     ),
+    FieldConfig(
+        name="start_from_scratch",
+        label="Start From Scratch:",
+        field_type=FieldType.CHECKBOX,
+        default_value=False,
+        tooltip="Enable to start training from scratch without using a pre-trained model.",
+    )
 ]
