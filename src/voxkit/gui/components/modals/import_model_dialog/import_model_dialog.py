@@ -1,6 +1,8 @@
 from typing import Callable, Optional
 
 from voxkit.gui.frameworks.modal.generic import FieldConfig, FieldType, GenericDialog
+from voxkit.services.hf import download_and_copy_huggingface_model
+from voxkit.storage.paths import create_train_destination
 
 
 class ImportModelDialog(GenericDialog):
@@ -10,7 +12,7 @@ class ImportModelDialog(GenericDialog):
         self,
         parent=None,
         on_import: Optional[Callable[[str, str], None]] = None,
-        engine_id: str = 'W2TG'
+        engine_id: str = "W2TG",
     ):
         """
         Args:
@@ -19,6 +21,8 @@ class ImportModelDialog(GenericDialog):
             engines: List of available engines/modes
         """
         self.on_import_callback = on_import or self._placeholder_import
+        self.engine_id = 'MFA' if 'MFA' in engine_id else 'W2TG'
+        self.parent = parent
 
         # Define fields
         fields = [
@@ -39,17 +43,16 @@ class ImportModelDialog(GenericDialog):
         ]
 
         super().__init__(
-            parent=parent,
+            parent=self.parent,
             title=f"Import {engine_id}",
             dims=(450, 250),
             fields=fields,
-            apply_blur=True
+            apply_blur=True,
         )
 
     def accept(self):
         """Override accept to trigger import callback"""
         values = self.get_values()
-        engine = values.get("engine", "")
         model_path = values.get("model_path", "").strip()
 
         # Basic validation
@@ -58,18 +61,21 @@ class ImportModelDialog(GenericDialog):
             return
 
         # Call the import callback
-        self.on_import_callback(engine, model_path)
+        self.on_import_callback(model_path)
         super().accept()
 
-    def _placeholder_import(self, engine: str, model_path: str):
-        """Placeholder import logic"""
-        print(f"Importing model: {model_path} with engine: {engine}")
-        # TODO: Implement actual import logic here
-        # This is where you would:
-        # - Download the model from HuggingFace
-        # - Initialize the engine
-        # - Save to local storage
-        # - Update application state
+    def _placeholder_import(self, model_path: str):
+        parts = model_path.split('/') if model_path else []
+        engine_key = parts[-1] if parts else (model_path or "NONE")
+        print(f"Creating destination for engine: {self.engine_id}, key: {engine_key}")
+        data_path, dest_model_path, train_path, eval_path = create_train_destination(engine_key, self.engine_id)
+        result = download_and_copy_huggingface_model(model_path, destination=dest_model_path)
+
+        if result is None:
+            print("Failed to download model")
+        else:
+            print(f"Model imported successfully to: {result}")
+        
 
 
 def main():
@@ -79,10 +85,7 @@ def main():
         print(f"Importing {model_path} using {engine}")
         # Download model, initialize, etc.
 
-    dialog = ImportModelDialog(
-        on_import=handle_import,
-        engines=["Whisper", "Wav2Vec2", "Custom"]
-    )
+    dialog = ImportModelDialog(on_import=handle_import, engines=["Whisper", "Wav2Vec2", "Custom"])
 
     if dialog.exec():
         print("Import completed!")
