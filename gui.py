@@ -4,7 +4,7 @@ from PyQt6.QtGui import QAction, QIcon
 from PyQt6.QtWidgets import QHBoxLayout, QMainWindow, QStackedWidget, QToolBar, QWidget
 from styles import GlobalStyleSheet, ToolBarStyle
 
-from voxkit.config import AppName, Dimensions
+from voxkit.config import HELP_URL, AppName, Dimensions
 from voxkit.gui.components.widgets import DNAStrandWidget
 from voxkit.gui.pages.manage import ManageAlignersWidget
 from voxkit.gui.pages.pipeline import PipelineFormStack as PipelineContainer
@@ -114,6 +114,7 @@ class AlignmentGUI(QMainWindow):
     def open_models_dashboard(self):
         """Switch to Pipeline view with menu and stacked pages"""
         print("Open Models Dashboard...")
+        self.pipeline_container.reload_models()  # Ensure models are reloaded
         self.pipeline_container.menu_list.setVisible(True)
         self.content_stack.setCurrentIndex(0)  # Show pipeline stack
         # Restore last selected pipeline page
@@ -124,6 +125,7 @@ class AlignmentGUI(QMainWindow):
     def open_preferences(self):
         """Switch to Manage view with CategoricalListWidget"""
         print("Open Preferences...")
+        self.manage_widget.reload_models()  # Ensure models are reloaded
         # Remember current pipeline page
         self.last_pipeline_page = self.pipeline_container.get_current_page_index()
         self.pipeline_container.menu_list.setVisible(False)
@@ -132,7 +134,7 @@ class AlignmentGUI(QMainWindow):
         self.update_active_tab_style("manage")
 
     def open_help(self):
-        webbrowser.open("https://support.google.com/")
+        webbrowser.open(HELP_URL)
         print("Open Help...")
 
     def init_ui(self):
@@ -171,14 +173,12 @@ class AlignmentGUI(QMainWindow):
         # Set initial active tab style
         self.update_active_tab_style("pipeline")
 
+
 if __name__ == "__main__":
     from voxkit.services.hf import download_and_copy_huggingface_model
     from voxkit.storage.paths import create_train_destination
 
-    data_path, model_path, train_path, eval_path = create_train_destination("prads model","W2TG")
-    
+    data_path, model_path, train_path, eval_path = create_train_destination("prads model", "W2TG")
+
     print(data_path)
-    download_and_copy_huggingface_model(
-        model_path="pkadambi/Wav2TextGrid",
-        destination=model_path
-    )
+    download_and_copy_huggingface_model(model_path="pkadambi/Wav2TextGrid", destination=model_path)
