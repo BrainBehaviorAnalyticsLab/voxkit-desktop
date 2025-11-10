@@ -40,7 +40,6 @@ class TrainingPage(QWidget):
         self.w2tg_train_settings = None
         self.parent = parent
         self.init_ui()
-    
 
     def on_mode_changed(self):
         """Handle model selection change"""
@@ -128,7 +127,7 @@ class TrainingPage(QWidget):
         )
 
         data_path, model_path, root_path, eval_path = create_train_destination(model_name, model)
-        
+
         print(f"Created training run directories at: {root_path}")
 
         if model == "MFA":
@@ -144,7 +143,9 @@ class TrainingPage(QWidget):
 
         elif model == "W2TG":
             if self.w2tg_train_settings is None:
-                self.w2tg_train_settings = W2TGTrainingSettingsDialog(store_values_path=get_storage_root() + "/train/W2TG/stored_settings.json").capture_settings
+                self.w2tg_train_settings = W2TGTrainingSettingsDialog(
+                    store_values_path=get_storage_root() + "/train/W2TG/stored_settings.json"
+                ).capture_settings
             selected_w2tg_model = self.w2tg_dropdown.currentText() or None
             print("Selected W2TG model:", selected_w2tg_model)
             models = list_models("W2TG", add_date=True)
@@ -154,7 +155,7 @@ class TrainingPage(QWidget):
                 audio_root=audio_path,
                 textgrid_root=textgrid_path,
                 model_id=model_name,
-                settings=self.w2tg_train_settings
+                settings=self.w2tg_train_settings,
             )
         else:
             raise ValueError(f"Unknown model type: {model}")
@@ -176,8 +177,10 @@ class TrainingPage(QWidget):
 
     def on_training_settings(self):
         """Handle settings button click on training page"""
-      
-        self.settings_dialog = W2TGTrainingSettingsDialog(self, store_values_path=get_storage_root() + "/train/W2TG/stored_settings.json")
+
+        self.settings_dialog = W2TGTrainingSettingsDialog(
+            self, store_values_path=get_storage_root() + "/train/W2TG/stored_settings.json"
+        )
         result = self.settings_dialog.exec()
 
         if result == QDialog.DialogCode.Accepted:
@@ -189,6 +192,16 @@ class TrainingPage(QWidget):
         # Clean up
         self.parent.setGraphicsEffect(None)
 
+    def reload_models(self):
+        """Reload models in the dropdowns"""
+        model_names_mfa = list_models("MFA", add_date=True).keys()
+        self.mfa_dropdown.clear()
+        self.mfa_dropdown.addItems(list(model_names_mfa) if model_names_mfa else [])
+
+        model_names_w2tg = list_models("W2TG", add_date=True).keys()
+        self.w2tg_dropdown.clear()
+        self.w2tg_dropdown.addItems(list(model_names_w2tg) if model_names_w2tg else [])
+        
     def init_ui(self):
         """Create the training page"""
         self.setMinimumWidth(600)
@@ -285,7 +298,6 @@ class TrainingPage(QWidget):
         mfa_info.setStyleSheet("color: #95a5a6; font-size: 11px; margin-left: 25px;")
         model_layout.addWidget(mfa_info)
         model_layout.addSpacing(5)
-
 
         # ----------------------------------------------------------------------
         # W2TG block (IDENTICAL alignment)

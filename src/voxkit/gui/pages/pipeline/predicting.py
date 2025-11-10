@@ -49,8 +49,19 @@ class PredictingPage(QWidget):
             self.selected_mode = "W2TG"
             self.mfa_dropdown.setVisible(False)
             self.w2tg_dropdown.setVisible(True)
+            
 
         print(f"Model changed to: {self.selected_mode}")
+    
+    def reload_models(self):
+        """Reload models in the dropdowns"""
+        model_names_mfa = list_models("MFA", add_date=True).keys()
+        self.mfa_dropdown.clear()
+        self.mfa_dropdown.addItems(list(model_names_mfa) if model_names_mfa else [])
+
+        model_names_w2tg = list_models("W2TG", add_date=True).keys()
+        self.w2tg_dropdown.clear()
+        self.w2tg_dropdown.addItems(list(model_names_w2tg) if model_names_w2tg else [])
 
     def init_ui(self):
         """Create the predict alignments page"""
@@ -352,9 +363,9 @@ class PredictingPage(QWidget):
 
             settings = W2TGAlignmentSettings(
                 aligner_model=selected_w2tg_model,
-                use_speaker_adaptation=False,
+                use_speaker_adaptation=True,
                 use_gpu=False,
-                file_type="wav"
+                file_type="wav",
             )
             engine = W2TGEngine()
             engine.run_alignment(wav_files_path, textgrid_output_path, settings)

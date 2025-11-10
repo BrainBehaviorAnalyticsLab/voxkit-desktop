@@ -461,6 +461,13 @@ class CategoricalListWidget(QWidget):
             if widget and isinstance(widget, CategoryListItem) and widget.is_checked():
                 selected[widget.item_key] = widget.item_data
         return selected
+    
+    def set_items(self, mode, items):
+        """Set the items for a specific category"""
+        if mode not in self.data:
+            self.data[mode] = {}
+        self.data[mode].update(items)
+        self.update_display()
 
     def on_export(self):
         """Handle export button click"""
@@ -490,7 +497,7 @@ class CategoricalListWidget(QWidget):
                 f"Exporting {len(selected_items)} item(s) to '{folder_name}'",
                 QMessageBox.StandardButton.Ok,
             )
-
+    
     def on_delete(self):
         """Handle delete button click"""
         selected_items = self.get_selected_items()

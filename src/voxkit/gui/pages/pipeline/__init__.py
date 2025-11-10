@@ -57,6 +57,15 @@ class PipelineFormStack(QWidget):
         self.menu_list.currentRowChanged.connect(self.change_page)
         self.menu_list.setCurrentRow(0)
 
+    def reload_models(self):
+        """Reload models in the training page and predicting page"""
+        training_page = self.stacked_widget.widget(0)
+        if isinstance(training_page, TrainingPage):
+            training_page.reload_models()
+        predicting_page = self.stacked_widget.widget(2)
+        if isinstance(predicting_page, PredictingPage):
+            predicting_page.reload_models()
+            
     def change_page(self, index):
         """Change the displayed page based on menu selection with animation"""
         if index >= 0:  # Valid index

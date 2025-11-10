@@ -42,5 +42,5 @@ FIELDS = [
         field_type=FieldType.CHECKBOX,
         default_value=False,
         tooltip="Enable to start training from scratch without using a pre-trained model.",
-    )
+    ),
 ]

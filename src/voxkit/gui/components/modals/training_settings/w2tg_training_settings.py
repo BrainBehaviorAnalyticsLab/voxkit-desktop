@@ -15,7 +15,7 @@ class W2TGTrainingSettingsDialog(GenericDialog):
             dims=DIMS,
             fields=FIELDS,
             apply_blur=APPLY_BLUR,
-            store_values_path=store_values_path
+            store_values_path=store_values_path,
         )
 
     # Settings
@@ -23,10 +23,9 @@ class W2TGTrainingSettingsDialog(GenericDialog):
     def capture_settings(self) -> TrainerSettings:
         """Get the current training settings as a TrainerSettings object"""
         return TrainerSettings(
-            num_epochs=self.field_widgets["num_epochs"].value(),
+            epochs=self.field_widgets["num_epochs"].value(),
             tokenizer_id=self.field_widgets["tokenizer_id"].text(),
             use_gpu=self.field_widgets["use_gpu"].isChecked(),
             save_checkpoints=self.field_widgets["save_checkpoints"].isChecked(),
             start_from_scratch=self.field_widgets["start_from_scratch"].isChecked(),
         )
-    
