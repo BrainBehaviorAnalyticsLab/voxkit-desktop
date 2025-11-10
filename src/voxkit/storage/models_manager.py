@@ -1,6 +1,7 @@
 """
 Models Manager Module handles model actions and retrieval in the scope of local storage
 """
+
 from typing import TypedDict
 
 from PyQt6.QtCore import QObject, pyqtSignal
@@ -14,12 +15,14 @@ class ModelMeta(TypedDict):
     path: str
     date: str
     time: str
-    train_code: str
+    code: str
 
-class ModelsManager(QObject): 
+
+class ModelsManager(QObject):
     """
     Manages the collection of models for all allowed engines
     """
+
     data_changed = pyqtSignal(dict)
 
     def __init__(self):
@@ -27,7 +30,7 @@ class ModelsManager(QObject):
         self._data = {}
         self.refresh()
 
-    def refresh(self, engine_id=None): 
+    def refresh(self, engine_id=None):
         """
         Refresh the models list by rescanning local storage
         """
@@ -41,7 +44,7 @@ class ModelsManager(QObject):
     def get_data(self):
         return self._data
 
-    def delete_model(self, engine_id, model_name): 
+    def delete_model(self, engine_id, model_name):
         """
         Erase a model from local storage and update internal state
         """
@@ -54,4 +57,3 @@ class ModelsManager(QObject):
                     scrub_training_run(engine_id, train_code)
                     self._data[key].remove(model_name)
                     self.data_changed.emit(self._data)
-

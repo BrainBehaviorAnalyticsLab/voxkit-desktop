@@ -14,5 +14,5 @@ __all__ = [
     "list_models",
     "list_modelz",
     "create_train_destination",
-    "ModelsManagerInstance",    
+    "ModelsManagerInstance",
 ]

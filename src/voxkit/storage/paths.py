@@ -14,6 +14,8 @@ TRAIN_ROOT = "train"
 
 def collect_models(name):
     pass
+
+
 def get_storage_root() -> str:
     """Get the root directory for storing models and data."""
     if STORAGE_ROOT.startswith("~"):
@@ -181,7 +183,7 @@ def scrub_training_run(engine_id, train_code: str):
         shutil.rmtree(train_path)
     else:
         raise FileNotFoundError(f"Training run path does not exist: {train_path}")
-    
+
 
 def create_train_destination(model_name: str, mode: Mode) -> str:
     """Create a directory for storing a new trained model and it information."""
@@ -202,7 +204,7 @@ def create_train_destination(model_name: str, mode: Mode) -> str:
         os.makedirs(model_path, exist_ok=True)
         os.makedirs(data_path, exist_ok=True)
         return data_path, model_path + "/model.zip", train_path, eval_path
-    
+
 
 def delete_training_run(engine_id, train_code: str):
     train_path = f"{get_storage_root()}/{TRAIN_ROOT}/{engine_id}/{train_code}"
