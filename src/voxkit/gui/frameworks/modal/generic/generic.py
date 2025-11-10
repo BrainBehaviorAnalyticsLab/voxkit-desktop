@@ -52,7 +52,7 @@ class GenericDialog(QDialog):
         self.store_values_path = store_values_path
         if not self.store_values_path or get_storage_root() not in self.store_values_path:
             raise ValueError("File path must be within the storage root directory.")
-        
+
         self.field_configs = fields or []
         self.field_widgets = {}
         self._apply_blur = apply_blur
@@ -149,9 +149,9 @@ class GenericDialog(QDialog):
         main_layout.addWidget(container)
 
         # Center dialog on parent
-        if self.parent():
+        if self.parent:
             try:
-                main_window = self.parent().parent
+                main_window = self.parent.parent
                 self.move(
                     main_window.x() + (main_window.width() - self.width()) // 2,
                     main_window.y() + (main_window.height() - self.height()) // 2,
@@ -196,7 +196,7 @@ class GenericDialog(QDialog):
             widget = self._create_lineedit(config)
         elif config.field_type == FieldType.COMBOBOX:
             widget = self._create_combobox(config)
-        
+
         else:
             raise ValueError(f"Unsupported field type: {config.field_type}")
 
