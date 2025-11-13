@@ -1,0 +1,176 @@
+#engines/_w2tg_engine.py
+
+from pathlib import Path
+
+from voxkit.gui.frameworks.modal.generic import FieldConfig, FieldType, SettingsConfig
+from voxkit.storage.paths import create_train_destination, get_storage_root, list_models
+from Wav2TextGrid.wav2textgrid import align_dirs
+from Wav2TextGrid.wav2textgrid_train import train_aligner
+
+from .base import AlignmentEngine
+from .register import register_engine
+
+TrainerConfiguration: SettingsConfig = SettingsConfig(
+    title="Wav2TextGrid Trainer Settings",
+    dimensions=(400, 300),
+    apply_blur=True,
+    fields=[
+        FieldConfig(
+            name="start_from_scratch",
+            label="Start from Scratch",
+            field_type=FieldType.CHECKBOX,
+            default_value=False,
+            tooltip="Whether to start training from scratch or fine-tune an existing model.",
+        ),
+        FieldConfig(
+            name="tokenizer_id",
+            label="Tokenizer ID",
+            field_type=FieldType.LINEEDIT,
+            default_value="charsiu/tokenizer_en_cmu",
+            tooltip="The Hugging Face tokenizer ID to use for training.",
+        ),
+        FieldConfig(
+            name="epochs",
+            label="Number of Epochs",
+            field_type=FieldType.SPINBOX,
+            default_value=50,
+            min_value=1,
+            max_value=1000,
+            tooltip="The number of epochs to train the model for.",
+        ),
+        FieldConfig(
+            name="use_gpu",
+            label="Use GPU",
+            field_type=FieldType.CHECKBOX,
+            default_value=False,
+            tooltip="Enable GPU acceleration for faster training.",
+        ),
+    ],
+    store_path=Path(get_storage_root()) / "W2TG" / "trainer_settings.json"
+)
+
+AlignerConfiguration: SettingsConfig = SettingsConfig(
+    title="Wav2TextGrid Aligner Settings",
+    dimensions=(400, 300),
+    apply_blur=True,
+    fields=[
+        FieldConfig(
+            name="use_speaker_adaptation",
+            label="Use Speaker Adaptation",
+            field_type=FieldType.CHECKBOX,
+            default_value=False,
+            tooltip="Enable speaker adaptation for better alignment results.",
+        ),
+        FieldConfig(
+            name="file_type",
+            label="Audio File Type",
+            field_type=FieldType.LINEEDIT,
+            default_value="wav",
+            tooltip="Specify the audio file type (e.g., wav, flac).",
+        ),
+        FieldConfig(
+            name="use_gpu",
+            label="Use GPU",
+            field_type=FieldType.CHECKBOX,
+            default_value=False,
+            tooltip="Enable GPU acceleration for faster processing.",
+        ),
+    ],
+    store_path=Path(get_storage_root()) / "W2TG" / "aligner_settings.json"
+)
+
+@register_engine(author="Beckett")
+class W2TGEngine(AlignmentEngine):
+
+    def __init__(self, id: str | None = None):
+        super().__init__(
+            settings_configurations={'align': AlignerConfiguration, 'train': TrainerConfiguration},
+            reference_url="https://huggingface.co/pkadambi/Wav2TextGrid",
+            description=(
+                "Wav2TextGrid is a forced alignment tool that uses a Wav2Vec 2.0 model "
+                "to align audio files to their corresponding transcripts, producing TextGrid files."
+            ),
+            human_readable_name="Wav2TextGrid",
+            id=id,
+        )
+        
+    def align(self, audio_root: Path, output_root: Path, model_id: str) -> None:
+        models = list_models(self.id, True)
+        settings = self.get_settings("align")
+
+        print(f"Aligning with settings: {settings}")
+        model_path = models.get(model_id, None)
+        print(f"Using model path: {model_path}")
+        align_dirs(
+            wavfile_or_dir=audio_root,
+            transcriptfile_or_dir=audio_root,
+            outfile_or_dir=output_root,
+            aligner_model=model_path,
+            filetype=settings.get("file_type", "wav"),
+            use_speaker_adaptation=settings.get("use_speaker_adaptation", False),
+        )
+
+    def train_aligner(
+        self,
+        audio_root: Path,
+        textgrid_root: Path, 
+        base_model_id: str | None, 
+        new_model_id: str
+    ) -> None:
+        models = list_models(self.id, True)
+        data_path, model_path, root_path, eval_path = create_train_destination(new_model_id, self.id)
+        settings = self.get_settings("train")
+        
+        base_model_path = models.get(base_model_id, None)
+
+        if base_model_path is None:
+            raise ValueError(
+                f"Invalid base model specified: {base_model_id}. "
+                f"Available models: {list(models.keys())}"
+            )
+        
+        print(f"Training aligner with settings: {settings}")
+        print(f"Using base model path: {base_model_path}")
+        train_aligner(
+            train_audio_dir=audio_root,
+            train_textgrid_dir=textgrid_root,
+            tokenizer_name=settings.get("tokenizer_id", "charsiu/tokenizer_en_cmu"),
+            model_output_dir=model_path,
+            tg_output_dir=eval_path,
+            model_name=base_model_path,
+            dataset_dir=data_path,
+            words_key="words",
+            device="cuda" if settings.get("use_gpu", False) else "cpu",
+            ntrain_epochs=settings.get("epochs", 50),
+            phone_key="phones",
+            has_eval_dataset=False,
+            retrain=settings.get("start_from_scratch", False),
+            download_nltk=True,
+        )
+
+    def _validate_align_settings(self, settings: dict) -> bool:
+        if not isinstance(settings.get("use_speaker_adaptation"), bool):
+            print("Invalid use_speaker_adaptation setting. Must be a boolean.")
+            return False
+        if not isinstance(settings.get("file_type"), (str, type(None))):
+            print("Invalid file_type setting. Must be a string or None.")
+            return False
+        if not isinstance(settings.get("use_gpu"), bool):
+            print("Invalid use_gpu setting. Must be a boolean.")
+            return False
+        return True
+    
+    def _validate_train_settings(self, settings: dict) -> bool:
+        if not isinstance(settings.get("start_from_scratch"), bool):
+            print("Invalid start_from_scratch setting. Must be a boolean.")
+            return False
+        if not isinstance(settings.get("tokenizer_id"), (str, type(None))):
+            print("Invalid tokenizer_id setting. Must be a string or None.")
+            return False
+        if not isinstance(settings.get("epochs"), int):
+            print("Invalid epochs setting. Must be an integer.")
+            return False
+        if not isinstance(settings.get("use_gpu"), bool):
+            print("Invalid use_gpu setting. Must be a boolean.")
+            return False
+        return True
