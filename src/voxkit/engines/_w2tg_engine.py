@@ -1,9 +1,11 @@
-#engines/_w2tg_engine.py
-
 from pathlib import Path
 
-from voxkit.gui.frameworks.modal.generic import FieldConfig, FieldType, SettingsConfig
-from voxkit.storage.paths import create_train_destination, get_storage_root, list_models
+from voxkit.gui.frameworks.settings_modal.generic import (
+    FieldConfig,
+    FieldType,
+    SettingsConfig,
+)
+from voxkit.storage.paths import create_train_destination, list_models
 from Wav2TextGrid.wav2textgrid import align_dirs
 from Wav2TextGrid.wav2textgrid_train import train_aligner
 
@@ -46,7 +48,7 @@ TrainerConfiguration: SettingsConfig = SettingsConfig(
             tooltip="Enable GPU acceleration for faster training.",
         ),
     ],
-    store_path=Path(get_storage_root()) / "W2TG" / "trainer_settings.json"
+    store_file="W2TGENGINE/train/trainer_settings.json",
 )
 
 AlignerConfiguration: SettingsConfig = SettingsConfig(
@@ -76,15 +78,19 @@ AlignerConfiguration: SettingsConfig = SettingsConfig(
             tooltip="Enable GPU acceleration for faster processing.",
         ),
     ],
-    store_path=Path(get_storage_root()) / "W2TG" / "aligner_settings.json"
+    store_file="W2TGENGINE/aligner/aligner_settings.json",
 )
+
 
 @register_engine(author="Beckett")
 class W2TGEngine(AlignmentEngine):
+    """
+    Alignment engine implementation using the Wav2TextGrid toolkit.
+    """
 
     def __init__(self, id: str | None = None):
         super().__init__(
-            settings_configurations={'align': AlignerConfiguration, 'train': TrainerConfiguration},
+            settings_configurations={"align": AlignerConfiguration, "train": TrainerConfiguration},
             reference_url="https://huggingface.co/pkadambi/Wav2TextGrid",
             description=(
                 "Wav2TextGrid is a forced alignment tool that uses a Wav2Vec 2.0 model "
@@ -93,7 +99,7 @@ class W2TGEngine(AlignmentEngine):
             human_readable_name="Wav2TextGrid",
             id=id,
         )
-        
+
     def align(self, audio_root: Path, output_root: Path, model_id: str) -> None:
         models = list_models(self.id, True)
         settings = self.get_settings("align")
@@ -111,16 +117,14 @@ class W2TGEngine(AlignmentEngine):
         )
 
     def train_aligner(
-        self,
-        audio_root: Path,
-        textgrid_root: Path, 
-        base_model_id: str | None, 
-        new_model_id: str
+        self, audio_root: Path, textgrid_root: Path, base_model_id: str | None, new_model_id: str
     ) -> None:
         models = list_models(self.id, True)
-        data_path, model_path, root_path, eval_path = create_train_destination(new_model_id, self.id)
+        data_path, model_path, root_path, eval_path = create_train_destination(
+            new_model_id, self.id
+        )
         settings = self.get_settings("train")
-        
+
         base_model_path = models.get(base_model_id, None)
 
         if base_model_path is None:
@@ -128,7 +132,7 @@ class W2TGEngine(AlignmentEngine):
                 f"Invalid base model specified: {base_model_id}. "
                 f"Available models: {list(models.keys())}"
             )
-        
+
         print(f"Training aligner with settings: {settings}")
         print(f"Using base model path: {base_model_path}")
         train_aligner(
@@ -159,7 +163,7 @@ class W2TGEngine(AlignmentEngine):
             print("Invalid use_gpu setting. Must be a boolean.")
             return False
         return True
-    
+
     def _validate_train_settings(self, settings: dict) -> bool:
         if not isinstance(settings.get("start_from_scratch"), bool):
             print("Invalid start_from_scratch setting. Must be a boolean.")

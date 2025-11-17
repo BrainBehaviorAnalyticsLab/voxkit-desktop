@@ -1,16 +1,24 @@
 """
-voxkit.engines.base
-===================
-
 Base utilities and abstract interface for alignment engines.
 
-This module provides a single abstract base class, AlignmentEngine, which
-defines the contract that all alignment engines must implement.
+This module defines the :class:`AlignmentEngine` abstract base class which
+encapsulates the contract every alignment engine must implement to
+integrate with VoxKit. The base class handles settings management. 
+Concrete engine implementations should subclass this base class and implement the required 
+methods for training and alignment, as well as specific validation criteria.
 
-Classes
--------
-AlignmentEngine
-    Abstract base class defining the required methods and common attributes.
+-------------
+Create a subclass and register it with :mod:`voxkit.engines.register`::
+
+    from voxkit.engines.base import AlignmentEngine
+    from voxkit.engines.register import register_engine
+
+    @register_engine(author="alice")
+    class MyEngine(AlignmentEngine):
+        ...
+
+The package initializer imports engine modules so registration side-effects
+execute at import time.
 """
 
 import json
@@ -18,11 +26,12 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Literal
 
-from voxkit.gui.frameworks.modal.generic import SettingsConfig
+from voxkit.gui.frameworks.settings_modal.generic import SettingsConfig
+from voxkit.storage.paths import get_storage_root
 
 """
-A speech tool is a unit of compatible functionality present in an engine that can be used to perform
-a specific task. Each engine can have no more than one of each type of tool, and each engine->tool 
+A tool is a unit of compatible functionality present in an engine that can be used to perform
+a specific task. Each engine can have no more than one of each type of tool, and each engine->tool
 has its own settings that are stored in a JSON file.
 """
 
@@ -32,25 +41,16 @@ class AlignmentEngine(ABC):
     """
     Abstract base class for alignment engines.
 
-    Summary
-    -------
-    Defines the interface and common attributes for alignment engines. Subclasses
-    must implement alignment, training, and settings update methods.
+    Subclasses must implement at least one ToolType operation and provide
+    specific validation criteria.
 
-    Attributes
-    ----------
-    settings_configurations : dict[ToolType, SettingsConfig]
-        A dictionary mapping tool types to their respective settings configurations.
-    name : str
-        Name of the engine, derived from the class name.
-    reference_url : str | None
-        Optional URL for reference documentation or resources.
-    description : str | None
-        Optional description of the engine's functionality.
-    human_readable_name : str | None
-        Optional human-readable name for the engine, defaults to the class name.
-    id : str | None
-        Optional unique identifier for the engine, defaults to the class name, use as folder name.
+    Attributes:
+        settings_configurations (dict[ToolType, SettingsConfig]): Mapping of
+            tool type names ("train"/"align") to their store configuration.
+        reference_url (str | None): Optional reference URL for the engine.
+        description (str | None): Human-readable description of the engine.
+        human_readable_name (str | None): Friendly display name for the engine.
+        id (str | None): Unique identifier used for storage and discovery.
     """
 
     def __init__(
@@ -59,8 +59,8 @@ class AlignmentEngine(ABC):
         reference_url: str | None = None,
         description: str | None = None,
         human_readable_name: str | None = None,
-        id: str | None = None,  
-    ):  
+        id: str | None = None,
+    ):
         self.settings_configurations = settings_configurations
         self.reference_url = reference_url
         self.description = description or (
@@ -70,177 +70,164 @@ class AlignmentEngine(ABC):
         self.human_readable_name = human_readable_name or self.__class__.__name__
         self.id = id or self.__class__.__name__
 
-    class AlignmentEngineError(Exception):
-        """Custom exception for alignment engine errors."""
-        pass
 
     @abstractmethod
     def train_aligner(
-        self,
-        audio_root: Path,
-        textgrid_root: Path, 
-        base_model_id: str | None, 
-        new_model_id: str
+        self, audio_root: Path, textgrid_root: Path, base_model_id: str | None, new_model_id: str
     ) -> None:
         """
         Train or fine-tune an alignment model.
 
-        Parameters
-        ----------
-        audio_root : Path
-            Directory containing training audio files.
-        textgrid_root : Path
-            Directory containing corresponding TextGrid files for training.
-        base_model_id : str | None
-            Identifier of the base model to use for training (e.g., a pre-trained model).
-        new_model_id : str
-            Identifier for the new model to be created after training.
+        Implementations should create a new model artifact identified by
+        ``new_model_id`` using the training data located under ``audio_root``
+        and ``textgrid_root``. If ``base_model_id`` is provided, it may be
+        used to initialize weights from a pre-trained model.
 
-        Returns
-        -------
-        None
+        Args:
+            audio_root: Directory containing training audio files.
+            textgrid_root: Directory containing corresponding TextGrid files.
+            base_model_id: Identifier of the base model to use for training,
+                or ``None`` to train from scratch.
+            new_model_id: Identifier for the new model to be created.
         """
-        pass
-    
-    
+        raise NotImplementedError()
+
     @abstractmethod
     def _validate_train_settings(self, settings: dict) -> bool:
         """
-        Validate the training settings.
+        Validate training settings for the engine.
 
-        Parameters
-        ----------
-        settings : dict
-            The training settings to validate.
+        Args:
+            settings: Dictionary of training settings loaded from JSON.
 
-        Returns
-        -------
-        bool
-            True if the settings are valid, False otherwise.
+        Returns:
+            True if the settings are considered valid for this engine,
+            otherwise False.
         """
-        pass
-
+        raise NotImplementedError()
 
     @abstractmethod
     def _validate_align_settings(self, settings: dict) -> bool:
         """
-        Validate the alignment settings.
+        Validate alignment settings for the engine.
 
-        Parameters
-        ----------
-        settings : dict
-            The alignment settings to validate.
+        Args:
+            settings: Dictionary of alignment settings loaded from JSON.
 
-        Returns
-        -------
-        bool
-            True if the settings are valid, False otherwise.
+        Returns:
+            True if the settings are considered valid for this engine,
+            otherwise False.
         """
-        pass
+        raise NotImplementedError()
 
-    
     def _save_json(self, data: dict, path: Path | str) -> None:
         """
-        Save a dictionary as a JSON file to the specified path.
+        Persist a dictionary to a JSON file.
 
-        Parameters
-        ----------
-        data : dict
-            The data to save as JSON.
-        path : Path | str
-            The path where the JSON file will be saved.
-
-        Returns
-        -------
-        None
+        Args:
+            data: The dictionary to serialize.
+            path: Filesystem path (``Path`` or string) to write the JSON file to.
         """
         if isinstance(path, str):
             path = Path(path)
-        with open(path, "w") as f:
+        with open(path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=4)
-            
 
     def _load_json(self, path: Path | str) -> dict:
         """
-        Load a JSON file from the specified path.
+        Load and return JSON data from a file.
 
-        Parameters
-        ----------
-        path : Path | str
-            The path to the JSON file to load.
+        Args:
+            path: Filesystem path (``Path`` or string) to the JSON file.
 
-        Returns
-        -------
-        dict
-            The contents of the JSON file as a dictionary.
+        Returns:
+            Parsed JSON as a dictionary.
+
+        Raises:
+            FileNotFoundError: If the file does not exist.
+            JSONDecodeError: If the file contains invalid JSON.
         """
         if isinstance(path, str):
             path = Path(path)
 
         if not path.exists():
             raise FileNotFoundError(f"Settings file not found: {path}")
-        
-        with open(path, "r") as f:
+
+        with open(path, "r", encoding="utf-8") as f:
             return json.load(f)
-    
-    
-    def get_settings(self, tool_type: ToolType) -> dict: 
+
+    def get_settings(self, tool_type: ToolType) -> dict:
         """
-        Retrieve the current settings from the respective tools json file.
+        Load and validate settings for a specific tool.
+
+        This method reads the JSON settings file defined by the engine's
+        ``settings_configurations`` for the given ``tool_type``, validates the
+        settings using the engine-provided validator, and returns the parsed
+        settings dictionary.
+
+        Args:
+            tool_type: The tool type to retrieve settings for ("train" or
+                "align").
+
+        Returns:
+            Parsed settings as a dictionary.
+
+        Raises:
+            ValueError: If the engine does not provide the requested tool or
+                if the settings fail validation.
+            FileNotFoundError: If the configured settings file path is missing.
         """
         if not self.has_tool(tool_type):
             raise ValueError(f"Tool type '{tool_type}' is not available in this engine.")
-        if not self.settings_configurations[tool_type].store_path:
-            raise FileNotFoundError(f"Settings path not given for tool type '{tool_type}' "
-                                    f"in this engine.")
+
+        cfg = self.settings_configurations[tool_type]
+        if not cfg.store_file:
+            raise FileNotFoundError(
+                f"Settings path not given for tool type '{tool_type}' in this engine."
+            )
+        settings = self._load_json(Path(get_storage_root() + "/" + cfg.store_file))
+
         if tool_type == "train":
-            settings = self._load_json(self.settings_configurations[tool_type].store_path)
             if not self._validate_train_settings(settings):
                 raise ValueError(f"Invalid training settings: {settings}")
             return settings
         elif tool_type == "align":
-            settings = self._load_json(self.settings_configurations[tool_type].store_path)
             if not self._validate_align_settings(settings):
                 raise ValueError(f"Invalid alignment settings: {settings}")
             return settings
         else:
             raise ValueError(f"Invalid tool_type: {tool_type}.")
-    
 
     def get_settings_config(self, tool_type: ToolType) -> SettingsConfig:
         """
-        Retrieve the settings configuration for the specified tool type.
+        Return the :class:`SettingsConfig` for a tool type.
 
-        Parameters
-        ----------
-        tool_type : ToolType
-            The type of tool for which to retrieve the settings configuration.
+        Args:
+            tool_type: The tool type to query.
 
-        Returns
-        -------
-        SettingsConfig
-            The settings configuration for the specified tool type.
+        Returns:
+            The settings configuration object.
+
+        Raises:
+            ValueError: If no configuration exists for the tool type.
         """
         config = self.settings_configurations.get(tool_type, None)
         if config is None:
             raise ValueError(f"No settings configuration found for tool type: {tool_type}")
         return config
-    
+
     def has_tool(self, tool_type: ToolType) -> bool:
-        """
-        Check if the engine has a tool of the specified type.
-        """
+        """Check if the engine has a tool of the specified type."""
         return tool_type in self.settings_configurations
 
     def source(self) -> str:
         """Return the reference url to pay homage to the engine's source."""
         return self.reference_url or "No source URL provided."
-    
+
     def name(self) -> str:
         """Return the human-readable name of the engine."""
         return self.human_readable_name
-    
+
     def __str__(self):
         """Return the engine's description."""
         return f"{self.description}"
-    

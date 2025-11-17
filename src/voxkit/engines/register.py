@@ -1,4 +1,17 @@
-# engines/register.py
+"""
+Engine registration system for VoxKit.
+
+This module provides the :func:`register_engine` decorator which allows
+alignment engine implementations to be registered in a global registry.
+The registry is populated at import time when engine modules are loaded
+by the package initializer.
+
+The registry enables runtime discovery and instantiation of engines by
+their unique IDs, which are derived from the engine class name in uppercase.
+
+The optional ``author`` parameter is recorded for attribution purposes.
+"""
+
 from __future__ import annotations
 
 from .base import AlignmentEngine
@@ -8,14 +21,33 @@ _REGISTERED_ENGINES: dict[str, AlignmentEngine] = {}
 
 def register_engine(cls=None, *, author: str | None = None):
     """
-    Register an AlignmentEngine subclass.
-    Usage:
-        @register_engine
-        class MyEngine(...)
+    Decorator to register an AlignmentEngine subclass in the global registry.
 
-        @register_engine(author="name")
-        class MyEngine(...)
+    This decorator supports both forms:
+      - ``@register_engine`` (simple form)
+      - ``@register_engine(author="name")`` (with author attribution)
+
+    When used with parentheses, it returns a decorator function. When used
+    without, it directly registers the provided class.
+
+    The engine is registered under an ID derived from the class name in
+    uppercase (e.g., ``MyEngine`` becomes ``MYENGINE``). The optional
+    ``author`` parameter is recorded for attribution but does not affect
+    functionality.
+
+    Args:
+        cls: The engine class to register, or ``None`` when used as a
+            decorator factory.
+        author: Optional author name for attribution.
+
+    Returns:
+        The original class, unmodified.
+
+    Raises:
+        ValueError: If the class does not inherit from AlignmentEngine,
+            or if an engine with the same ID is already registered.
     """
+
     def _register(c: type) -> type:
         print(f"[register] Registering {c.__name__} (author={author})")
         if not issubclass(c, AlignmentEngine):
