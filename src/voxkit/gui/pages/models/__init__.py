@@ -1,5 +1,5 @@
 # TODO : Add module docstring
 
-from .manage import ManageAlignersWidget
+from .models_page import ManageAlignersWidget
 
 __all__ = ["ManageAlignersWidget"]

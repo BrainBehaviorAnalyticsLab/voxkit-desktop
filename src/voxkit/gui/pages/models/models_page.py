@@ -2,8 +2,8 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QLabel
 
 from voxkit.gui.components.modals.import_model_dialog.import_model_dialog import ImportModelDialog
-from voxkit.gui.frameworks.widget.categorical_list import CategoricalListWidget
-from voxkit.storage.paths import list_modelz, scrub_training_run
+from voxkit.gui.frameworks.categorical_list import CategoricalListWidget
+from voxkit.storage.models import list_modelz, scrub_training_run
 
 from .utils import handle_export_lambda
 
@@ -14,11 +14,11 @@ class ManageAlignersWidget(CategoricalListWidget):
     """Widget to manage and display alignment models."""
 
     def __init__(self, parent=None):
-        mfa_models = list_modelz("MFA", True)
-        w2tg_models = list_modelz("W2TG", True)
+        mfa_models = list_modelz("MFAENGINE", True)
+        w2tg_models = list_modelz("W2TGENGINE", True)
         self.parent = parent
-        self.data = {"MFA Models": mfa_models, "W2TG Models": w2tg_models}
-
+        self.data = {"MFAENGINE": mfa_models, "W2TGENGINE": w2tg_models}
+        
         super().__init__(self.data, parent) 
 
         self.export_requested.connect(handle_export_lambda(self, self.data))
@@ -40,9 +40,9 @@ class ManageAlignersWidget(CategoricalListWidget):
     def scrub_training_runs(self, mode, items: dict):
         for model in items.keys():
             if "MFA" in mode:
-                mode = "MFA"
+                mode = "MFAENGINE"
             elif "W2TG" in mode:
-                mode = "W2TG"
+                mode = "W2TGENGINE"
             else:
                 raise ValueError("Invalid mode")
             
@@ -51,16 +51,17 @@ class ManageAlignersWidget(CategoricalListWidget):
 
     def reload_models(self):
         """Reload models in the dropdowns"""
-        mfa_models = list_modelz("MFA", True)
-        self.set_items("MFA Models", mfa_models)
+        mfa_models = list_modelz("MFAENGINE", True)
+        self.set_items("MFAENGINE", mfa_models)
       
-        w2tg_models = list_modelz("W2TG", True)
-        self.set_items("W2TG Models", w2tg_models)
+        w2tg_models = list_modelz("W2TGENGINE", True)
+        self.set_items("W2TGENGINE", w2tg_models)
 
         
             
 
     def open_import_dialog(self, category):
+        print(f"Opening import dialog for category: {category}")
         dialog = ImportModelDialog(parent=self, engine_id=category)
         if dialog.exec():
             path = dialog.field_widgets["model_path"].text()

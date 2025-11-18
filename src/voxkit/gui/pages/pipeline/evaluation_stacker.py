@@ -21,7 +21,7 @@ from voxkit.workers.worker_thread import WorkerThread
 from .styles import BrowseButtonStyle
 
 
-class EvalPage(QWidget):
+class EvaluationStacker(QWidget):
     """Page for evaluating aligner performance against reference alignments."""
 
     def __init__(self, parent=None):

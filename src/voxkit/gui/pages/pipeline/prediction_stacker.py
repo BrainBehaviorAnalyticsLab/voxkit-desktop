@@ -5,7 +5,6 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QButtonGroup,
     QComboBox,
-    QDialog,
     QFileDialog,
     QGroupBox,
     QHBoxLayout,
@@ -19,21 +18,25 @@ from PyQt6.QtWidgets import (
 )
 
 from voxkit.config import Defaults
-from voxkit.engines.w2tg_engine import AlignmentSettings as W2TGAlignmentSettings
-from voxkit.engines.w2tg_engine import W2TGEngine
-from voxkit.gui.components.modals.aligning_settings import AlignmentSettingsDialog
-from voxkit.storage.paths import list_models
+from voxkit.engines import ManageEngines
+from voxkit.gui.components.modals.aligning_settings import (
+    AlignmentSettingsDialog as W2TGSettingsDialog,
+)
+from voxkit.storage.datasets import get_dataset_path, list_datasets
+from voxkit.storage.models import get_storage_root, list_models
 from voxkit.storage.validation import validate_path, validate_paths
 from voxkit.workers.worker_thread import WorkerThread
 
 from .styles import BrowseButtonStyle
 
+MFAEngine = ManageEngines.get_engine("MFAENGINE")  # Ensure MFA engine is registered
+W2TGEngine = ManageEngines.get_engine("W2TGENGINE")  # Ensure W2TG engine is registered   
 
-class PredictingPage(QWidget):
+class PredictionStacker(QWidget):
     def __init__(self, parent):
         super().__init__()
         self.parent = parent
-        self.corpus_path = None
+        self.predict_dataset_dropdown = None
         self.textgrid_output_path = None
         self.selected_mode = Defaults["mode"]
         self.init_ui()
@@ -42,26 +45,37 @@ class PredictingPage(QWidget):
         """Handle model selection change"""
         # Check which radio button is actually checked
         if self.mfa_radio.isChecked():
-            self.selected_mode = "MFA"
+            self.selected_mode = "MFAENGINE"
             self.mfa_dropdown.setVisible(True)
             self.w2tg_dropdown.setVisible(False)
         elif self.wav2text_radio.isChecked():
-            self.selected_mode = "W2TG"
+            self.selected_mode = "W2TGENGINE"
             self.mfa_dropdown.setVisible(False)
             self.w2tg_dropdown.setVisible(True)
-            
 
         print(f"Model changed to: {self.selected_mode}")
     
+
     def reload_models(self):
         """Reload models in the dropdowns"""
-        model_names_mfa = list_models("MFA", add_date=True).keys()
+        model_names_mfa = list_models("MFAENGINE", add_date=True).keys()
         self.mfa_dropdown.clear()
         self.mfa_dropdown.addItems(list(model_names_mfa) if model_names_mfa else [])
 
-        model_names_w2tg = list_models("W2TG", add_date=True).keys()
+        model_names_w2tg = list_models("W2TGENGINE", add_date=True).keys()
         self.w2tg_dropdown.clear()
         self.w2tg_dropdown.addItems(list(model_names_w2tg) if model_names_w2tg else [])
+    
+    def reload_datasets(self):
+        """Reload datasets in the dropdown"""
+        self.predict_dataset_dropdown.clear()
+        datasets = list_datasets()
+        if datasets:
+            self.predict_dataset_dropdown.addItems([d["name"] for d in datasets])
+            self.predict_dataset_dropdown.setEnabled(True)
+        else:
+            self.predict_dataset_dropdown.addItem("No datasets registered")
+            self.predict_dataset_dropdown.setEnabled(False)
 
     def init_ui(self):
         """Create the predict alignments page"""
@@ -144,7 +158,7 @@ class PredictingPage(QWidget):
         self.mfa_dropdown.setToolTip("Select the MFA model to use for alignment")
         self.mfa_dropdown.setPlaceholderText("Select MFA Model")
         self.mfa_dropdown.setStyleSheet("color: #95a5a6;")
-        model_names_mfa = list_models("MFA", add_date=True).keys()
+        model_names_mfa = list_models("MFAENGINE", add_date=True).keys()
         self.mfa_dropdown.addItems(list(model_names_mfa) if model_names_mfa else [])
         self.mfa_dropdown.setFixedWidth(300)
         self.mfa_dropdown.setVisible(True)
@@ -191,7 +205,7 @@ class PredictingPage(QWidget):
         self.w2tg_dropdown.setToolTip("Select the W2TG model to use for alignment")
         self.w2tg_dropdown.setPlaceholderText("Select W2TG Model")
         self.w2tg_dropdown.setStyleSheet("color: #95a5a6;")
-        model_names_w2tg = list_models("W2TG", add_date=True).keys()
+        model_names_w2tg = list_models("W2TGENGINE", add_date=True).keys()
         self.w2tg_dropdown.addItems(list(model_names_w2tg) if model_names_w2tg else [])
         self.w2tg_dropdown.setFixedWidth(300)
         self.w2tg_dropdown.setVisible(False)
@@ -210,22 +224,44 @@ class PredictingPage(QWidget):
 
         layout.addSpacing(10)
 
-        # Data Corpus Path
-        corpus_label = QLabel("Audio Path")
-        corpus_label.setStyleSheet("font-weight: bold; color: #34495e;")
-        layout.addWidget(corpus_label)
-
-        corpus_layout = QHBoxLayout()
-        corpus_layout.setSpacing(8)
-        self.corpus_path = QLineEdit("/path/to/data/corpus")
-        self.corpus_browse = QPushButton("Browse")
-        self.corpus_browse.setFixedWidth(100)
-        self.corpus_browse.setStyleSheet(BrowseButtonStyle)
-        self.corpus_browse.setStyleSheet(BrowseButtonStyle)
-        self.corpus_browse.clicked.connect(lambda: self.browse_directory(self.corpus_path))
-        corpus_layout.addWidget(self.corpus_path, stretch=1)
-        corpus_layout.addWidget(self.corpus_browse)
-        layout.addLayout(corpus_layout)
+        # Dataset selection dropdown
+        dataset_label = QLabel("Prediction Dataset")
+        dataset_label.setStyleSheet("font-weight: bold; color: #2c3e50;")
+        layout.addWidget(dataset_label)
+        
+        self.predict_dataset_dropdown = QComboBox()
+        self.predict_dataset_dropdown.setPlaceholderText("Select Dataset")
+        self.predict_dataset_dropdown.setStyleSheet("""
+            QComboBox {
+                padding: 8px;
+                border: 1px solid #bdc3c7;
+                border-radius: 4px;
+                background-color: white;
+                min-height: 25px;
+            }
+            QComboBox:hover {
+                border: 1px solid #3498db;
+            }
+            QComboBox::drop-down {
+                border: none;
+                width: 30px;
+            }
+            QComboBox::down-arrow {
+                image: url(down_arrow.png);
+                width: 12px;
+                height: 12px;
+            }
+        """)
+        
+        # Populate with registered datasets
+        datasets = list_datasets()
+        if datasets:
+            self.predict_dataset_dropdown.addItems([d["name"] for d in datasets])
+        else:
+            self.predict_dataset_dropdown.addItem("No datasets registered")
+            self.predict_dataset_dropdown.setEnabled(False)
+        
+        layout.addWidget(self.predict_dataset_dropdown)
 
         # Textgrid Output Path
         output_label = QLabel("TextGrid Output Path")
@@ -284,19 +320,16 @@ class PredictingPage(QWidget):
 
     def on_predict_settings(self):
         # Create and show settings dialog
-        settings_dialog = AlignmentSettingsDialog(self)
-
-        result = settings_dialog.exec()
-
-        # Clean up
+        settings_dialog = None
+        if self.selected_mode == "W2TG":
+            settings_dialog = W2TGSettingsDialog(self, save_path=get_storage_root() + "/" + "w2tg_settings.json")
+            _ = settings_dialog.exec()
+            settings_dialog.save()  # Save settings to file
+        elif self.selected_mode == "MFA":
+            pass  # Implement MFA settings dialog
+        
+        # TODO - Automate Cleanup internally if possible
         self.parent.setGraphicsEffect(None)
-
-        if result == QDialog.DialogCode.Accepted:
-            # Apply settings
-            print("Settings applied:")
-            print(f"Expected Pairs: {settings_dialog.expected_pairs.value()}")
-            print(f"Assert Num Pairs: {settings_dialog.assert_num_pairs.isChecked()}")
-            print(f"Use GPU: {settings_dialog.use_gpu.isChecked()}")
 
     def browse_directory(self, line_edit):
         """Open directory browser and update the line edit"""
@@ -312,9 +345,27 @@ class PredictingPage(QWidget):
 
     def on_predict_alignments(self):
         """Handle Predict Alignments button click"""
+        # Get selected dataset
+        selected_dataset = self.predict_dataset_dropdown.currentText()
+        if not selected_dataset or selected_dataset == "Select Dataset":
+            QMessageBox.warning(
+                self, "No Dataset Selected",
+                "Please select a dataset from the dropdown."
+            )
+            return
+        
+        # Get dataset path
+        corpus_path = get_dataset_path(selected_dataset)
+        if not corpus_path:
+            QMessageBox.warning(
+                self, "Invalid Dataset",
+                f"Could not find path for dataset '{selected_dataset}'."
+            )
+            return
+        
         # Validate inputs
         paths = {
-            "Data Corpus Path": self.corpus_path.text(),
+            "Data Corpus Path": corpus_path,
             "Textgrid Output Path": self.textgrid_output_path.text(),
         }
 
@@ -322,7 +373,6 @@ class PredictingPage(QWidget):
             return
 
         # Get current settings
-        corpus_path = self.corpus_path.text()
         output_path = self.textgrid_output_path.text()
         mode = self.selected_mode
 
@@ -345,7 +395,7 @@ class PredictingPage(QWidget):
 
     def predict_alignments_logic(self, wav_files_path, textgrid_output_path, model):
         """Actual alignment prediction logic"""
-        if model == "MFA":
+        if model == "MFAENGINE":
             # Get the selected model from dropdown
             selected_mfa_model = self.mfa_dropdown.currentText()
 
@@ -356,19 +406,15 @@ class PredictingPage(QWidget):
                 shell=True,
                 check=True,
             )
-        elif model == "W2TG":
+        elif model == "W2TGENGINE":
             # Get the selected model from dropdown
             selected_w2tg_model = self.w2tg_dropdown.currentText() or None
-            print(f"Using W2TG model: {selected_w2tg_model}")
 
-            settings = W2TGAlignmentSettings(
-                aligner_model=selected_w2tg_model,
-                use_speaker_adaptation=True,
-                use_gpu=False,
-                file_type="wav",
+            W2TGEngine.align(
+                audio_root=Path(wav_files_path),
+                output_root=Path(textgrid_output_path),
+                model_id=selected_w2tg_model,
             )
-            engine = W2TGEngine()
-            engine.run_alignment(wav_files_path, textgrid_output_path, settings)
         else:
             raise ValueError(f"Unknown model selected: {model}")
 

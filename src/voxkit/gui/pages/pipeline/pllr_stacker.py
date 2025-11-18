@@ -22,7 +22,7 @@ from voxkit.workers.worker_thread import WorkerThread
 from .styles import BrowseButtonStyle
 
 
-class EvaluatingPage(QWidget):
+class PLLRStacker(QWidget):
     def __init__(self, parent=None):
         super().__init__()
         self.parent = parent

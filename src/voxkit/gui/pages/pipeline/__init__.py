@@ -6,10 +6,10 @@ from PyQt6.QtWidgets import QHBoxLayout, QLabel, QListWidget, QSizePolicy, QVBox
 from voxkit.config import Dimensions
 from voxkit.gui.components.widgets import AnimatedStackedWidget
 
-from .evaluating import EvaluatingPage
-from .model_eval import EvalPage
-from .predicting import PredictingPage
-from .training import TrainingPage
+from .evaluation_stacker import EvaluationStacker
+from .pllr_stacker import PLLRStacker
+from .prediction_stacker import PredictionStacker
+from .training_stacker import TrainingStacker
 
 
 class PipelineFormStack(QWidget):
@@ -42,12 +42,10 @@ class PipelineFormStack(QWidget):
 
         # Right side - Stacked widget for different pipeline pages
         self.stacked_widget = AnimatedStackedWidget()
-        self.stacked_widget.addWidget(TrainingPage(self.parent_window))
-
-        # Placeholder for Evaluate page
-        self.stacked_widget.addWidget(EvalPage(self.parent_window))
-        self.stacked_widget.addWidget(PredictingPage(self.parent_window))
-        self.stacked_widget.addWidget(EvaluatingPage(self.parent_window))
+        self.stacked_widget.addWidget(TrainingStacker(self.parent_window))
+        self.stacked_widget.addWidget(EvaluationStacker(self.parent_window))
+        self.stacked_widget.addWidget(PredictionStacker(self.parent_window))
+        self.stacked_widget.addWidget(PLLRStacker(self.parent_window))
         content_layout.addWidget(self.stacked_widget, stretch=1)
 
         # Make top content expand to take available space
@@ -60,10 +58,10 @@ class PipelineFormStack(QWidget):
     def reload_models(self):
         """Reload models in the training page and predicting page"""
         training_page = self.stacked_widget.widget(0)
-        if isinstance(training_page, TrainingPage):
-            training_page.reload_models()
+        if isinstance(training_page, TrainingStacker):
+            pass
         predicting_page = self.stacked_widget.widget(2)
-        if isinstance(predicting_page, PredictingPage):
+        if isinstance(predicting_page, PredictionStacker):
             predicting_page.reload_models()
             
     def change_page(self, index):
