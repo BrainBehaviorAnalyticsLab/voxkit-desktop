@@ -1,11 +1,13 @@
-# TODO : Add module docstring
-
 from .animate_stack import AnimatedStackedWidget
 from .dna_strand import DNAStrandWidget
+from .horizontal_button_selector import HorizontalButtonSelector
 from .overlay_effects import OverlayWidget
+from .toggle_switch import ToggleSwitch
 
 __all__ = [
     "AnimatedStackedWidget",
     "DNAStrandWidget",
     "OverlayWidget",
+    "ToggleSwitch",
+    "HorizontalButtonSelector",
 ]
