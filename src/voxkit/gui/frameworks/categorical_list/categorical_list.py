@@ -169,7 +169,7 @@ class CategoricalListWidget(QWidget):
         main_layout.setContentsMargins(20, 20, 20, 20)
 
         # Title
-        title = QLabel("Model Manager")
+        title = QLabel("Model Management")
         title.setStyleSheet(Labels.TITLE)
         main_layout.addWidget(title)
 
