@@ -1,5 +1,6 @@
 import json
 import os
+from pathlib import Path
 from typing import Any
 
 from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, Qt
@@ -21,9 +22,9 @@ from PyQt6.QtWidgets import (
 )
 
 from voxkit.gui.components.widgets.toggle_switch import ToggleSwitch
-from voxkit.storage.paths import get_storage_root
+from voxkit.storage.utils import get_storage_root
 
-from .api import FieldConfig, FieldType
+from .api import FieldConfig, FieldType, SettingsConfig
 from .styles import (
     CheckBoxStyle,
     CloseButtonStyle,
@@ -37,37 +38,79 @@ from .styles import (
 
 
 class GenericDialog(QDialog):
-    """Base class for reusable modal dialogs with configurable fields"""
+    """
+    Reusable modal dialog for engine tool settings with automatic field generation.
+
+    This dialog automatically generates form fields based on a declarative
+    configuration and handles persistence to JSON files in the VoxKit storage
+    directory. It provides a consistent UI experience with animations, blur
+    effects, and automatic value restoration.
+
+    The dialog creates widgets dynamically based on the field configurations,
+    loads any previously saved values from disk, and provides methods to
+    retrieve and save the current form state.
+
+    Args:
+        parent: Parent widget, typically the main application window.
+        config: SettingsConfig object defining the dialog structure and fields.
+
+    Raises:
+        ValueError: If store_file path is not within the storage root directory.
+
+    Attributes:
+        store_values_path: Path to JSON file for settings persistence.
+        field_configs: List of FieldConfig objects from config.
+        field_widgets: Dict mapping field names to their widget instances.
+
+    Example:
+        >>> config = SettingsConfig(
+        ...     title="Training Settings",
+        ...     dimensions=(400, 300),
+        ...     apply_blur=True,
+        ...     store_file="train_settings.json",
+        ...     fields=[...]
+        ... )
+        >>> dialog = GenericDialog(parent=main_window, config=config)
+        >>> if dialog.exec() == QDialog.DialogCode.Accepted:
+        ...     values = dialog.get_values()
+        ...     dialog.save()
+    """
 
     def __init__(
         self,
-        parent=None,
-        title: str = "Settings",
-        dims: tuple[int, int] = (400, 350),
-        fields: list[FieldConfig] = None,
-        apply_blur: bool = True,
-        store_values_path: str = "/Users/beckett/.tpe-speech-analysis/test.json",
+        parent,
+        config: SettingsConfig,
     ):
         super().__init__(parent)
-        self.store_values_path = store_values_path
-        if not self.store_values_path or get_storage_root() not in self.store_values_path:
+        self.store_values_path = Path(get_storage_root() + "/" + config.store_file)
+        if not self.store_values_path:
             raise ValueError("File path must be within the storage root directory.")
 
-        self.field_configs = fields or []
+        self.field_configs = config.fields or []
         self.field_widgets = {}
-        self._apply_blur = apply_blur
+        self._apply_blur = config.apply_blur
 
         # Setup overlay and blur if parent exists
-        if parent and apply_blur:
+        if parent and config.apply_blur:
             self._setup_overlay(parent)
 
-        self._setup_ui(title, dims)
+        self._setup_ui(config.title, config.dimensions)
         self._create_fields()
         self._load_saved_values()
         self.fade_in()
 
+
     def _setup_overlay(self, parent):
-        """Setup overlay and blur effect"""
+        """
+        Setup overlay widget and apply blur effect to parent window.
+
+        Creates a semi-transparent overlay on the main window and applies a
+        blur effect to create visual focus on the dialog. Gracefully handles
+        missing overlay widget or parent window.
+
+        Args:
+            parent: Parent widget to apply blur effect to.
+        """
         try:
             from voxkit.gui.components.widgets import OverlayWidget
 
@@ -87,6 +130,19 @@ class GenericDialog(QDialog):
             pass
 
     def _load_saved_values(self):
+        """
+        Load previously saved field values from JSON file.
+
+        Reads the JSON file specified by store_values_path and populates
+        form fields with saved values. If the file doesn't exist or cannot
+        be read, fields retain their default values.
+
+        The method handles different widget types appropriately:
+        - Checkboxes/ToggleSwitch: setChecked()
+        - SpinBoxes: setValue()
+        - LineEdit: setText()
+        - ComboBox: setCurrentIndex() matching saved text
+        """
         if not os.path.exists(self.store_values_path):
             print("Saved values json doesn't exist yet.")
             return
@@ -111,7 +167,16 @@ class GenericDialog(QDialog):
             print("Error loading saved values.")
 
     def _setup_ui(self, title: str, dims: tuple[int, int]):
-        """Setup the basic dialog UI structure"""
+        """
+        Setup the basic dialog UI structure and styling.
+
+        Creates the frameless dialog window with rounded container, header,
+        form layout, and button box. Centers the dialog on the parent window.
+
+        Args:
+            title: Dialog title for the header.
+            dims: Dialog dimensions as (width, height) tuple.
+        """
         self.setWindowTitle(title)
         self.setFixedSize(dims[0], dims[1])
         self.setModal(True)
@@ -178,14 +243,34 @@ class GenericDialog(QDialog):
         return header_layout
 
     def _create_fields(self):
-        """Create form fields based on field configurations"""
+        """
+        Create form fields based on field configurations.
+
+        Iterates through field_configs and creates appropriate widgets for
+        each field, adding them to the form layout with their labels.
+        """
         for field_config in self.field_configs:
             widget = self._create_field_widget(field_config)
             self.field_widgets[field_config.name] = widget
             self.form_layout.addRow(field_config.label, widget)
 
     def _create_field_widget(self, config: FieldConfig) -> QWidget:
-        """Create a widget based on field configuration"""
+        """
+        Create a widget based on field configuration.
+
+        Factory method that instantiates the appropriate Qt widget based on
+        the field type specified in the configuration. Applies styling and
+        sets tooltip if provided.
+
+        Args:
+            config: Field configuration specifying widget type and parameters.
+
+        Returns:
+            Configured Qt widget instance ready for form insertion.
+
+        Raises:
+            ValueError: If field_type is not recognized.
+        """
         if config.field_type == FieldType.SPINBOX:
             widget = self._create_spinbox(config)
         elif config.field_type == FieldType.DOUBLE_SPINBOX:
@@ -206,7 +291,15 @@ class GenericDialog(QDialog):
         return widget
 
     def _create_spinbox(self, config: FieldConfig) -> QSpinBox:
-        """Create a spinbox widget"""
+        """
+        Create an integer spinbox widget.
+
+        Args:
+            config: Field configuration with min_value, max_value, default_value.
+
+        Returns:
+            Configured QSpinBox instance.
+        """
         spinbox = QSpinBox()
         if config.min_value is not None:
             spinbox.setMinimum(config.min_value)
@@ -219,7 +312,16 @@ class GenericDialog(QDialog):
         return spinbox
 
     def _create_double_spinbox(self, config: FieldConfig) -> QDoubleSpinBox:
-        """Create a double spinbox widget"""
+        """
+        Create a floating-point spinbox widget.
+
+        Args:
+            config: Field configuration with min_value, max_value, decimals,
+                default_value.
+
+        Returns:
+            Configured QDoubleSpinBox instance.
+        """
         spinbox = QDoubleSpinBox()
         if config.min_value is not None:
             spinbox.setMinimum(config.min_value)
@@ -234,7 +336,15 @@ class GenericDialog(QDialog):
         return spinbox
 
     def _create_checkbox(self, config: FieldConfig) -> QCheckBox:
-        """Create a checkbox widget"""
+        """
+        Create a checkbox widget.
+
+        Args:
+            config: Field configuration with default_value (bool).
+
+        Returns:
+            Configured QCheckBox instance.
+        """
         checkbox = QCheckBox()
         if config.default_value is not None:
             checkbox.setChecked(config.default_value)
@@ -243,7 +353,15 @@ class GenericDialog(QDialog):
         return checkbox
 
     def _create_lineedit(self, config: FieldConfig) -> QLineEdit:
-        """Create a line edit widget"""
+        """
+        Create a text input line edit widget.
+
+        Args:
+            config: Field configuration with default_value, placeholder.
+
+        Returns:
+            Configured QLineEdit instance.
+        """
         lineedit = QLineEdit()
         if config.default_value is not None:
             lineedit.setText(str(config.default_value))
@@ -254,7 +372,15 @@ class GenericDialog(QDialog):
         return lineedit
 
     def _create_combobox(self, config: FieldConfig) -> QComboBox:
-        """Create a combobox widget"""
+        """
+        Create a dropdown combobox widget.
+
+        Args:
+            config: Field configuration with options list, default_value.
+
+        Returns:
+            Configured QComboBox instance.
+        """
         combobox = QComboBox()
         if config.options:
             combobox.addItems(config.options)
@@ -277,7 +403,12 @@ class GenericDialog(QDialog):
         return button_box
 
     def fade_in(self):
-        """Animate dialog fade-in"""
+        """
+        Animate dialog fade-in effect.
+
+        Creates a smooth opacity animation from 0 to 1 over 200ms using an
+        easing curve. Called automatically during initialization.
+        """
         self.setWindowOpacity(0)
         self.animation = QPropertyAnimation(self, b"windowOpacity")
         self.animation.setDuration(200)
@@ -287,7 +418,21 @@ class GenericDialog(QDialog):
         self.animation.start()
 
     def get_values(self) -> dict[str, Any]:
-        """Get all field values as a dictionary"""
+        """
+        Get all field values as a dictionary.
+
+        Retrieves current values from all form widgets and returns them in
+        a dictionary keyed by field names. Values are in their native Python
+        types (int, float, bool, str).
+
+        Returns:
+            Dictionary mapping field names to their current values.
+
+        Example:
+            >>> values = dialog.get_values()
+            >>> print(values)
+            {'batch_size': 32, 'learning_rate': 0.001, 'use_gpu': True}
+        """
         values = {}
         for name, widget in self.field_widgets.items():
             if isinstance(widget, QSpinBox) or isinstance(widget, QDoubleSpinBox):
@@ -304,7 +449,18 @@ class GenericDialog(QDialog):
         return values
 
     def set_values(self, values: dict[str, Any]):
-        """Set field values from a dictionary"""
+        """
+        Set field values from a dictionary.
+
+        Updates form widgets with values from the provided dictionary.
+        Handles type conversion and widget-specific setter methods.
+
+        Args:
+            values: Dictionary mapping field names to their desired values.
+
+        Example:
+            >>> dialog.set_values({'batch_size': 64, 'use_gpu': False})
+        """
         for name, value in values.items():
             if name in self.field_widgets:
                 widget = self.field_widgets[name]
@@ -322,6 +478,17 @@ class GenericDialog(QDialog):
                     widget.setChecked(value)
 
     def save(self):
+        """
+        Save current field values to JSON file.
+
+        Retrieves all field values and writes them to the JSON file specified
+        by store_values_path. The file is created in the VoxKit storage root
+        directory and will be loaded automatically when the dialog opens again.
+
+        Example:
+            >>> if dialog.exec() == QDialog.DialogCode.Accepted:
+            ...     dialog.save()  # Persist settings to disk
+        """
         values = self.get_values()
         with open(self.store_values_path, "w") as f:
             json.dump(values, f, indent=4)
