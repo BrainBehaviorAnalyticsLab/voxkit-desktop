@@ -6,7 +6,8 @@ from styles import GlobalStyleSheet, ToolBarStyle
 
 from voxkit.config import HELP_URL, AppName, Dimensions
 from voxkit.gui.components.widgets import DNAStrandWidget
-from voxkit.gui.pages.manage import ManageAlignersWidget
+from voxkit.gui.pages.datasets import DatasetsPage
+from voxkit.gui.pages.models import ManageAlignersWidget
 from voxkit.gui.pages.pipeline import PipelineFormStack as PipelineContainer
 
 
@@ -43,12 +44,15 @@ class AlignmentGUI(QMainWindow):
                 widget.setCursor(widget.cursor())  # ensure widget exists; can set more props here
             return action
 
-        # Store actions for Pipeline, Manage so we can update their styles
+        # Store actions for Pipeline, Datasets, Manage so we can update their styles
         self.pipeline_action = _add_button(
             "Pipeline", self.open_models_dashboard, tooltip="Main Pipeline Dashboard"
         )
+        self.datasets_action = _add_button(
+            "Datasets", self.open_datasets, tooltip="Manage Datasets"
+        )
         self.manage_action = _add_button(
-            "Manage", self.open_preferences, tooltip="Manage Aligners and Models"
+            "Models", self.open_preferences, tooltip="Manage Aligner Models"
         )
         # Help button
         _add_button("Help", self.open_help, tooltip="Get Help")
@@ -96,20 +100,43 @@ class AlignmentGUI(QMainWindow):
         """
 
         # Get the actual button widgets
+        datasets_widget = self.toolbar.widgetForAction(self.datasets_action)
         pipeline_widget = self.toolbar.widgetForAction(self.pipeline_action)
         manage_widget = self.toolbar.widgetForAction(self.manage_action)
 
         # Apply styles based on which button is active
-        if active_button == "pipeline":
+        if active_button == "datasets":
+            if datasets_widget:
+                datasets_widget.setStyleSheet(active_style)
+            if pipeline_widget:
+                pipeline_widget.setStyleSheet(inactive_style)
+            if manage_widget:
+                manage_widget.setStyleSheet(inactive_style)
+        elif active_button == "pipeline":
+            if datasets_widget:
+                datasets_widget.setStyleSheet(inactive_style)
             if pipeline_widget:
                 pipeline_widget.setStyleSheet(active_style)
             if manage_widget:
                 manage_widget.setStyleSheet(inactive_style)
         elif active_button == "manage":
+            if datasets_widget:
+                datasets_widget.setStyleSheet(inactive_style)
             if pipeline_widget:
                 pipeline_widget.setStyleSheet(inactive_style)
             if manage_widget:
                 manage_widget.setStyleSheet(active_style)
+    
+
+    def open_datasets(self):
+        """Switch to Datasets view"""
+        print("Open Datasets...")
+        # Remember current pipeline page
+        self.last_pipeline_page = self.pipeline_container.get_current_page_index()
+        self.pipeline_container.menu_list.setVisible(False)
+        self.content_stack.setCurrentIndex(1)  # Show datasets page
+        # Update active tab styling
+        self.update_active_tab_style("datasets")
 
     def open_models_dashboard(self):
         """Switch to Pipeline view with menu and stacked pages"""
@@ -129,7 +156,7 @@ class AlignmentGUI(QMainWindow):
         # Remember current pipeline page
         self.last_pipeline_page = self.pipeline_container.get_current_page_index()
         self.pipeline_container.menu_list.setVisible(False)
-        self.content_stack.setCurrentIndex(1)  # Show manage widget
+        self.content_stack.setCurrentIndex(2)  # Show manage widget
         # Update active tab styling
         self.update_active_tab_style("manage")
 
@@ -155,13 +182,17 @@ class AlignmentGUI(QMainWindow):
         main_layout.setSpacing(20)
         main_layout.setContentsMargins(20, 20, 20, 20)
 
-        # Master stacked widget to switch between Pipeline and Manage views
+        # Master stacked widget to switch between Pipeline, Datasets and Manage views
         self.content_stack = QStackedWidget()
         main_layout.addWidget(self.content_stack, stretch=1)
 
         # Pipeline view: container with menu and animated stacked widget
         self.pipeline_container = PipelineContainer(self)
         self.content_stack.addWidget(self.pipeline_container)
+
+        # Datasets view: dataset management page
+        self.datasets_page = DatasetsPage(self)
+        self.content_stack.addWidget(self.datasets_page)
 
         # Manage view: categorical list widget
         self.manage_widget = ManageAlignersWidget(self)
@@ -176,7 +207,7 @@ class AlignmentGUI(QMainWindow):
 
 if __name__ == "__main__":
     from voxkit.services.hf import download_and_copy_huggingface_model
-    from voxkit.storage.paths import create_train_destination
+    from voxkit.storage.utils import create_train_destination
 
     data_path, model_path, train_path, eval_path = create_train_destination("prads model", "W2TG")
 
