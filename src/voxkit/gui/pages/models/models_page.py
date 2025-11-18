@@ -1,10 +1,10 @@
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QLabel
 
-from voxkit.gui.components.modals.import_model_dialog.import_model_dialog import ImportModelDialog
 from voxkit.gui.frameworks.categorical_list import CategoricalListWidget
 from voxkit.storage.models import list_modelz, scrub_training_run
 
+from .import_dialog import ImportModelDialog
 from .utils import handle_export_lambda
 
 # TODO : Implement Aligner managment logic by see frameworks/widget/categorical_list/api.py | __init__.py
