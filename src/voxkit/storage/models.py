@@ -1,66 +1,34 @@
 import os
 import shutil
 from datetime import datetime
+from typing import TypedDict
 
-from voxkit.config import Mode
-
-STORAGE_ROOT = "~/.tpe-speech-analysis"
-# Models are stored with this prefix for a more ceertain means of identification, set later
-MODEL_PREFIX = "9276_model_"
-DATA_PREFIX = "8372_dataset_"
-
-TRAIN_ROOT = "train"
+from .config import DATA_PREFIX, MODEL_PREFIX, TRAIN_ROOT
+from .utils import get_storage_root, human_readable_date
 
 
-def collect_models(name):
-    pass
+class ModelMetadata(TypedDict):
+    path: str
+    date: str
+    time: str
+    name: str
+    id: str
+    train_root: str
 
 
-def get_storage_root() -> str:
-    """Get the root directory for storing models and data."""
-    if STORAGE_ROOT.startswith("~"):
-        from pathlib import Path
-
-        return str(Path(STORAGE_ROOT).expanduser())
-    else:
-        raise ValueError("STORAGE_ROOT must be a valid path starting with '~'")
-
-
-def human_readable_date(date_str: str) -> str:
-    """Convert YYYYMMDD_HHMMSS to 'MM-DD-YYYY H:MM am/pm' (e.g. 11-14-2001 6:00 pm)."""
-    try:
-        dt = datetime.strptime(date_str, "%Y%m%d_%H%M%S")
-        s = dt.strftime("%m-%d-%Y %I:%M %p")  # "11-14-2001 06:00 PM"
-        date_part, time_part, ampm = s.split()
-        hour, minute = time_part.split(":")
-        hour = hour.lstrip("0")
-        return f"{date_part} {hour}:{minute} {ampm.lower()}"
-    except ValueError:
-        return date_str
-
-
-def machine_readable_date(date_str: str) -> str:
-    """Convert 'MM-DD-YYYY H:MM am/pm' back to 'YYYYMMDD_HHMMSS'."""
-    try:
-        dt = datetime.strptime(date_str.strip(), "%m-%d-%Y %I:%M %p")
-        return dt.strftime("%Y%m%d_%H%M%S")
-    except ValueError:
-        return date_str
-
-
-def list_models(mode: Mode, add_date=False) -> list[str]:
+def list_models(engine_id, add_date=False) -> list[str]:
     """List available model names for the given mode."""
     try:
-        mode_path = f"{get_storage_root()}/{TRAIN_ROOT}/{mode}"
+        models_root = f"{get_storage_root()}/{engine_id}/{TRAIN_ROOT}"
 
-        if mode == "W2TG":
-            if not os.path.exists(mode_path):
-                print(f"Mode path does not exist: {mode_path}")
+        if engine_id == "W2TGENGINE":
+            if not os.path.exists(models_root):
+                print(f"Mode path does not exist: {models_root}")
                 return {}
 
             models = {}
             # Scan each subdirectory for a folder that starts with MODEL_PREFIX
-            for entry in os.scandir(mode_path):
+            for entry in os.scandir(models_root):
                 if entry.is_dir():
                     for subentry in os.scandir(entry.path):
                         if subentry.is_dir() and subentry.name.startswith(MODEL_PREFIX):
@@ -74,14 +42,14 @@ def list_models(mode: Mode, add_date=False) -> list[str]:
 
             return models
 
-        elif mode == "MFA":
-            if not os.path.exists(mode_path):
-                print(f"Mode path does not exist: {mode_path}")
+        elif engine_id == "MFAENGINE":
+            if not os.path.exists(models_root):
+                print(f"Mode path does not exist: {models_root}")
                 return {}
 
             models = {}
             # Scan each subdirectory for a folder that starts with MODEL_PREFIX
-            for entry in os.scandir(mode_path):
+            for entry in os.scandir(models_root):
                 if entry.is_dir():
                     for subentry in os.scandir(entry.path):
                         if subentry.is_dir() and subentry.name.startswith(MODEL_PREFIX):
@@ -103,20 +71,20 @@ def list_models(mode: Mode, add_date=False) -> list[str]:
         return {}
 
 
-# TODO Combine with list_models
-def list_modelz(mode: Mode, add_date=False) -> list[str]:
+def list_modelz(engine_id, add_date=False) -> dict[str, ModelMetadata]:
     """List available model names for the given mode."""
     try:
-        mode_path = f"{get_storage_root()}/{TRAIN_ROOT}/{mode}"
 
-        if mode == "W2TG":
-            if not os.path.exists(mode_path):
-                print(f"Mode path does not exist: {mode_path}")
+        models_root = f"{get_storage_root()}/{engine_id}/{TRAIN_ROOT}"
+
+        if engine_id == "W2TGENGINE":
+            if not os.path.exists(models_root):
+                print(f"Mode path does not exist: {models_root}")
                 return {}
 
             models = {}
             # Scan each subdirectory for a folder that starts with MODEL_PREFIX
-            for entry in os.scandir(mode_path):
+            for entry in os.scandir(models_root):
                 if entry.is_dir():
                     for subentry in os.scandir(entry.path):
                         if subentry.is_dir() and subentry.name.startswith(MODEL_PREFIX):
@@ -129,6 +97,8 @@ def list_modelz(mode: Mode, add_date=False) -> list[str]:
                                     "path": subentry.path,
                                     "date": date_time[0],
                                     "time": date_time[1],
+                                    "name": model_name,
+                                    "id": model_name,
                                     "train_root": entry.name,
                                 }
                             else:
@@ -137,14 +107,14 @@ def list_modelz(mode: Mode, add_date=False) -> list[str]:
 
             return models
 
-        elif mode == "MFA":
-            if not os.path.exists(mode_path):
-                print(f"Mode path does not exist: {mode_path}")
+        elif engine_id == "MFAENGINE":
+            if not os.path.exists(models_root):
+                print(f"Mode path does not exist: {models_root}")
                 return {}
 
             models = {}
             # Scan each subdirectory for a folder that starts with MODEL_PREFIX
-            for entry in os.scandir(mode_path):
+            for entry in os.scandir(models_root):
                 if entry.is_dir():
                     for subentry in os.scandir(entry.path):
                         if subentry.is_dir() and subentry.name.startswith(MODEL_PREFIX):
@@ -178,37 +148,29 @@ def list_modelz(mode: Mode, add_date=False) -> list[str]:
 
 def scrub_training_run(engine_id, train_code: str):
     """Delete a training run given its mode and root directory."""
-    train_path = f"{get_storage_root()}/{TRAIN_ROOT}/{engine_id}/{train_code}"
+    train_path = f"{get_storage_root()}/{engine_id}/{TRAIN_ROOT}/{train_code}"
     if os.path.exists(train_path):
         shutil.rmtree(train_path)
     else:
         raise FileNotFoundError(f"Training run path does not exist: {train_path}")
 
 
-def create_train_destination(model_name: str, mode: Mode) -> str:
+def create_train_destination(model_name: str, engine_id) -> str:
     """Create a directory for storing a new trained model and it information."""
     now = datetime.now().strftime("%Y%m%d_%H%M%S")
-    if mode == "W2TG":
-        train_path = f"{get_storage_root()}/{TRAIN_ROOT}/{mode}/{now}"
+    if engine_id == "W2TGENGINE":
+        train_path = f"{get_storage_root()}/{engine_id}/{TRAIN_ROOT}/{now}"
         model_path = f"{train_path}/{MODEL_PREFIX}{model_name}"
         data_path = f"{train_path}/{DATA_PREFIX}{model_name}"
         eval_path = f"{train_path}/eval_output_textgrids"
         os.makedirs(model_path, exist_ok=True)
         os.makedirs(data_path, exist_ok=True)
         return data_path, model_path, train_path, eval_path
-    elif mode == "MFA":
-        train_path = f"{get_storage_root()}/{TRAIN_ROOT}/{mode}/{now}"
+    elif engine_id == "MFAENGINE":
+        train_path = f"{get_storage_root()}/{engine_id}/{TRAIN_ROOT}/{now}"
         model_path = f"{train_path}/{MODEL_PREFIX}{model_name}"
         data_path = f"{train_path}/{DATA_PREFIX}{model_name}"
         eval_path = f"{train_path}/eval_output_textgrids"
         os.makedirs(model_path, exist_ok=True)
         os.makedirs(data_path, exist_ok=True)
         return data_path, model_path + "/model.zip", train_path, eval_path
-
-
-def delete_training_run(engine_id, train_code: str):
-    train_path = f"{get_storage_root()}/{TRAIN_ROOT}/{engine_id}/{train_code}"
-    if os.path.exists(train_path):
-        shutil.rmtree(train_path)
-    else:
-        raise FileNotFoundError(f"Training run path does not exist: {train_path}")
