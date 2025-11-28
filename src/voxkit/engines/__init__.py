@@ -24,9 +24,9 @@ The intended workflow for adding a new engine implementation is:
 Engine implementation notes
 ---------------------------
 
-Each engine encapsulates a set of compatible units of functionality (tools), and a corresponding 
-configuration of type :class:`voxkit.gui.frameworks.settings_modal.generic.SettingsConfig` 
-this config serves as both documentation and the settings interface for the engine. The settings 
+Each engine encapsulates a set of compatible units of functionality (tools), and a corresponding
+configuration of type :class:`voxkit.gui.frameworks.settings_modal.SettingsConfig`
+this config serves as both documentation and the settings interface for the engine. The settings
 are stored in JSON files under the engine's storage directory.
 
 Registration
@@ -76,7 +76,10 @@ def _import_all_engines() -> None:
                 importlib.import_module(full_name)
             except Exception as e:
                 print(f"[engines.__init__] Failed to import {full_name}: {e}")
+
+
 _import_all_engines()
+
 
 class EngineManager:
     """
@@ -92,7 +95,7 @@ class EngineManager:
 
     def __init__(self, engines: dict[str, AlignmentEngine]):
         self._engines = engines
-    
+
     def list_engines(self) -> List[str]:
         """Return a list of registered engine IDs."""
         keys = list(self._engines.keys())
@@ -105,7 +108,7 @@ class EngineManager:
             return self._engines[engine_id]
         except KeyError:
             raise ValueError(f"No engine with id: {engine_id}")
-    
+
     def get_tool_providers(self, tool: ToolType) -> dict[str, AlignmentEngine]:
         """Return a list of engines that provide the specified tool type."""
         engines = {}
@@ -113,7 +116,8 @@ class EngineManager:
             if engine.has_tool(tool):
                 engines[engine.id] = engine
         return engines
-    
+
+
 # Singleton instance for unified export/interface
 ManageEngines = EngineManager(_REGISTERED_ENGINES)
 

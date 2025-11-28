@@ -1,8 +1,8 @@
 """
 Dataset Analyzer registration system for VoxKit.
 
-This module provides the :func:`register_analyzer` decorator which allows dataset analysis 
-implementations to be registered in a global registry. The registry is populated at import time 
+This module provides the :func:`register_analyzer` decorator which allows dataset analysis
+implementations to be registered in a global registry. The registry is populated at import time
 when analysis modules are loaded by the package initializer.
 """
 
@@ -22,7 +22,7 @@ def register_analyzer(cls=None, *, author: str | None = None):
 
     Returns:
         The original class, unmodified
-        
+
     Raises:
         ValueError: If the class does not inherit from DatasetAnalyzer,
             or if an analyzer with the same ID is already registered.

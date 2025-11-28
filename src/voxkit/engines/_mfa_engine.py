@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from voxkit.gui.frameworks.settings_modal.generic import (
+from voxkit.gui.frameworks.settings_modal import (
     FieldConfig,
     FieldType,
     SettingsConfig,
@@ -51,7 +51,6 @@ class MFAEngine(AlignmentEngine):
             ),
             human_readable_name="Montreal Forced Aligner",
             id=id,
-
         )
 
     def align(self, audio_root: Path, output_root: Path, model_id: str) -> None:

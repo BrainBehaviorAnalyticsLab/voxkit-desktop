@@ -1,6 +1,7 @@
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
     QCheckBox,
+    QGroupBox,
     QHBoxLayout,
     QInputDialog,
     QLabel,
@@ -300,6 +301,9 @@ class CategoricalListWidget(QWidget):
         self.list_widget.raise_()
         main_layout.addWidget(list_container, stretch=1)
 
+        # Action group
+        group = QGroupBox()
+
         # Action buttons
         action_layout = QHBoxLayout()
         action_layout.setSpacing(10)
@@ -371,8 +375,9 @@ class CategoricalListWidget(QWidget):
         """)
         self.delete_btn.clicked.connect(self.on_delete)
         action_layout.addWidget(self.delete_btn)
-
-        main_layout.addLayout(action_layout)
+        
+        group.setLayout(action_layout)
+        main_layout.addWidget(group)
 
     def set_data(self, data):
         """Update the widget with new data"""

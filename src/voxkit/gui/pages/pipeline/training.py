@@ -5,7 +5,6 @@ from PyQt6.QtCore import Qt
 # Add these imports at the top of your file
 from PyQt6.QtWidgets import (
     QButtonGroup,
-    QComboBox,
     QDialog,
     QFileDialog,
     QGroupBox,
@@ -18,6 +17,7 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from voxkit.gui.pages.pipeline.model_eval import QComboBox
 
 from voxkit.config import Defaults
 from voxkit.engines import ManageEngines
@@ -31,7 +31,7 @@ from .styles import BrowseButtonStyle
 
 TrainingTools = ManageEngines.get_tool_providers("train")
 
-class TrainingStacker(QWidget):
+class TrainingPage(QWidget):
     def __init__(self, parent):
         super().__init__()
         self.train_dataset_dropdown = None
@@ -214,7 +214,7 @@ class TrainingStacker(QWidget):
         header.addWidget(title)
         header.addStretch()
 
-        settings_btn = QPushButton("⚙️")
+        settings_btn = QPushButton("Settings")
         settings_btn.setFixedSize(65, 40)
         settings_btn.setStyleSheet(""" ... """)
         settings_btn.clicked.connect(self.on_training_settings)

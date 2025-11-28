@@ -5,7 +5,7 @@ from PyQt6.QtWidgets import QHBoxLayout, QMainWindow, QStackedWidget, QToolBar, 
 from styles import GlobalStyleSheet, ToolBarStyle
 
 from voxkit.config import HELP_URL, AppName, Dimensions
-from voxkit.gui.components.widgets import DNAStrandWidget
+from voxkit.gui.components import DNAStrandWidget
 from voxkit.gui.pages.datasets import DatasetsPage
 from voxkit.gui.pages.models import ManageAlignersWidget
 from voxkit.gui.pages.pipeline import PipelineFormStack as PipelineContainer

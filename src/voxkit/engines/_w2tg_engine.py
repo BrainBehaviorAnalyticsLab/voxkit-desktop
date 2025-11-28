@@ -1,11 +1,14 @@
+import os
 from pathlib import Path
 
-from voxkit.gui.frameworks.settings_modal.generic import (
+from voxkit.gui.frameworks.settings_modal import (
     FieldConfig,
     FieldType,
     SettingsConfig,
 )
-from voxkit.storage.paths import create_train_destination, list_models
+from voxkit.storage.alignments import create_alignment
+from voxkit.storage.datasets import get_dataset, get_dataset_path
+from voxkit.storage.models import create_train_destination, list_models
 from Wav2TextGrid.wav2textgrid import align_dirs
 from Wav2TextGrid.wav2textgrid_train import train_aligner
 
@@ -99,18 +102,38 @@ class W2TGEngine(AlignmentEngine):
             human_readable_name="Wav2TextGrid",
             id=id,
         )
+        for tool, config in self.settings_configurations.items():
+            # Assert settings files exist
+            print(f"Ensuring settings file exists: {config.store_file}")
+            os.makedirs(os.path.dirname(config.store_file), exist_ok=True)
 
-    def align(self, audio_root: Path, output_root: Path, model_id: str) -> None:
+    def align(self, dataset_id: str, model_id: str) -> None:
+        print(f"Args received for align: dataset_id={dataset_id}, model_id={model_id}")
         models = list_models(self.id, True)
         settings = self.get_settings("align")
-
+        result, msg = create_alignment(
+            engine_id=self.id,
+            model_id=model_id,
+            dataset_id=dataset_id,
+            local=True,
+        )
+        print(f"Alignment creation result: {result}, message: {msg}")
+        
+        if result is False:
+            print(f"Alignment creation failed: {msg}")
+            return
+        alignment_meta = msg
+        dataset_meta = get_dataset(dataset_id)
         print(f"Aligning with settings: {settings}")
+        print(f"Dataset meta: {dataset_meta}")
+        print(f"Alignment meta: {alignment_meta}")
         model_path = models.get(model_id, None)
         print(f"Using model path: {model_path}")
+        audio_root = get_dataset_path(dataset_id)
         align_dirs(
             wavfile_or_dir=audio_root,
             transcriptfile_or_dir=audio_root,
-            outfile_or_dir=output_root,
+            outfile_or_dir=alignment_meta["tg_root"],
             aligner_model=model_path,
             filetype=settings.get("file_type", "wav"),
             use_speaker_adaptation=settings.get("use_speaker_adaptation", False),

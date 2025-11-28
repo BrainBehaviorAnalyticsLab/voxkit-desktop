@@ -4,9 +4,8 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QHBoxLayout, QLabel, QListWidget, QSizePolicy, QVBoxLayout, QWidget
 
 from voxkit.config import Dimensions
-from voxkit.gui.components.widgets import AnimatedStackedWidget
+from voxkit.gui.components import AnimatedStackedWidget
 
-from .evaluation_stacker import EvaluationStacker
 from .pllr_stacker import PLLRStacker
 from .prediction_stacker import PredictionStacker
 from .training_stacker import TrainingStacker
@@ -35,15 +34,15 @@ class PipelineFormStack(QWidget):
         self.menu_list = QListWidget()
         self.menu_list.setMaximumWidth(Dimensions["max_width"])
         self.menu_list.addItem("Ⓐ  Train Aligner")
-        self.menu_list.addItem("Ⓑ  Evaluate Aligner")
-        self.menu_list.addItem("Ⓒ  Predict Alignments")
+        # self.menu_list.addItem("Ⓑ  Evaluate Aligner")
+        self.menu_list.addItem("Ⓑ  Predict Alignments")
         self.menu_list.addItem("ⓩ  Extract PLLR Scores")
         content_layout.addWidget(self.menu_list)
 
         # Right side - Stacked widget for different pipeline pages
         self.stacked_widget = AnimatedStackedWidget()
         self.stacked_widget.addWidget(TrainingStacker(self.parent_window))
-        self.stacked_widget.addWidget(EvaluationStacker(self.parent_window))
+        # self.stacked_widget.addWidget(EvaluationStacker(self.parent_window))
         self.stacked_widget.addWidget(PredictionStacker(self.parent_window))
         self.stacked_widget.addWidget(PLLRStacker(self.parent_window))
         content_layout.addWidget(self.stacked_widget, stretch=1)

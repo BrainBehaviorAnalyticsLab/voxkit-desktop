@@ -1,5 +1,6 @@
+
 STORAGE_ROOT = "~/.tpe-speech-analysis"
-MODEL_PREFIX = "MODEL_"
-DATA_PREFIX = "META_"
-TRAIN_ROOT = "train"
+TEMP_STORAGE_ROOT = "./test_storage_root"
+MODELS_ROOT = "train"
 DATASETS_ROOT = "datasets"
+ALIGNMENTS_ROOT = "alignments"

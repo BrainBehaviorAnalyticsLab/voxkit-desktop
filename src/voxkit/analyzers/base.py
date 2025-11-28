@@ -5,8 +5,8 @@ voxkit.datasets.analysis.base
 This module defines the base class for dataset analysis methods.
 The public surface area includes:
 
-- :class:`DatasetAnalyzer`: Abstract base class for dataset analysis methods. Subclasses must 
-implement the ``name`` and ``description`` properties and the ``analyze`` method which returns 
+- :class:`DatasetAnalyzer`: Abstract base class for dataset analysis methods. Subclasses must
+implement the ``name`` and ``description`` properties and the ``analyze`` method which returns
 row dictionaries suitable for CSV export.
 """
 
@@ -22,7 +22,7 @@ class DatasetAnalyzer(ABC):
     the ``analyze`` method which returns row dictionaries suitable for CSV
     export.
     """
-    
+
     @property
     @abstractmethod
     def name(self) -> str:
@@ -32,7 +32,7 @@ class DatasetAnalyzer(ABC):
         Returns:
             str: Human readable name used to register and select the analyzer.
         """
-    
+
     @property
     @abstractmethod
     def description(self) -> str:
@@ -42,7 +42,7 @@ class DatasetAnalyzer(ABC):
         Returns:
             str: Brief description suitable for display in UI lists.
         """
-    
+
     @abstractmethod
     def analyze(self, dataset_path: str) -> List[Dict[str, Any]]:
         """
@@ -58,5 +58,3 @@ class DatasetAnalyzer(ABC):
             dictionary represents a single CSV row. Dictionary keys will be
             used as CSV column headers.
         """
-
-

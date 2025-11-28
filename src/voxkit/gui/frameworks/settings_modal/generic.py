@@ -21,7 +21,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from voxkit.gui.components.widgets.toggle_switch import ToggleSwitch
+from voxkit.gui.components import OverlayWidget, ToggleSwitch
 from voxkit.storage.utils import get_storage_root
 
 from .api import FieldConfig, FieldType, SettingsConfig
@@ -112,7 +112,6 @@ class GenericDialog(QDialog):
             parent: Parent widget to apply blur effect to.
         """
         try:
-            from voxkit.gui.components.widgets import OverlayWidget
 
             main_window = parent.parent
             overlay = OverlayWidget(main_window)
@@ -490,6 +489,8 @@ class GenericDialog(QDialog):
             ...     dialog.save()  # Persist settings to disk
         """
         values = self.get_values()
+        if not os.path.exists(os.path.dirname(self.store_values_path)):
+            os.makedirs(os.path.dirname(self.store_values_path))
         with open(self.store_values_path, "w") as f:
             json.dump(values, f, indent=4)
             print(f"Settings saved to {self.store_values_path}")

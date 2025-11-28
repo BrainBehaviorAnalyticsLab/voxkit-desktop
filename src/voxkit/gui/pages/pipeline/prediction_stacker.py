@@ -1,10 +1,10 @@
-import subprocess
 from pathlib import Path
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QButtonGroup,
     QComboBox,
+    QDialog,
     QFileDialog,
     QGroupBox,
     QHBoxLayout,
@@ -19,13 +19,11 @@ from PyQt6.QtWidgets import (
 
 from voxkit.config import Defaults
 from voxkit.engines import ManageEngines
-from voxkit.gui.components.modals.aligning_settings import (
-    AlignmentSettingsDialog as W2TGSettingsDialog,
-)
+from voxkit.gui.frameworks.settings_modal import GenericDialog
+from voxkit.gui.workers.worker_thread import WorkerThread
 from voxkit.storage.datasets import get_dataset_path, list_datasets
-from voxkit.storage.models import get_storage_root, list_models
+from voxkit.storage.models import list_models
 from voxkit.storage.validation import validate_path, validate_paths
-from voxkit.workers.worker_thread import WorkerThread
 
 from .styles import BrowseButtonStyle
 
@@ -321,14 +319,19 @@ class PredictionStacker(QWidget):
     def on_predict_settings(self):
         # Create and show settings dialog
         settings_dialog = None
-        if self.selected_mode == "W2TG":
-            settings_dialog = W2TGSettingsDialog(self, save_path=get_storage_root() + "/" + "w2tg_settings.json")
-            _ = settings_dialog.exec()
-            settings_dialog.save()  # Save settings to file
-        elif self.selected_mode == "MFA":
-            pass  # Implement MFA settings dialog
+        if self.selected_mode == "W2TGENGINE":
+            settings_dialog = GenericDialog(self, config=ManageEngines.get_engine("W2TGENGINE").get_settings_config("align"))
+            settings_dialog.exec()
+            
+            if settings_dialog.result() == QDialog.DialogCode.Accepted:
+                settings_dialog.save()
+        elif self.selected_mode == "MFAENGINE":
+            settings_dialog = GenericDialog(self, config=ManageEngines.get_engine("MFAENGINE").get_settings_config("align"))
+            settings_dialog.exec()
+            
+            if settings_dialog.result() == QDialog.DialogCode.Accepted:
+                settings_dialog.save()
         
-        # TODO - Automate Cleanup internally if possible
         self.parent.setGraphicsEffect(None)
 
     def browse_directory(self, line_edit):
@@ -388,31 +391,25 @@ class PredictionStacker(QWidget):
 
         # Start worker thread
         self.worker = WorkerThread(
-            lambda: self.predict_alignments_logic(corpus_path, output_path, mode)
+            lambda: self.predict_alignments_logic(self.predict_dataset_dropdown.currentText(), mode)
         )
         self.worker.finished.connect(self.on_predict_finished)
         self.worker.start()
 
-    def predict_alignments_logic(self, wav_files_path, textgrid_output_path, model):
+    def predict_alignments_logic(self, dataset_id: str, model) -> str:
         """Actual alignment prediction logic"""
         if model == "MFAENGINE":
             # Get the selected model from dropdown
             selected_mfa_model = self.mfa_dropdown.currentText()
 
             # Activate conda environment and run MFA
-            subprocess.run(
-                "conda run -n aligner mfa align "
-                + f'"{wav_files_path}" {selected_mfa_model} {selected_mfa_model} "{textgrid_output_path}"',
-                shell=True,
-                check=True,
-            )
+            pass
         elif model == "W2TGENGINE":
             # Get the selected model from dropdown
             selected_w2tg_model = self.w2tg_dropdown.currentText() or None
 
             W2TGEngine.align(
-                audio_root=Path(wav_files_path),
-                output_root=Path(textgrid_output_path),
+                dataset_id=dataset_id,
                 model_id=selected_w2tg_model,
             )
         else:

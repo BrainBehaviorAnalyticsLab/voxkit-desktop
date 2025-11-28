@@ -1,27 +1,32 @@
+import os
 from datetime import datetime
+from pathlib import Path
 
-from .config import STORAGE_ROOT
+from .config import STORAGE_ROOT, TEMP_STORAGE_ROOT
 
 
-def get_storage_root() -> str:
-    """Get the root directory for storing models and data."""
+def get_storage_root() -> Path:
+    """Get the root directory for storing VoxKit data."""
+    if os.getenv("TESTING", "0") == "1":
+        path = Path(TEMP_STORAGE_ROOT)
+        if not path.exists():
+            path.mkdir(parents=True, exist_ok=True)
+        return path
     if STORAGE_ROOT.startswith("~"):
-        from pathlib import Path
-
-        return str(Path(STORAGE_ROOT).expanduser())
+        return Path(STORAGE_ROOT).expanduser()
     else:
         raise ValueError("STORAGE_ROOT must be a valid path starting with '~'")
 
 
-def human_readable_date(date_str: str) -> str:
-    """Convert YYYYMMDD_HHMMSS to 'MM-DD-YYYY H:MM am/pm' (e.g. 11-14-2001 6:00 pm)."""
-    try:
-        dt = datetime.strptime(date_str, "%Y%m%d_%H%M%S")
-        s = dt.strftime("%m-%d-%Y %I:%M %p")  # "11-14-2001 06:00 PM"
-        date_part, time_part, ampm = s.split()
-        hour, minute = time_part.split(":")
-        hour = hour.lstrip("0")
-        return f"{date_part} {hour}:{minute} {ampm.lower()}"
-    except ValueError:
-        return date_str
+def generate_unique_id(prefix: str = None) -> str:
+    """Generate a unique identifier with the given prefix and current timestamp."""
+    now = datetime.now().strftime("%Y%m%d_%H%M%S")
+    if prefix:
+        return f"{prefix}_{now}"
+    return now
 
+
+def readable_from_unique_id(date_str: str) -> str:
+    """Convert a unique ID timestamp (YYYYMMDD_HHMMSS) to a human-readable format."""
+    dt = datetime.strptime(date_str, "%Y%m%d_%H%M%S")
+    return dt.strftime("%B %d, %Y at %I:%M:%S %p")

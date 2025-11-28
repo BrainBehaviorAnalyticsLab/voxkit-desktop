@@ -3,6 +3,7 @@ from pathlib import Path
 from pypllrcomputer import compute_pllr
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
+    QComboBox,
     QDialog,
     QFileDialog,
     QHBoxLayout,
@@ -15,30 +16,98 @@ from PyQt6.QtWidgets import (
 )
 
 from voxkit.config import Defaults
-from voxkit.gui.components.modals.extraction_settings import ExtractionSettingsDialog
+from voxkit.gui.frameworks.settings_modal import (
+    FieldConfig,
+    FieldType,
+    GenericDialog,
+    SettingsConfig,
+)
+from voxkit.gui.workers.worker_thread import WorkerThread
+from voxkit.storage.datasets import get_dataset_path, list_datasets
 from voxkit.storage.validation import validate_path, validate_paths
-from voxkit.workers.worker_thread import WorkerThread
 
 from .styles import BrowseButtonStyle
 
+FIELDS: list[FieldConfig] = [
+    FieldConfig(
+        name="acoustic_model",
+        label="Acoustic Model:",
+        field_type=FieldType.LINEEDIT,
+        default_value="pkadambi/w2v2_pronunciation_score_model",
+        tooltip="HuggingFace model name or path to local model directory.",
+    ),
+    FieldConfig(
+        name="phone_key",
+        label="Phone Key:",
+        field_type=FieldType.LINEEDIT,
+        default_value="ha phones",
+        tooltip="Key in the model's config for phone labels.",
+    ),
+    FieldConfig(
+        name="recompute_probas",
+        label="Recompute Probabilities:",
+        field_type=FieldType.CHECKBOX,
+        default_value=False,
+        tooltip="Check to recompute framewise probabilities even if cached data exists.",
+    ),
+    FieldConfig(
+        name="likelihood_dct",
+        label="Likelihood Dict Path:",
+        field_type=FieldType.LINEEDIT,
+        default_value="./computed-likelihoods/likelihood_dict.pkl",
+        tooltip="Path to save/load the computed likelihood dictionary.",
+    ),
+    FieldConfig(
+        name="aggregation_function",
+        label="Aggregation Function:",
+        field_type=FieldType.COMBOBOX,
+        default_value="aggregate_by_phoneme_occurrence",
+        options=[
+            "aggregate_by_phoneme_occurrence",
+            "aggregate_by_phoneme_average",
+            "aggregate_by_phoneme_median",
+        ],
+        tooltip="Method to aggregate framewise probabilities into phonewise scores.",
+    ),
+]
 
+
+PLLR_SETTINGS_CONFIG: SettingsConfig = SettingsConfig(
+    title="PLLR Extraction Settings",
+    dimensions=(400, 400),
+    apply_blur=True,
+    fields=FIELDS,
+    store_file="pllr_settings.json",
+)   
 class PLLRStacker(QWidget):
     def __init__(self, parent=None):
         super().__init__()
         self.parent = parent
+        self.pllr_dataset_dropdown = None
         self.init_ui()
 
     def on_extract_settings(self):
-        # Create and show settings dialog
-        settings_dialog = ExtractionSettingsDialog(self)
-
+        
+        settings_dialog = GenericDialog(self, PLLR_SETTINGS_CONFIG)
+         
         result = settings_dialog.exec()
 
         # Clean up
         self.parent.setGraphicsEffect(None)
 
         if result == QDialog.DialogCode.Accepted:
-            print("Extraction settings updated")
+            settings_dialog.save()
+    
+    def reload_datasets(self):
+        """Reload datasets in the dropdown"""
+        self.pllr_dataset_dropdown.clear()
+        datasets = list_datasets()
+        if datasets:
+            self.pllr_dataset_dropdown.addItems([d["name"] for d in datasets])
+            self.pllr_dataset_dropdown.setEnabled(True)
+        else:
+            self.pllr_dataset_dropdown.addItem("No datasets registered")
+            self.pllr_dataset_dropdown.setEnabled(False)
 
     def init_ui(self):
         """Create the extract PLLR scores page"""
@@ -99,21 +168,44 @@ class PLLRStacker(QWidget):
         textgrid_layout.addWidget(self.textgrid_path_browse)
         layout.addLayout(textgrid_layout)
 
-        # Wav/lab Path
-        wavlab_label = QLabel("Audio Path")
-        wavlab_label.setStyleSheet("font-weight: bold; color: #34495e;")
-        layout.addWidget(wavlab_label)
-
-        wavlab_layout = QHBoxLayout()
-        wavlab_layout.setSpacing(5)
-        self.wavlab_path = QLineEdit(Defaults["audio_path"])
-        self.wavlab_browse = QPushButton("Browse")
-        self.wavlab_browse.setFixedWidth(100)
-        self.wavlab_browse.setStyleSheet(BrowseButtonStyle)
-        self.wavlab_browse.clicked.connect(lambda: self.browse_directory(self.wavlab_path))
-        wavlab_layout.addWidget(self.wavlab_path, stretch=1)
-        wavlab_layout.addWidget(self.wavlab_browse)
-        layout.addLayout(wavlab_layout)
+        # Dataset selection dropdown
+        dataset_label = QLabel("PLLR Dataset")
+        dataset_label.setStyleSheet("font-weight: bold; color: #2c3e50;")
+        layout.addWidget(dataset_label)
+        
+        self.pllr_dataset_dropdown = QComboBox()
+        self.pllr_dataset_dropdown.setPlaceholderText("Select Dataset")
+        self.pllr_dataset_dropdown.setStyleSheet("""
+            QComboBox {
+                padding: 8px;
+                border: 1px solid #bdc3c7;
+                border-radius: 4px;
+                background-color: white;
+                min-height: 25px;
+            }
+            QComboBox:hover {
+                border: 1px solid #3498db;
+            }
+            QComboBox::drop-down {
+                border: none;
+                width: 30px;
+            }
+            QComboBox::down-arrow {
+                image: url(down_arrow.png);
+                width: 12px;
+                height: 12px;
+            }
+        """)
+        
+        # Populate with registered datasets
+        datasets = list_datasets()
+        if datasets:
+            self.pllr_dataset_dropdown.addItems([d["name"] for d in datasets])
+        else:
+            self.pllr_dataset_dropdown.addItem("No datasets registered")
+            self.pllr_dataset_dropdown.setEnabled(False)
+        
+        layout.addWidget(self.pllr_dataset_dropdown)
 
         # Output Path
         extract_output_label = QLabel("Output Path")
@@ -181,10 +273,28 @@ class PLLRStacker(QWidget):
 
     def on_extract_pllr(self):
         """Handle Extract PLLR button click"""
+        # Get selected dataset
+        selected_dataset = self.pllr_dataset_dropdown.currentText()
+        if not selected_dataset or selected_dataset == "Select Dataset":
+            QMessageBox.warning(
+                self, "No Dataset Selected",
+                "Please select a dataset from the dropdown."
+            )
+            return
+        
+        # Get dataset path
+        wavlab_path = get_dataset_path(selected_dataset)
+        if not wavlab_path:
+            QMessageBox.warning(
+                self, "Invalid Dataset",
+                f"Could not find path for dataset '{selected_dataset}'."
+            )
+            return
+        
         # Validate inputs
         paths = {
             "TextGrid Path": self.textgrid_path.text(),
-            "Wav/lab Path": self.wavlab_path.text(),
+            "Wav/lab Path": wavlab_path,
             "Output Path": self.extract_output_path.text(),
         }
 
@@ -193,7 +303,6 @@ class PLLRStacker(QWidget):
 
         # Get current settings
         textgrid_path = self.textgrid_path.text()
-        wavlab_path = self.wavlab_path.text()
         output_path = self.extract_output_path.text()
 
         print("Extract PLLR clicked!")

@@ -19,6 +19,7 @@ from .base import AlignmentEngine
 # Global registry
 _REGISTERED_ENGINES: dict[str, AlignmentEngine] = {}
 
+
 def register_engine(cls=None, *, author: str | None = None):
     """
     Decorator to register an AlignmentEngine subclass in the global registry.

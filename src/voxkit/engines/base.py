@@ -3,8 +3,8 @@ Base utilities and abstract interface for alignment engines.
 
 This module defines the :class:`AlignmentEngine` abstract base class which
 encapsulates the contract every alignment engine must implement to
-integrate with VoxKit. The base class handles settings management. 
-Concrete engine implementations should subclass this base class and implement the required 
+integrate with VoxKit. The base class handles settings management.
+Concrete engine implementations should subclass this base class and implement the required
 methods for training and alignment, as well as specific validation criteria.
 
 -------------
@@ -26,8 +26,8 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Literal
 
-from voxkit.gui.frameworks.settings_modal.generic import SettingsConfig
-from voxkit.storage.paths import get_storage_root
+from voxkit.gui.frameworks.settings_modal import SettingsConfig
+from voxkit.storage.utils import get_storage_root
 
 """
 A tool is a unit of compatible functionality present in an engine that can be used to perform
@@ -36,6 +36,7 @@ has its own settings that are stored in a JSON file.
 """
 
 ToolType = Literal["train", "align"]
+
 
 class AlignmentEngine(ABC):
     """
@@ -69,8 +70,22 @@ class AlignmentEngine(ABC):
         )
         self.human_readable_name = human_readable_name or self.__class__.__name__
         self.id = id or self.__class__.__name__
+        
+    @abstractmethod
+    def align(self, dataset_id: str, model_id: str) -> None:
+        """
+        Perform alignment on a dataset using a specified model.
 
+        Implementations should process the dataset identified by
+        ``dataset_id`` using the alignment model identified by
+        ``model_id``.
 
+        Args:
+            dataset_id: Identifier of the dataset to align.
+            model_id: Identifier of the alignment model to use.
+        """
+        raise NotImplementedError()
+    
     @abstractmethod
     def train_aligner(
         self, audio_root: Path, textgrid_root: Path, base_model_id: str | None, new_model_id: str

@@ -24,6 +24,7 @@ dependencies = [
     "pre-commit>=4.3.0",
     "pytest>=8.4.2",
     "pydantic>=2.12.3",
+    "pdoc>=16.0.0",
 ]
 
 [dependency-groups]
@@ -34,6 +35,9 @@ dev = [
     "pre-commit>=4.3.0",
     "ruff>=0.14.0",
     "mypy>=1.18.2"
+]
+docs = [
+    "pdoc>=16.0.0",
 ]
 installation = [
     "pyinstaller>=5.10.1",
