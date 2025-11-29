@@ -1,18 +1,54 @@
 """
-Dataset management module for registering, validating, and managing speech datasets.
+Dataset Management Module
+-------------------------
+
+    Specialized CRUD operations for managing datasets within the VoxKit storage system.
+
+Directory Structure (Many per Environment)
+-------------------------------
+Each dataset follows a hierarchical structure:
+    
+    my_dataset/
+    ├── voxkit_dataset.json       # Dataset metadata
+    ├── alignments/               # Alignment outputs storage
+    └── cache/                    # Optional cached copy of dataset
+        ├── speaker_001/
+        │   ├── audio_001.wav
+        │   ├── audio_001.lab
+        │   └── ...
+        └── speaker_002/
+            └── ...
+
+API
+-----
+- create_dataset: Create a new dataset metadata and directories.
+- get_dataset_metadata: Retrieve metadata for a specific dataset.
+- list_datasets_metadata: List all existing datasets.
+- update_dataset_metadata: Update metadata fields for a specific dataset.
+- delete_dataset: Delete a registered dataset and its metadata.
+- export_dataset: Export a dataset to a specified output path.
+- import_dataset: Import an existing dataset into VoxKit storage.
+
+Notes
+-----
+- All dataset IDs are unique timestamps with microsecond precision
+- Failed operations automatically clean up partial changes
+- Dataset validation occurs before creation to prevent invalid data
+- Cached datasets are copied for faster access
+- transcribed flag indicates presence of transcriptions
+- Importing datasets adjusts metadata and validates structure
 """
 import json
 import os
 import shutil
 from pathlib import Path
-from typing import List, Optional, Tuple, TypedDict
+from typing import List, Tuple, TypedDict
 
 from .config import ALIGNMENTS_ROOT, DATASETS_ROOT
 from .utils import generate_unique_id, get_storage_root, readable_from_unique_id
 
 
 class DatasetMetadata(TypedDict):
-    """Metadata structure for datasets"""
     name: str
     id: str
     description: str
@@ -24,20 +60,35 @@ class DatasetMetadata(TypedDict):
 
 
 def _get_datasets_root() -> Path:
-    """Get the root directory for storing VoxKit datasets."""
+    """Get the root directory for storage relative to voxkit storage root.
+    
+    Returns:
+        Path to datasets storage root
+    """
     root = get_storage_root() / DATASETS_ROOT
-    os.makedirs(root, exist_ok=True)
+    root.mkdir(parents=False, exist_ok=True)
     return root
 
-def _get_dataset_root(dataset_id: DatasetMetadata.id) -> Path | None:
-    """Get the root directory for a specific dataset by name."""
-    dataset_root = _get_datasets_root() / dataset_id
-    if dataset_root.exists():
-        return dataset_root
+def _get_dataset_root(dataset_id: DatasetMetadata["id"]) -> Path | None:
+    """Get the root directory for a specific dataset by ID.
+    
+    Args:
+        dataset_id: Identifier of the dataset
+        
+    Returns:"""
+    datasets_root = _get_datasets_root()
+    if datasets_root:
+        dataset_root = datasets_root / dataset_id
+        if dataset_root.exists():
+            return dataset_root
     return None
 
 def _get_dataset_metadata(dataset_root: Path) -> DatasetMetadata | None:
-    """Load dataset metadata from the given dataset root directory."""
+    """Load dataset metadata from the given dataset root directory.
+
+    Args:
+        dataset_root: Path to the dataset root directory
+    """
     try:
         metadata_path = dataset_root / "voxkit_dataset.json"
         if not metadata_path.exists():
@@ -67,14 +118,20 @@ def create_dataset(
     Returns:
         Tuple of (success, message)
     """
+    # Validate dataset structure
+    valid, msg = validate_dataset(Path(original_path))
+    if not valid:
+        return False, msg
+    
     now = generate_unique_id()
+
     try:
         humannow = readable_from_unique_id(now)
         metadata = DatasetMetadata(
             name=name,
             id=now,
             description=description,
-            original_path=original_path,
+            original_path=str(original_path),
             cached=cached,
             anonymize=anonymize,
             transcribed=transcribed,
@@ -100,18 +157,27 @@ def create_dataset(
             cache_dir.mkdir(parents=False, exist_ok=False)
             shutil.copytree(original_path, cache_dir, dirs_exist_ok=True)
 
-        return True, "Dataset metadata created successfully"
+        return True, metadata
     
     except Exception as e:
         # Clean up on failure
         dataset_dir = _get_datasets_root() / now
         if dataset_dir.exists():
             shutil.rmtree(dataset_dir, ignore_errors=False)
+
+        print("Error during dataset creation:", str(e))
         return False, f"Failed to create dataset metadata: {str(e)}"
 
 
-def get_dataset_metadata(dataset_id: DatasetMetadata.id) -> DatasetMetadata:
-    """Get the metadata for a specific dataset."""
+def get_dataset_metadata(dataset_id: DatasetMetadata["id"]) -> DatasetMetadata | None:
+    """Get the metadata for a specific dataset.
+    
+    Args:
+        dataset_id: ID of the dataset to retrieve
+
+    Returns:
+        Dataset metadata dictionary or None if not found  
+    """
     try:
         dataset_dir = _get_datasets_root() / dataset_id
         metadata = _get_dataset_metadata(dataset_dir)
@@ -121,19 +187,18 @@ def get_dataset_metadata(dataset_id: DatasetMetadata.id) -> DatasetMetadata:
             
     except Exception as e:
         print(f"Error retrieving dataset metadata: {str(e)}")
-        raise e
+        return None
 
 
 def list_datasets_metadata() -> List[DatasetMetadata]:
-    """
-    List all existing datasets.
+    """List all existing datasets.
     
     Returns:
         List of dataset metadata dictionaries
     """
     datasets = []
     datasets_root = _get_datasets_root()
-    
+
     try:
         for entry in os.scandir(datasets_root):
             if entry.is_dir():
@@ -150,21 +215,14 @@ def list_datasets_metadata() -> List[DatasetMetadata]:
 
 
 def update_dataset_metadata(
-    dataset_id: DatasetMetadata.id,
-    description: Optional[str] = None,
-    cached: Optional[bool] = None,
-    anonymize: Optional[bool] = None,
-    transcribed: Optional[bool] = None,
+    dataset_id: str,
+    updates: dict,
 ) -> Tuple[bool, str]:
-    """
-    Update the metadata for a specific dataset.
+    """Update the metadata for a specific dataset.
     
     Args:
         dataset_id: ID of the dataset to update
-        description: New description (if updating)
-        cached: New cached status (if updating)
-        anonymize: New anonymize status (if updating)
-        transcribed: New transcribed status (if updating)
+        updates: Dictionary of metadata fields to update
 
     Returns:
         Tuple of (success, message)
@@ -172,14 +230,14 @@ def update_dataset_metadata(
     try:
         metadata = get_dataset_metadata(dataset_id)
         
-        if description is not None:
-            metadata["description"] = description
-        if cached is not None:
-            metadata["cached"] = cached
-        if anonymize is not None:
-            metadata["anonymize"] = anonymize
-        if transcribed is not None:
-            metadata["transcribed"] = transcribed
+        if updates["description"] is not None:
+            metadata["description"] = updates["description"]
+        if updates["cached"] is not None:
+            metadata["cached"] = updates["cached"]
+        if updates["anonymize"] is not None:
+            metadata["anonymize"] = updates["anonymize"]
+        if updates["transcribed"] is not None:
+            metadata["transcribed"] = updates["transcribed"]
         
         # Save the updated metadata
         metadata_path = _get_datasets_root() / dataset_id / "voxkit_dataset.json"
@@ -196,9 +254,8 @@ def update_dataset_metadata(
         return False, f"Failed to update dataset metadata: {str(e)}"
 
 
-def delete_dataset(dataset_id: DatasetMetadata.id) -> Tuple[bool, str]:
-    """
-    Delete a registered dataset.
+def delete_dataset(dataset_id: DatasetMetadata["id"]) -> Tuple[bool, str]:
+    """Delete a registered dataset.
     
     Args:
         dataset_id: ID of the dataset to delete
@@ -206,7 +263,13 @@ def delete_dataset(dataset_id: DatasetMetadata.id) -> Tuple[bool, str]:
     Returns:
         Tuple of (success, message)
     """
+    if not dataset_id:
+        return False, "Dataset ID cannot be empty."
+    
     dataset_path = _get_datasets_root() / dataset_id
+
+    if dataset_path is None:
+        return False, f"Dataset '{dataset_id}' not found"
     
     if not dataset_path.exists():
         return False, f"Dataset '{dataset_id}' not found"
@@ -219,7 +282,17 @@ def delete_dataset(dataset_id: DatasetMetadata.id) -> Tuple[bool, str]:
         return False, f"Failed to delete dataset: {str(e)}"
 
 
-def export_dataset(dataset_id: DatasetMetadata.id, output_root: Path) -> Tuple[bool, str]:
+def export_dataset(dataset_id: DatasetMetadata["id"], output_root: Path) -> Tuple[bool, str]:
+    """Export an existing dataset to a specified output path.
+
+    Args:
+        dataset_id: Identifier of the dataset to export.
+        output_root: Path to the output directory where the dataset will be copied.
+
+    Returns:
+        Tuple of (success, message)
+    """
+    
     if not output_root.exists():
         return False, f"Output path '{output_root}' does not exist."
     else:
@@ -241,12 +314,16 @@ def export_dataset(dataset_id: DatasetMetadata.id, output_root: Path) -> Tuple[b
     
 
 def import_dataset(dataset_path: Path) -> Tuple[bool, str]:
-    """Import an existing dataset into VoxKit storage."""
+    """Import an existing dataset into VoxKit storage.
+    
+    Args:
+        dataset_path: Path to the dataset to import.
 
+    Returns:
+        Tuple of (success, message)
+    """
     # Validate dataset structure
-    success, msg = validate_dataset(dataset_path)
-    if not success:
-        return False, msg
+    valid, valid_msg = validate_dataset(dataset_path / "cache")
     
     now = generate_unique_id()
     dataset_dest = _get_datasets_root() / now
@@ -265,7 +342,11 @@ def import_dataset(dataset_path: Path) -> Tuple[bool, str]:
             original_location_exists = Path(dataset_metadata["original_path"]).exists()
             if not original_location_exists:
                 return False, f"Original dataset path {dataset_metadata['original_path']} does not exist; cannot import non-cached dataset."
-
+        
+        # Validate dataset 
+        elif not valid:
+            return False, f"Dataset validation failed: {valid_msg}"
+           
         metadata_path = dataset_dest / "voxkit_dataset.json"
         
         if not dataset_dest.exists():
@@ -281,16 +362,17 @@ def import_dataset(dataset_path: Path) -> Tuple[bool, str]:
         # Cleanup on failure
         if dataset_dest.exists():
             shutil.rmtree(dataset_dest, ignore_errors=True)
+        print("Error during dataset import:", str(e))
         return False, f"Failed to import dataset: {str(e)}"
 
 
 def validate_dataset(
     dataset_path: Path
 ) -> Tuple[bool, str]:
-    """
-    Validate if a dataset follows the organization pattern.
+    """Validate if a dataset follows the organization pattern.
     
     Expected structure:
+
         dataset_path/
         ├── speaker_001/
         │   ├── audio_001.wav
@@ -313,6 +395,14 @@ def validate_dataset(
         return False, f"Dataset path '{dataset_path}' does not exist."
     if not dataset_path.is_dir():
         return False, f"Dataset path '{dataset_path}' is not a directory."
+    if not os.listdir(dataset_path):
+        return False, f"Dataset path '{dataset_path}' is empty."
+    for subdir in os.listdir(dataset_path):
+        subdir_path = os.path.join(dataset_path, subdir)
+        if not os.path.isdir(subdir_path):
+            return False, f"Expected speaker directories in dataset path '{dataset_path}', found file '{subdir_path}'."
+        if not os.listdir(subdir_path):
+            return False, f"Speaker directory '{subdir_path}' is empty."
     
     speaker_dirs = [d for d in os.listdir(dataset_path) if os.path.isdir(os.path.join(dataset_path, d))]
     if not speaker_dirs:

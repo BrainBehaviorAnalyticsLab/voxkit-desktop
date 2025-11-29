@@ -1,6 +1,13 @@
+"""
+Storage Configuration
+---------------------
+"""
 
-STORAGE_ROOT = "~/.tpe-speech-analysis"
-TEMP_STORAGE_ROOT = "./test_storage_root"
-MODELS_ROOT = "train"
-DATASETS_ROOT = "datasets"
-ALIGNMENTS_ROOT = "alignments"
+STORAGE_ROOT = "~/.voxkit_storage" 
+MODELS_ROOT = "train" # Path from STORAGE_ROOT to models
+DATASETS_ROOT = "datasets" # Path from STORAGE_ROOT to datasets
+ALIGNMENTS_ROOT = "alignments" # Path from STORAGE_ROOT/DATASETS_ROOT to alignments
+
+    
+
+

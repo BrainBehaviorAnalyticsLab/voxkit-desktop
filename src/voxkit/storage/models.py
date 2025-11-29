@@ -1,11 +1,47 @@
+"""
+Model Management Module
+-----------------------
+
+    Specialized CRUD operations for managing models within the VoxKit storage system.
+
+Directory Structure (None or Many per Engine) 
+-------------------
+Each model follows a hierarchical structure:
+
+    chosen_engine/
+    ├── train/
+    │   ├── model_id_1/
+    │   │   ├── entrypoint.model      # Model file
+    │   │   ├── data/                 # Data directory
+    │   │   ├── eval/                 # Evaluation directory
+    │   │   ├── train/                # Training directory
+    │   │   └── voxkit_model.json     # Model metadata
+    │   ├── model_id_2/
+    │   │   ├── ...
+    │   └── ...
+
+API
+---
+- create_model: Create a new model entry in storage.
+- get_model_metadata: Retrieve metadata for a specific model.
+- update_model_metadata: Update the status or details of an existing model.
+- list_models: List all models for a given engine.
+- delete_model: Remove a model from storage.
+
+Notes
+-----
+- All paths are managed using pathlib.
+- Added branching by engine_id may be neccesary to bridge different model formats.
+- Error handling only exposes messages.
+- Raises FileNotFoundError if model or metadata not found.
+"""
 import json
-import os
 import shutil
 from pathlib import Path
 from typing import Tuple, TypedDict
 
 from .config import MODELS_ROOT
-from .utils import generate_unique_id, get_storage_root, readable_from_unique_id
+from voxkit.storage.utils import generate_unique_id, get_storage_root, readable_from_unique_id
 
 
 class ModelMetadata(TypedDict):
@@ -19,8 +55,15 @@ class ModelMetadata(TypedDict):
     id: str
 
 
-def _get_model_root(engine_id: str, model_id: str) -> str:
+def _get_model_root(engine_id: str, model_id: ModelMetadata) -> Path | None:
     """Get the root directory for storing models for a given engine.
+    
+    Args:
+        engine_id: Identifier of the engine the model belongs to.
+        model_id: Identifier of the model.
+
+    Returns:
+        Path to the model root directory or None if not found.
     """
     model_root = Path(f"{get_storage_root()}/{engine_id}/{MODELS_ROOT}/{model_id}")
     if model_root.exists():
@@ -32,15 +75,30 @@ def create_model(
     engine_id: str,
     model_name: str
 ) -> Tuple[True, ModelMetadata] | Tuple[False, str]:
+    """Create a new model entry in the storage.
+    
+    Args:
+        engine_id: Identifier of the engine the model belongs to.
+        model_name: Human-readable name for the model.
+
+    Returns:
+        Tuple of (success, ModelMetadata) or (failure, error message)
+    """
+    
+    engine_models_root = Path(f"{get_storage_root()}/{engine_id}/{MODELS_ROOT}")
+    if not engine_models_root.exists():
+        return False, f"Unsupported engine_id: {engine_id}"
+    
     now = generate_unique_id()
-    model_root = Path(f"{get_storage_root()}/{engine_id}/{MODELS_ROOT}/{now}")
+    model_root = Path(f"{engine_models_root}/{now}")
     print(f"Creating model at: {model_root}")
+
     try:
         model_path = model_root / "entrypoint.model"
-        print(f"Model path will be: {model_path}")
         data_path = model_root / "data"
         eval_path = model_root / "eval"
         train_path = model_root / "train"
+
         humandate = readable_from_unique_id(now)
         model_metadata = ModelMetadata(
             name=model_name or f"Model_{now}",
@@ -52,6 +110,7 @@ def create_model(
             download_date=humandate,
             id=now
         )
+
         # Create model directories
         model_path.mkdir(parents=True, exist_ok=False)
         data_path.mkdir(parents=True, exist_ok=False)
@@ -59,26 +118,24 @@ def create_model(
         train_path.mkdir(parents=True, exist_ok=False)
         metadata_path = model_root / "voxkit_model.json"
 
-        print(f"Metadata path will be: {metadata_path}")
-        # Create metadata file and write metadata
-        
+        # Create metadata file and write metadata 
         with open(metadata_path, "w") as f:
             json.dump(model_metadata, f, indent=4)
 
         return True, model_metadata
     
     except Exception as e:
-        print("Exception occurred during model creation.")
-        print(e)
+        print(f"Exception occurred during model creation: {e}")
         # Clean up partially created model directory
         if model_root and model_root.exists():
             shutil.rmtree(model_root)
+
         return False, "Failed to create model metadata."
 
 
 def update_model_metadata(
     engine_id: str,
-    model_id: ModelMetadata["id"],
+    model_id: str,
     updates: dict
 ) -> Tuple[bool, str]:
     """Update metadata for an existing model.
@@ -103,7 +160,7 @@ def update_model_metadata(
         # Update fields
         for key, value in updates.items():
             if key in metadata:
-                metadata[key] = value
+                metadata[key] = str(value)
         
         with open(metadata_path, "w") as f:
             json.dump(metadata, f, indent=4)
@@ -111,11 +168,19 @@ def update_model_metadata(
         return True, "Model metadata updated successfully."
     
     except Exception as e:
-        return False, f"Failed to update model metadata: {str(e)}"
+        print(f"Exception occurred during model metadata update: {e}")
+        return False, f"Failed to update model metadata."
 
 
 def list_models(engine_id: str) -> list[ModelMetadata]:
-    """List available model names for the given engine."""
+    """List available model names for the given engine.
+    
+    Args:
+        engine_id: Identifier of the engine to list models for.
+
+    Returns:
+        List of ModelMetadata dictionaries.
+    """
     try:
         models_root = Path(f"{get_storage_root()}/{engine_id}/{MODELS_ROOT}")
         if not models_root.exists():
@@ -136,8 +201,19 @@ def list_models(engine_id: str) -> list[ModelMetadata]:
         return []
                     
 
-def get_model_metadata(engine_id, model_id: ModelMetadata["id"]) -> ModelMetadata:
-    """Get metadata for a specific model by its ID."""
+def get_model_metadata(engine_id: str, model_id: str) -> ModelMetadata:
+    """Get metadata for a specific model by its ID.
+
+    Args:
+        engine_id: Identifier of the engine the model belongs to.
+        model_id: Identifier of the model.
+
+    Returns:
+        ModelMetadata dictionary.
+
+    Raises:
+        FileNotFoundError: If the model or metadata file is not found.
+    """
     model_root = _get_model_root(engine_id, model_id)
     if not model_root:
         raise FileNotFoundError(f"Model '{model_id}' for engine '{engine_id}' not found")
@@ -149,10 +225,18 @@ def get_model_metadata(engine_id, model_id: ModelMetadata["id"]) -> ModelMetadat
         return metadata
     
 
-def delete_model(engine_id, model_id: ModelMetadata["id"]):
-    """Delete a model given its engine ID and model ID."""
+def delete_model(engine_id: str, model_id: str) -> Tuple[bool, str]:
+    """Delete a model given its engine ID and model ID.
+    
+    Args:
+        engine_id: Identifier of the engine the model belongs to.
+        model_id: Identifier of the model to delete.
+        
+    Returns:
+        Tuple of (success, message)"""
     model_path = _get_model_root(engine_id, model_id)
-    if os.path.exists(model_path):
-        shutil.rmtree(model_path)
-    else:
-        raise FileNotFoundError(f"Model path does not exist: {model_path}")
+    shutil.rmtree(model_path)
+    return True, "Model deleted successfully."
+
+
+    

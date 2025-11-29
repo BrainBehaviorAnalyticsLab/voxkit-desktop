@@ -1,24 +1,21 @@
 
-import os
 import shutil
+from ..config import MODELS_ROOT
+from pathlib import Path
 
-from ..utils import get_storage_root
+ENGINE_IDS = ["ENGINE_A", "ENGINE_B", "ENGINE_C"]
 
-
-def activate_test_environment(engine_ids) -> None:
+def activate_test_environment(storage_root, engine_ids=ENGINE_IDS) -> None:
     """Activate the test environment by overriding storage paths."""
-    import os
-    os.environ["TESTING"] = "1"
     for engine_id in engine_ids:
-        engine_root = get_storage_root() / engine_id
-        engine_root.mkdir(parents=True, exist_ok=True)
+        engine_root = storage_root / engine_id / MODELS_ROOT
+        engine_root.mkdir(parents=True, exist_ok=False)
 
-
-def deactivate_test_environment() -> None:
+def deactivate_test_environment(storage_root) -> None:
     """Deactivate the test environment by resetting storage paths."""
-    os.environ["TESTING"] = "1"
-    if os.environ.get("TESTING") == "1":
-        storage_root = get_storage_root()
-        if storage_root.exists():
-            shutil.rmtree(storage_root)
+    if storage_root.exists():
+        shutil.rmtree(storage_root)
+
+def mock_get_storage_root():
+    return Path("./temp_test_storage_models")
 
