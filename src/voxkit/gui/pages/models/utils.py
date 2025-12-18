@@ -4,21 +4,62 @@ Export handler for copying model files to a download folder
 
 import shutil
 from pathlib import Path
+from datetime import datetime
+import json
 
+from voxkit.storage import models
 from PyQt6.QtWidgets import QFileDialog, QMessageBox
 
 
-def handle_import(parent_widget, data: dict, current_category: str):
-    pass
+def handle_import(parent_widget, current_category: str):
+    """
+    Handle importing models into the storage.
+
+    Args:
+        parent_widget: Parent widget for dialogs
+        current_category: Current category being viewed
+
+    Returns:
+        tuple: (success: bool, message: str)
+    """
+    # Ask user to select model files or directory
+    import_path = QFileDialog.getExistingDirectory(
+        parent_widget, "Select Models Directory", str(Path.home())
+    )
+
+    if not import_path:
+        return False, ""
+    
 
 
-def handle_delete(parent_widget, selected_items: list, data: dict, current_category: str):
-    pass
+    return models.import_models(current_category, Path(import_path))
+
+
+def handle_delete(parent_widget, selected_items: list, current_category: str) -> tuple[bool, str]:
+    """
+    Handle deleting selected models from storage.   
+
+    Args:
+        parent_widget: Parent widget for dialogs
+        selected_items: List of selected item keys
+        current_category: Current category being viewed
+    Returns:
+        tuple: (success: bool, message: str)
+    """
+    try:
+        for item in selected_items:
+            success, msg = models.delete_model(current_category, item["id"])
+            if not success:
+                return False, f"Failed to delete model {item['id']}: {msg}"
+            
+        return True, "Selected models deleted successfully."
+    except Exception as e:
+        return False, f"Error deleting models: {str(e)}"
 
 
 def handle_export(
-    parent_widget, folder_name: str, selected_items: list, data: dict, current_category: str
-):
+    parent_widget, selected_items: list[dict], current_category: str
+) -> tuple[bool, str]:
     """
     Export selected items by copying their paths to a new folder.
 
@@ -39,50 +80,46 @@ def handle_export(
         )
 
         if not export_base_dir:
-            return False, "Export cancelled"
+            return False, ""
+        
+        folder_name = f'voxkit_models_{datetime.now().strftime("%Y%m%d_%H%M%S")}'
 
         # Create the export folder
         export_folder = Path(export_base_dir) / folder_name
         export_folder.mkdir(parents=True, exist_ok=True)
 
-        # Get category data
-        category_data = data.get(current_category, {})
 
         # Track success/failure
         copied_count = 0
         failed_items = []
 
         # Copy each selected item
-        for item_key in selected_items:
-            item_data = category_data.get(item_key)
+        for item in selected_items:
 
-            if not item_data:
-                failed_items.append(f"{item_key} (not found in data)")
+            if not item:
+                failed_items.append(f"{item} (not found in data)")
                 continue
 
             # Get source path
-            if isinstance(item_data, dict):
-                source_path = Path(item_data.get("path", ""))
+            if isinstance(item, dict):
+                source_path = models._get_model_root(current_category, item["id"])
             else:
-                source_path = Path(str(item_data))
+               failed_items.append(f"{item} (invalid item format)")
 
             if not source_path.exists():
-                failed_items.append(f"{item_key} (source path does not exist)")
+                failed_items.append(f"{str(source_path)} (source path does not exist)")
                 continue
 
             # Determine destination
-            if source_path.is_file():
-                # Copy file
-                dest_path = export_folder / source_path.name
-                shutil.copy2(source_path, dest_path)
-                copied_count += 1
-            elif source_path.is_dir():
+            if source_path.is_dir():
                 # Copy directory
                 dest_path = export_folder / source_path.name
                 shutil.copytree(source_path, dest_path, dirs_exist_ok=True)
                 copied_count += 1
             else:
-                failed_items.append(f"{item_key} (unknown type)")
+                failed_items.append(f"{item} (unknown type)")
+
+        
 
         # Build result message
         if copied_count == len(selected_items):

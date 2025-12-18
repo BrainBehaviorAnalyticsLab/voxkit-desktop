@@ -3,7 +3,7 @@ import os
 from PyQt6.QtCore import QThread, pyqtSignal
 
 from voxkit.analyzers import ManageAnalyzers
-from voxkit.storage.datasets import create_dataset, get_datasets_root, validate_dataset
+from voxkit.storage import datasets
 
 
 class DatasetRegistrationWorker(QThread):
@@ -30,20 +30,19 @@ class DatasetRegistrationWorker(QThread):
         self.anonymize = anonymize
         self.transcribed = transcribed
         self.analysis_method = analysis_method
-        print(self.cache)
 
     def run(self):
         self.progress.emit("Validating dataset structure...")
         
         # First validate the dataset
-        success = validate_dataset(self.dataset_path)
+        success = datasets.validate_dataset(self.dataset_path)
         
         if not success:
             self.finished.emit(False, " Dataset validation failed. " \
             "Please ensure the dataset follows the Kaldi organization pattern.")
             return
         
-        success, message = create_dataset(
+        success, message = datasets.create_dataset(
             name=self.dataset_name,
             description=self.description,
             original_path=self.dataset_path,
@@ -52,6 +51,8 @@ class DatasetRegistrationWorker(QThread):
             transcribed=self.transcribed,
         )
 
+        print(f"Dataset creation result: {success}, message: {message}")
+
         if not success:
             self.finished.emit(False, message)
             return  
@@ -59,7 +60,7 @@ class DatasetRegistrationWorker(QThread):
             self.progress.emit("Dataset metadata created successfully.")
         
         # Determine output path for CSV file
-        dataset_dir = os.path.join(get_datasets_root(), self.dataset_name)
+        dataset_dir = os.path.join(datasets._get_datasets_root(), message["id"])
 
         csv_path = os.path.join(dataset_dir, f"{self.analysis_method.lower()}_summary.csv")
         

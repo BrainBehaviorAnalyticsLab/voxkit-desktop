@@ -1,0 +1,114 @@
+name: Release Build
+
+on:
+  push:
+    branches:
+      - releases
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: macos-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+      
+      - name: Install dependencies
+        run: |
+          uv sync
+      
+      - name: Build .app bundle
+        run: make build
+      
+      - name: Get version from tag or commit
+        id: get_version
+        run: |
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            VERSION=${GITHUB_REF#refs/tags/}
+          else
+            VERSION="v$(date +'%Y.%m.%d')-$(git rev-parse --short HEAD)"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Building version: $VERSION"
+      
+      - name: Create DMG
+        run: |
+          # Create a simple DMG for easier distribution
+          mkdir -p dmg_contents
+          cp -R dist/VoxKit.app dmg_contents/
+          hdiutil create -volname "VoxKit" -srcfolder dmg_contents -ov -format UDZO VoxKit.dmg
+        continue-on-error: true
+      
+      - name: Zip .app for release
+        run: |
+          cd dist
+          zip -r VoxKit.app.zip VoxKit.app
+          cd ..
+      
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.get_version.outputs.version }}
+          release_name: VoxKit ${{ steps.get_version.outputs.version }} (macOS)
+          body: |
+            **VoxKit Release ${{ steps.get_version.outputs.version }}**
+            
+            🍎 **Platform:** macOS (Apple Silicon & Intel)
+            
+            Automated build from releases branch.
+            
+            ## Installation
+            1. Download VoxKit-macOS.app.zip
+            2. Unzip the file
+            3. Move VoxKit.app to your Applications folder
+            4. Right-click and select "Open" the first time (macOS security)
+            
+            ## System Requirements
+            - macOS 10.13 or later
+            - Works on both Intel and Apple Silicon Macs
+            
+            ## Changes
+            - Built from commit: ${{ github.sha }}
+            
+          draft: false
+          prerelease: false
+      
+      - name: Upload .app.zip to Release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/VoxKit.app.zip
+          asset_name: VoxKit-macOS.app.zip
+          asset_content_type: application/zip
+      
+      - name: Upload DMG to Release (if created)
+        if: success()
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./VoxKit.dmg
+          asset_name: VoxKit-macOS.dmg
+          asset_content_type: application/x-apple-diskimage
+        continue-on-error: true

@@ -22,7 +22,10 @@ from .config import STORAGE_ROOT
 
 
 def get_storage_root() -> Path:
-    """Get the root directory for storing VoxKit data."""
+    """Get the root directory for storing VoxKit data.
+    
+    This uses ~ (home directory) so it works regardless of how the app is launched.
+    """
     if STORAGE_ROOT.startswith("~"):
         return Path(STORAGE_ROOT).expanduser()
     else:

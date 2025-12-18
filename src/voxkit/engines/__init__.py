@@ -54,32 +54,11 @@ API (high level)
 
 from __future__ import annotations
 
-import importlib
-import pkgutil
 from typing import List
 
 from .base import AlignmentEngine, ToolType
-from .register import _REGISTERED_ENGINES
 
-
-def _import_all_engines() -> None:
-    """
-    Auto-import all engine modules in the package to trigger their registration.
-    """
-
-    print("[engines.__init__] Discovering engine modules...")
-    for _, name, _ in pkgutil.iter_modules(__path__):
-        if name.startswith("_") and name.endswith("_engine"):
-            full_name = f"{__package__}.{name}"
-            print(f"[engines.__init__] → Importing {full_name}")
-            try:
-                importlib.import_module(full_name)
-            except Exception as e:
-                print(f"[engines.__init__] Failed to import {full_name}: {e}")
-
-
-_import_all_engines()
-
+from .w2tg_engine import W2TGEngine
 
 class EngineManager:
     """
@@ -119,6 +98,7 @@ class EngineManager:
 
 
 # Singleton instance for unified export/interface
-ManageEngines = EngineManager(_REGISTERED_ENGINES)
+w2tg = W2TGEngine(id ="W2TGENGINE")
+engines = EngineManager({w2tg.id: w2tg})
 
-__all__ = ["ManageEngines"]
+__all__ = ["engines"]

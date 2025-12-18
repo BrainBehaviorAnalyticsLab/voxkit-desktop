@@ -82,7 +82,7 @@ class GenericDialog(QDialog):
         config: SettingsConfig,
     ):
         super().__init__(parent)
-        self.store_values_path = Path(get_storage_root() + "/" + config.store_file)
+        self.store_values_path = Path(get_storage_root() / Path(config.store_file))
         if not self.store_values_path:
             raise ValueError("File path must be within the storage root directory.")
 
@@ -93,12 +93,33 @@ class GenericDialog(QDialog):
         # Setup overlay and blur if parent exists
         if parent and config.apply_blur:
             self._setup_overlay(parent)
-
+        
+        self._save_defaults()
         self._setup_ui(config.title, config.dimensions)
         self._create_fields()
         self._load_saved_values()
         self.fade_in()
 
+    def _save_defaults(self):
+        """
+        Save default field values to JSON file if it doesn't exist.
+
+        This ensures that the dialog has a starting point for form values
+        even if no previous settings are saved. It writes default values from
+        field configurations to the store_values_path.
+
+        The method only writes if the file does not already exist, avoiding
+        overwriting user-saved settings.
+        """
+        if os.path.exists(self.store_values_path):
+            return
+
+        defaults = {field.name: field.default_value for field in self.field_configs}
+        if not os.path.exists(os.path.dirname(self.store_values_path)):
+            os.makedirs(os.path.dirname(self.store_values_path))
+        with open(self.store_values_path, "w") as f:
+            json.dump(defaults, f, indent=4)
+            print(f"Default settings saved to {self.store_values_path}")
 
     def _setup_overlay(self, parent):
         """

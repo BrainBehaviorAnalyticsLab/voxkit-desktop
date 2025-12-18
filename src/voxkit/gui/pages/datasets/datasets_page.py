@@ -5,11 +5,9 @@ Datasets management page for registering, validating, and managing speech datase
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
-    QCheckBox,
     QComboBox,
     QDialog,
     QFileDialog,
-    QFormLayout,
     QGroupBox,
     QHBoxLayout,
     QHeaderView,
@@ -18,13 +16,14 @@ from PyQt6.QtWidgets import (
     QPushButton,
     QTableWidget,
     QTableWidgetItem,
-    QTextEdit,
     QVBoxLayout,
     QWidget,
 )
 
+from pathlib import Path
+
 from voxkit.analyzers import ManageAnalyzers
-from voxkit.gui.formatting import humanize_timestamp
+from voxkit.gui.components import HuggingFaceButton
 from voxkit.gui.frameworks.settings_modal import (
     FieldConfig,
     FieldType,
@@ -32,17 +31,11 @@ from voxkit.gui.frameworks.settings_modal import (
     SettingsConfig,
 )
 from voxkit.gui.workers import DatasetRegistrationWorker
-from voxkit.storage.alignments import list_alignments
-from voxkit.storage.datasets import (
-    delete_dataset,
-    export_dataset,
-    import_dataset,
-    list_datasets,
-    update_dataset,
-)
-
+from voxkit.storage import datasets, alignments
 from .styles import Colors
+from voxkit.engines import engines
 
+ENGINE_IDS = engines.list_engines()
 
 class DatasetsPage(QWidget):
     """Main datasets management page"""
@@ -51,7 +44,7 @@ class DatasetsPage(QWidget):
         super().__init__(parent)
         self.parent_window = parent
         self.registration_worker = None
-        self.selected_dataset = None
+        self.selected_dataset: datasets.DatasetMetadata | None = None
         self.init_ui()
         self.refresh_datasets()
 
@@ -61,10 +54,21 @@ class DatasetsPage(QWidget):
         main_layout.setSpacing(20)
         main_layout.setContentsMargins(20, 20, 20, 20)
 
-        # Title
+        # Title header with HuggingFace button
+        header_layout = QHBoxLayout()
+        
         title = QLabel("Dataset Management")
         title.setStyleSheet("font-size: 24px; font-weight: bold; color: #2c3e50;")
-        main_layout.addWidget(title)
+        header_layout.addWidget(title)
+        
+        header_layout.addStretch()
+        
+        # HuggingFace button in top right
+        self.hf_button = HuggingFaceButton("Browse Datasets")
+        self.hf_button.clicked.connect(self.on_huggingface_browse)
+        header_layout.addWidget(self.hf_button)
+        
+        main_layout.addLayout(header_layout)
 
         # Load available analysis methods
         self.analysis_methods = list(ManageAnalyzers.list_analyzers())
@@ -86,19 +90,16 @@ class DatasetsPage(QWidget):
         credit.setStyleSheet("color: #999; font-size: 10px; padding: 5px;")
         credit.setAlignment(Qt.AlignmentFlag.AlignCenter)
         main_layout.addWidget(credit)
+
+    def refresh_page(self):
+        """Refresh the entire page content"""
+        self.dataset_table.clearSelection()
+        self.refresh_datasets()
     
     def _create_register_section(self):
         """Create the dataset registration section"""
         group = QGroupBox()
         layout = QVBoxLayout()
-        
-        # # Description text
-        # desc_label = QLabel(
-        #     "Register a new dataset by providing its path, name, and configuration options."
-        # )
-        # desc_label.setWordWrap(True)
-        # desc_label.setStyleSheet("color: #7f8c8d; font-size: 12px; margin-bottom: 10px;")
-        # layout.addWidget(desc_label)
 
         # Action buttons
         action_layout = QHBoxLayout()
@@ -177,6 +178,16 @@ class DatasetsPage(QWidget):
         group.setLayout(layout)
         return group
     
+    def on_huggingface_browse(self):
+        """Handle HuggingFace button click"""
+        # TODO: Implement HuggingFace dataset browsing/import
+        QMessageBox.information(
+            self,
+            "HuggingFace Integration",
+            "HuggingFace dataset browsing will be available soon!\n\n"
+            "This will allow you to browse and import datasets directly from HuggingFace Hub."
+        )
+    
     def on_import(self):
         """Handle import button click to open registration dialog"""
         dir_path = QFileDialog.getExistingDirectory(
@@ -190,7 +201,7 @@ class DatasetsPage(QWidget):
             QMessageBox.warning(self, "No Destination Selected", "Please select a destination.")
             return
 
-        success, message = import_dataset(dir_path)
+        success, message = datasets.import_dataset(dir_path)
 
         if success:
             QMessageBox.information(self, "Success", message)
@@ -200,21 +211,63 @@ class DatasetsPage(QWidget):
             QMessageBox.critical(self, "Import Failed", message)
     
     def on_export(self):
-        """Handle export button click for selected dataset"""   
+        """Handle export button click for selected dataset""" 
         if not self.selected_dataset:
             QMessageBox.warning(self, "No Dataset Selected", "Please select a dataset to export.")
+            return 
+        
+        dir_path = QFileDialog.getExistingDirectory(
+            self,
+            "Select Directory to Save Exported Dataset",
+            "",
+            QFileDialog.Option.ShowDirsOnly,
+        )
+
+        if not dir_path:
+            QMessageBox.warning(self, "No Destination Selected", "Please select a destination.")
             return
+
+        success, message = datasets.export_dataset(self.selected_dataset, Path(dir_path))
+        if success:
+            QMessageBox.information(self, "Success", message)
         else:
-            self._export_dataset(self.selected_dataset)
+            QMessageBox.critical(self, "Export Failed", message)
+
 
     def on_delete(self):
         """Handle delete button click for selected dataset"""
-        pass
-    
+        if not self.selected_dataset:
+            QMessageBox.warning(self, "No Dataset Selected", "Please select a dataset to delete.")
+            return
+        else:
+            success, message = datasets.delete_dataset(self.selected_dataset)
+            if success:
+                QMessageBox.information(self, "Deleted", message)
+                self.selected_dataset = None
+                self.refresh_page()
+
+            else:
+                QMessageBox.critical(self, "Delete Failed", message)
+            
     def _create_list_section(self):
         """Create the dataset list section"""
         
-        group = QGroupBox()
+        group = QGroupBox("Datasets")
+        group.setStyleSheet("""
+            QGroupBox {
+                font-weight: bold;
+                border: 2px solid #3498db;
+                border-radius: 8px;
+                margin-top: 12px;
+                padding: 15px;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 15px;
+                padding: 0 5px;
+                color: #2c3e50;
+            }
+        """)
         layout = QVBoxLayout()
         
         # Add plus button at the top
@@ -249,6 +302,7 @@ class DatasetsPage(QWidget):
         
         # Helper text
         helper_label = QLabel("💡 Select a dataset to view its alignments below")
+        
         helper_label.setStyleSheet("""
             QLabel {
                 color: #3498db;
@@ -277,8 +331,7 @@ class DatasetsPage(QWidget):
                 "Cached",
                 "De-identified",
                 "Transcribed",
-                "Registration Date",
-                # "Actions",
+                "Registration Date"
             ]
         )
 
@@ -294,12 +347,15 @@ class DatasetsPage(QWidget):
         self.dataset_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.dataset_table.setSelectionMode(QTableWidget.SelectionMode.SingleSelection)
         self.dataset_table.itemSelectionChanged.connect(self._on_dataset_selected)
+        
         self.dataset_table.setAlternatingRowColors(True)
         self.dataset_table.setStyleSheet(
             """
             QTableWidget {
                 gridline-color: #ecf0f1;
                 background-color: white;
+                border: 1px solid #bdc3c7;
+                border-radius: 4px;
             }
             QTableWidget::item {
                 padding: 0px;
@@ -375,9 +431,10 @@ class DatasetsPage(QWidget):
         
         self.engine_filter_combo = QComboBox()
         self.engine_filter_combo.addItem("All Engines")
+
         self.engine_filter_combo.setStyleSheet("""
             QComboBox {
-                padding: 4px 8px;
+                padding: 0px 8px;
                 border: 2px solid #d0d0d0;
                 border-radius: 4px;
                 background-color: white;
@@ -408,6 +465,11 @@ class DatasetsPage(QWidget):
         align_header.setSectionResizeMode(4, QHeaderView.ResizeMode.Fixed)
         self.alignments_table.setColumnWidth(4, 150)
         
+        # Disable selection and editing
+        self.alignments_table.setSelectionMode(QTableWidget.SelectionMode.NoSelection)
+        self.alignments_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        self.alignments_table.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        
         self.alignments_table.setAlternatingRowColors(True)
         self.alignments_table.setMaximumHeight(300)
         self.alignments_table.setStyleSheet("""
@@ -431,60 +493,49 @@ class DatasetsPage(QWidget):
         
         layout.addWidget(self.alignments_table)
         
-        # Empty state for alignments
-        self.alignments_empty_label = QLabel(
-            "No alignments found for this dataset.\n"
-            "Run alignment on this dataset to see results here."
-        )
-        self.alignments_empty_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.alignments_empty_label.setStyleSheet("""
-            QLabel {
-                color: #95a5a6;
-                font-style: italic;
-                font-size: 13px;
-                padding: 30px;
-            }
-        """)
-        self.alignments_empty_label.hide()
-        layout.addWidget(self.alignments_empty_label)
-        
         group.setLayout(layout)
         return group
     
     def _on_dataset_selected(self):
         """Handle dataset selection change"""
         selected_items = self.dataset_table.selectedItems()
+
         if not selected_items:
             self.selected_dataset = None
-            self.alignments_info_label.setText("👆 Select a dataset above to view its alignments")
             self.alignments_table.setRowCount(0)
-            self.alignments_empty_label.hide()
             return
         
         # Get dataset name from first column of selected row
         row = selected_items[0].row()
-        dataset_name = self.dataset_table.item(row, 0).text()
-        self.selected_dataset = dataset_name
 
-        self._load_alignments(dataset_name)
+        print(f"Dataset row selected: {row}")
+        item = self.dataset_table.item(row, 0)  # The item we stored the ID on
+
+        print(item)
     
-    def _load_alignments(self, dataset_name: str):
+        if item:
+            dataset_id = item.data(Qt.ItemDataRole.UserRole)
+            print(f"Selected dataset ID: {dataset_id}")
+            self.selected_dataset = dataset_id
+
+        self._load_alignments(dataset_id)
+    
+    def _load_alignments(self, dataset_id: datasets.DatasetMetadata["id"]):
         """Load alignments for the selected dataset"""
-        # TODO: Implement actual alignment loading from storage
-        # For now, show mock data
-        mock_alignments = self.convert_alignments(dataset_name)
+
+        print(f"Loading alignments for dataset ID: {dataset_id}")
+        alignments_metadata: list = alignments.list_alignments(dataset_id)
         
         # Populate engine filter (block signals to prevent recursion)
-        engines = set([align["engine_id"] for align in mock_alignments])
         current_filter = self.engine_filter_combo.currentText()
         self.engine_filter_combo.blockSignals(True)
         self.engine_filter_combo.clear()
         self.engine_filter_combo.addItem("All Engines")
-        self.engine_filter_combo.addItems(sorted(engines))
+        self.engine_filter_combo.addItems(sorted(ENGINE_IDS))
         self.engine_filter_combo.setCurrentText(current_filter)
         self.engine_filter_combo.blockSignals(False)
         
-        self._display_alignments(mock_alignments)
+        self._display_alignments(alignments_metadata)
     
     def _filter_alignments(self):
         """Filter alignments by selected engine"""
@@ -492,29 +543,31 @@ class DatasetsPage(QWidget):
             return
         self._load_alignments(self.selected_dataset)
     
-    def _display_alignments(self, alignments: list):
+    def _display_alignments(self, alignments: list[alignments.AlignmentMetadata]):
         """Display alignments in the table"""
         # Filter by engine if selected
+
+        print("Displaying alignments:")
+        print(alignments)
         engine_filter = self.engine_filter_combo.currentText()
         if engine_filter != "All Engines":
-            alignments = [a for a in alignments if a["engine"] == engine_filter]
-        
-        if not alignments:
-            self.alignments_table.hide()
-            self.alignments_empty_label.show()
-            return
-        
-        self.alignments_empty_label.hide()
-        self.alignments_table.show()
+            alignments = [a for a in alignments if a["engine_id"] == engine_filter]
         
         self.alignments_table.setRowCount(len(alignments))
         
+        if not alignments:
+            return
+        
         for row, alignment in enumerate(alignments):
             # Engine
-            self.alignments_table.setItem(row, 0, QTableWidgetItem(alignment["engine_id"]))
+            print(alignment)
+            engine_item = QTableWidgetItem(alignment["engine_id"])
+            engine_item.setFlags(engine_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+            self.alignments_table.setItem(row, 0, engine_item)
             
             # Model (clickable)
-            model_item = QTableWidgetItem(alignment["model_id"])
+            model_item = QTableWidgetItem(alignment["model_metadata"]["name"])
+            model_item.setFlags(model_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
             model_item.setForeground(Qt.GlobalColor.blue)
             model_item.setToolTip("Click to view model details")
             font = model_item.font()
@@ -523,13 +576,19 @@ class DatasetsPage(QWidget):
             self.alignments_table.setItem(row, 1, model_item)
             
             # Date Aligned
-            self.alignments_table.setItem(row, 2, QTableWidgetItem(humanize_timestamp(alignment["alignment_date"])))
+            date_item = QTableWidgetItem(alignment["alignment_date"])
+            date_item.setFlags(date_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+            self.alignments_table.setItem(row, 2, date_item)
             
             # Status
-            status_item = QTableWidgetItem(alignment.get("status", ""))
-            if alignment.get("status") == "Complete":
+            status_item = QTableWidgetItem(alignment.get("status", "Unknown"))
+            status_item.setFlags(status_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+            status = alignment.get("status", "")
+            if status == "completed":
                 status_item.setForeground(Qt.GlobalColor.darkGreen)
-            elif alignment.get("status")     == "Failed":
+            elif status == "pending":
+                status_item.setForeground(Qt.GlobalColor.darkYellow)
+            elif status == "failed":
                 status_item.setForeground(Qt.GlobalColor.red)
             self.alignments_table.setItem(row, 3, status_item)
             
@@ -579,14 +638,7 @@ class DatasetsPage(QWidget):
                 background-color: #1e8449;
             }}
         """
-        
-        # Export button
-        export_btn = QPushButton("Export")
-        export_btn.setMaximumWidth(60)
-        export_btn.setStyleSheet(button_style)
-        export_btn.clicked.connect(lambda: self._export_alignment(alignment))
-        layout.addWidget(export_btn)
-        
+
         # Delete button
         delete_btn = QPushButton("Delete")
         delete_btn.setMaximumWidth(60)
@@ -607,12 +659,17 @@ class DatasetsPage(QWidget):
         """)
         delete_btn.clicked.connect(lambda: self._delete_alignment(alignment))
         layout.addWidget(delete_btn)
+
+        # View button
+        view_btn = QPushButton("View")
+        view_btn.setStyleSheet(button_style)
+        view_btn.clicked.connect(lambda: self._view_alignment(alignment))
         
         return widget
     
     def convert_alignments(self, dataset_name: str) -> list:
         """Generate mock alignment data (to be replaced with actual data loading)"""
-        data_set_alignments = list_alignments(dataset_name)
+        data_set_alignments = alignments.list_alignments(dataset_name)
         return data_set_alignments
     
     def _view_alignment(self, alignment: dict):
@@ -641,16 +698,24 @@ class DatasetsPage(QWidget):
         reply = QMessageBox.question(
             self,
             "Confirm Delete",
-            f"Are you sure you want to delete the alignment with model '{alignment['model']}'?",
+            f"Are you sure you want to delete the alignment with model '{alignment['model_metadata']['id']}'?",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
         )
         
         if reply == QMessageBox.StandardButton.Yes:
-            # TODO: Implement actual alignment deletion
+            success, msg = alignments.delete_alignment(dataset_id=self.selected_dataset, alignment_id=alignment["id"])
+
+            if not success:
+                QMessageBox.critical(
+                    self,
+                    "Delete Failed",
+                    f"Failed to delete alignments: {msg}"
+                )
+                return
             QMessageBox.information(
                 self,
                 "Deleted",
-                f"Alignment '{alignment['model']}' deleted successfully."
+                f"Alignments deleted successfully."
             )
             # Refresh alignments list
             if self.selected_dataset:
@@ -728,6 +793,7 @@ class DatasetsPage(QWidget):
         if result == QDialog.DialogCode.Accepted:
             # Get values from dialog
             values = dialog.get_values()
+            print("Registration values:", values)
             self.process_registration(values)
 
     def process_registration(self, values: dict):
@@ -796,7 +862,6 @@ class DatasetsPage(QWidget):
 
     def refresh_datasets(self):
         """Refresh the dataset list"""
-        datasets = list_datasets()
 
         # Show empty label if no datasets, otherwise show table
         if not datasets:
@@ -808,36 +873,40 @@ class DatasetsPage(QWidget):
             self.empty_label.hide()
             self.dataset_table.show()
 
-        self.dataset_table.setRowCount(len(datasets))
+        metadata_list = datasets.list_datasets_metadata()
 
-        for row, dataset in enumerate(datasets):
-            # Name
-            self.dataset_table.setItem(row, 0, QTableWidgetItem(dataset["name"]))
+        self.dataset_table.setRowCount(len(metadata_list))
+
+        for index, meta in enumerate(metadata_list):
+            # Name — store the dataset ID on this item
+            name_item = QTableWidgetItem(meta["name"])
+            name_item.setData(Qt.ItemDataRole.UserRole, meta["id"])  # ← Store ID here
+            self.dataset_table.setItem(index, 0, name_item)         # ← Use the same item!
 
             # Description
-            desc_item = QTableWidgetItem(dataset["description"])
-            desc_item.setToolTip(dataset["description"])
-            self.dataset_table.setItem(row, 1, desc_item)
+            desc_item = QTableWidgetItem(meta["description"])
+            desc_item.setToolTip(meta["description"])
+            self.dataset_table.setItem(index, 1, desc_item)
 
             # Cached
             self.dataset_table.setItem(
-                row, 2, QTableWidgetItem("Yes" if dataset["cached"] else "No")
+                index, 2, QTableWidgetItem("Yes" if meta["cached"] else "No")
             )
 
             # Anonymized
             self.dataset_table.setItem(
-                row, 3, QTableWidgetItem("Yes" if dataset["anonymize"] else "No")
+                index, 3, QTableWidgetItem("Yes" if meta["anonymize"] else "No")
             )
 
             self.dataset_table.setItem(
-                row, 4, QTableWidgetItem("Yes" if dataset.get("transcribed", False) else "No")
+                index, 4, QTableWidgetItem("Yes" if meta.get("transcribed", False) else "No")
             )
 
             # Registration date
-            reg_date = dataset.get("registration_date", "Unknown")
+            reg_date = meta.get("registration_date", "Unknown")
             if reg_date != "Unknown":
                 reg_date = reg_date.split("T")[0]  # Show only date part
-            self.dataset_table.setItem(row, 5, QTableWidgetItem(reg_date))
+            self.dataset_table.setItem(index, 5, QTableWidgetItem(reg_date))
 
             # # Actions
             # actions_widget = self._create_action_buttons(dataset)
@@ -911,59 +980,6 @@ class DatasetsPage(QWidget):
 
         QMessageBox.information(self, "Dataset Information", info_text)
 
-    def edit_dataset(self, dataset):
-        """Edit dataset metadata"""
-        from PyQt6.QtWidgets import QDialog, QDialogButtonBox
-
-        dialog = QDialog(self)
-        dialog.setWindowTitle(f"Edit Dataset: {dataset['name']}")
-        dialog.setMinimumWidth(400)
-
-        layout = QVBoxLayout(dialog)
-
-        form_layout = QFormLayout()
-
-        # Description
-        desc_edit = QTextEdit()
-        desc_edit.setPlainText(dataset["description"])
-        desc_edit.setMaximumHeight(100)
-        form_layout.addRow("Description:", desc_edit)
-
-        # Anonymize
-        anonymize_check = QCheckBox()
-        anonymize_check.setChecked(dataset["anonymize"])
-        form_layout.addRow("Anonymize:", anonymize_check)
-
-        # Transcribed
-        transcribed_check = QCheckBox()
-        transcribed_check.setChecked(dataset.get("transcribed", False))
-        form_layout.addRow("Transcribed:", transcribed_check)
-
-        layout.addLayout(form_layout)
-
-        # Buttons
-        button_box = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok
-            | QDialogButtonBox.StandardButton.Cancel
-        )
-        button_box.accepted.connect(dialog.accept)
-        button_box.rejected.connect(dialog.reject)
-        layout.addWidget(button_box)
-
-        if dialog.exec() == QDialog.DialogCode.Accepted:
-            success, message = update_dataset(
-                dataset["name"],
-                description=desc_edit.toPlainText().strip(),
-                anonymize=anonymize_check.isChecked(),
-                transcribed=transcribed_check.isChecked(),
-            )
-
-            if success:
-                QMessageBox.information(self, "Success", message)
-                self.refresh_datasets()
-            else:
-                QMessageBox.critical(self, "Update Failed", message)
-
     def transcribe_dataset(self, dataset):
         """Transcribe a dataset using available transcription engines"""
         # Check if already transcribed
@@ -1005,7 +1021,7 @@ class DatasetsPage(QWidget):
         )
 
         if dir_path:
-            success, message = export_dataset(dataset, dir_path)
+            success, message = datasets.export_dataset(dataset, Path(dir_path))
             if success:
                 QMessageBox.information(self, "Success", message)
             else:
@@ -1027,9 +1043,7 @@ class DatasetsPage(QWidget):
         )
 
         if reply == QMessageBox.StandardButton.Yes:
-            success, message = delete_dataset(
-                dataset["name"], remove_cached_files=True
-            )
+            success, message = datasets.delete_dataset(dataset)
 
             if success:
                 QMessageBox.information(self, "Success", message)

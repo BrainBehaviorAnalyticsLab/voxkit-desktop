@@ -77,7 +77,7 @@ def _get_dataset_root(dataset_id: DatasetMetadata["id"]) -> Path | None:
         
     Returns:"""
     datasets_root = _get_datasets_root()
-    if datasets_root:
+    if datasets_root and dataset_id:
         dataset_root = datasets_root / dataset_id
         if dataset_root.exists():
             return dataset_root
@@ -334,7 +334,7 @@ def import_dataset(dataset_path: Path) -> Tuple[bool, str]:
         
         # Change metadata accordingly
         dataset_metadata["id"] = now
-        humannow = readable_from_unique_id(now)
+        humannow = readable_from_unpique_id(now)
         dataset_metadata["registration_date"] = humannow
 
         # Check cache consistency
@@ -391,6 +391,8 @@ def validate_dataset(
             is_valid: True if dataset is valid, False otherwise
             message: Description of validation result or issues found
     """
+    if not isinstance(dataset_path, Path):
+        dataset_path = Path(dataset_path)
     if not dataset_path.exists():
         return False, f"Dataset path '{dataset_path}' does not exist."
     if not dataset_path.is_dir():
@@ -398,6 +400,8 @@ def validate_dataset(
     if not os.listdir(dataset_path):
         return False, f"Dataset path '{dataset_path}' is empty."
     for subdir in os.listdir(dataset_path):
+        if subdir.startswith('.'):
+            continue  # Skip hidden files/directories
         subdir_path = os.path.join(dataset_path, subdir)
         if not os.path.isdir(subdir_path):
             return False, f"Expected speaker directories in dataset path '{dataset_path}', found file '{subdir_path}'."
@@ -405,6 +409,7 @@ def validate_dataset(
             return False, f"Speaker directory '{subdir_path}' is empty."
     
     speaker_dirs = [d for d in os.listdir(dataset_path) if os.path.isdir(os.path.join(dataset_path, d))]
+
     if not speaker_dirs:
         return False, "No speaker directories found in the dataset path."
     

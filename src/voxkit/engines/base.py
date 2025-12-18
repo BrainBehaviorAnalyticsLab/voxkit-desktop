@@ -166,8 +166,8 @@ class AlignmentEngine(ABC):
             path = Path(path)
 
         if not path.exists():
-            raise FileNotFoundError(f"Settings file not found: {path}")
-
+            return None
+        
         with open(path, "r", encoding="utf-8") as f:
             return json.load(f)
 
@@ -200,9 +200,12 @@ class AlignmentEngine(ABC):
             raise FileNotFoundError(
                 f"Settings path not given for tool type '{tool_type}' in this engine."
             )
-        settings = self._load_json(Path(get_storage_root() + "/" + cfg.store_file))
-
+        settings = self._load_json(Path(get_storage_root() / cfg.store_file))
+        
         if tool_type == "train":
+            if settings is None:
+                # Get default settings if none exist
+                settings = cfg.default_settings or {}
             if not self._validate_train_settings(settings):
                 raise ValueError(f"Invalid training settings: {settings}")
             return settings

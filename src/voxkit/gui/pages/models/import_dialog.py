@@ -1,4 +1,5 @@
 from typing import Callable, Optional
+from PyQt6.QtWidgets import QMessageBox
 
 from voxkit.gui.frameworks.settings_modal import (
     FieldConfig,
@@ -7,7 +8,7 @@ from voxkit.gui.frameworks.settings_modal import (
     SettingsConfig,
 )
 from voxkit.services.hf import download_and_copy_huggingface_model
-from voxkit.storage.models import create_train_destination
+from voxkit.storage import models
 
 
 class ImportModelDialog(GenericDialog):
@@ -76,9 +77,20 @@ class ImportModelDialog(GenericDialog):
 
     def _placeholder_import(self, model_path: str):
         parts = model_path.split('/') if model_path else []
-        engine_key = parts[-1] if parts else (model_path or "NONE")
-        print(f"Creating destination for engine: {self.engine_id}, key: {engine_key}")
-        data_path, dest_model_path, train_path, eval_path = create_train_destination(engine_key, self.engine_id)
+        model_name = parts[-1] if parts else (model_path or "NONE")
+        print(f"Creating destination for engine: {self.engine_id}, key: {model_name}")
+        success, message = models.create_model(
+            engine_id=self.engine_id,
+            model_name=model_name,
+        )
+        if not success:
+            QMessageBox.critical(
+                self,
+                "Import Failed",
+                f"Failed to create model entry: {message}"
+            )
+        else:
+            dest_model_path = message["model_path"]
         result = download_and_copy_huggingface_model(model_path, destination=dest_model_path)
 
         if result is None:
@@ -86,7 +98,6 @@ class ImportModelDialog(GenericDialog):
         else:
             print(f"Model imported successfully to: {result}")
         
-
 
 def main():
     # Example usage:

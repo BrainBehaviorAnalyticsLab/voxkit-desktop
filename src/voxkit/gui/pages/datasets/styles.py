@@ -180,7 +180,7 @@ class Inputs:
 
     COMBOBOX = f"""
         QComboBox {{
-            padding: 4px;
+            padding: 0px 8px;
             border: 2px solid {Colors.GRAY};
             border-radius: 4px;
             color: {Colors.TEXT_PRIMARY};

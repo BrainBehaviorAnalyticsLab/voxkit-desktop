@@ -141,7 +141,7 @@ class AlignmentGUI(QMainWindow):
     def open_models_dashboard(self):
         """Switch to Pipeline view with menu and stacked pages"""
         print("Open Models Dashboard...")
-        self.pipeline_container.reload_models()  # Ensure models are reloaded
+        self.pipeline_container.reload()  # Ensure models are reloaded
         self.pipeline_container.menu_list.setVisible(True)
         self.content_stack.setCurrentIndex(0)  # Show pipeline stack
         # Restore last selected pipeline page
@@ -152,7 +152,7 @@ class AlignmentGUI(QMainWindow):
     def open_preferences(self):
         """Switch to Manage view with CategoricalListWidget"""
         print("Open Preferences...")
-        self.manage_widget.reload_models()  # Ensure models are reloaded
+        self.pipeline_container.reload()  # Ensure models are reloaded
         # Remember current pipeline page
         self.last_pipeline_page = self.pipeline_container.get_current_page_index()
         self.pipeline_container.menu_list.setVisible(False)

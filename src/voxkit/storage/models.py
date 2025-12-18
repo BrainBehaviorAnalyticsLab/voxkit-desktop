@@ -55,7 +55,7 @@ class ModelMetadata(TypedDict):
     id: str
 
 
-def _get_model_root(engine_id: str, model_id: ModelMetadata) -> Path | None:
+def _get_model_root(engine_id: str, model_id: ModelMetadata["id"]) -> Path | None:
     """Get the root directory for storing models for a given engine.
     
     Args:
@@ -67,9 +67,20 @@ def _get_model_root(engine_id: str, model_id: ModelMetadata) -> Path | None:
     """
     model_root = Path(f"{get_storage_root()}/{engine_id}/{MODELS_ROOT}/{model_id}")
     if model_root.exists():
-        return model_root
+        return model_root       
     return None
 
+
+def _get_models_root(engine_id: str) -> Path | None:
+    """Get the root directory for storing models for a given engine.
+    
+    Args:
+        engine_id: Identifier of the engine.
+    """
+    models_root = Path(f"{get_storage_root()}/{engine_id}/{MODELS_ROOT}")
+    if models_root.exists():
+        return models_root
+    return None
 
 def create_model(
     engine_id: str,
@@ -234,9 +245,77 @@ def delete_model(engine_id: str, model_id: str) -> Tuple[bool, str]:
         
     Returns:
         Tuple of (success, message)"""
+    
+    print(f"Attempting to delete model: engine_id={engine_id}, model_id={model_id}")
     model_path = _get_model_root(engine_id, model_id)
+
+    print(f"Deleting model at path: {model_path}")
     shutil.rmtree(model_path)
     return True, "Model deleted successfully."
 
 
+def import_models(engine_id, new_models_root: Path) -> Tuple[bool, str]:
+    """Import a model into the storage system.
     
+    Args:
+        model_id: Identifier of the model to import.
+        new_models_root: Destination root path for the imported model.
+
+    Returns:
+        Tuple of (success, message)
+    """
+    try:
+        for new_model_path in new_models_root.iterdir():
+            if new_model_path.is_dir():
+                try:
+                    # Check for voxkit_model.json file
+                    metadata_path = Path(new_model_path / "voxkit_model.json")
+                    if not metadata_path.exists():
+                        return False, f"{new_model_path.name} (missing metadata file)"
+                    
+                    metadata = None
+                    # Read json metadata
+
+                    with open(metadata_path, "r") as f:
+                        metadata = json.load(f)
+                    
+                    if metadata is None:
+                        return False, f"{new_model_path.name} (invalid metadata file)"
+                    
+                    engine_models_root = get_storage_root() / engine_id
+                    if not engine_models_root.exists():
+                        engine_models_root.mkdir(parents=True, exist_ok=False)
+                    
+                    model_id = generate_unique_id()
+
+                    if engine_id != metadata["engine_id"]:
+                        return False, f"{new_model_path.name} (engine_id mismatch)"
+                    
+                    new_metadata = ModelMetadata(
+                        name=metadata["name"],
+                        engine_id=metadata["engine_id"],
+                        model_path=str(Path(engine_models_root / MODELS_ROOT / model_id / "entrypoint.model")),
+                        data_path=str(Path(engine_models_root / MODELS_ROOT / model_id / "data")),
+                        eval_path=str(Path(engine_models_root / MODELS_ROOT / model_id / "eval")),
+                        train_path=str(Path(engine_models_root / MODELS_ROOT / model_id / "train")),
+                        download_date=readable_from_unique_id(model_id),
+                        id=model_id
+                    )
+
+                    # Copy model directory to storage
+                    dest_path = engine_models_root / MODELS_ROOT / model_id
+                    
+                    shutil.copytree(new_model_path, dest_path, dirs_exist_ok=True)
+
+                    # Overwrite metadata file with new IDs and paths
+                    new_metadata_path = dest_path / "voxkit_model.json"
+                    with open(new_metadata_path, "w") as f:
+                        json.dump(new_metadata, f, indent=4)
+                    
+                except Exception as e:
+                    return False, f"{new_model_path.name} (error: {str(e)})"
+                
+        return True, f"Models imported successfully from: {new_models_root}"
+    
+    except Exception as e:
+        return False, f"Failed to import model: {str(e)}"

@@ -107,16 +107,16 @@
                         <div class="pdoc-code codehilite"><pre><span></span><span id="L-1"><a href="#L-1"><span class="linenos"> 1</span></a><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Literal</span>
 </span><span id="L-2"><a href="#L-2"><span class="linenos"> 2</span></a>
 </span><span id="L-3"><a href="#L-3"><span class="linenos"> 3</span></a><span class="n">AppName</span> <span class="o">=</span> <span class="s2">&quot;VoxKit&quot;</span>
-</span><span id="L-4"><a href="#L-4"><span class="linenos"> 4</span></a><span class="n">Dimensions</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;min_width&quot;</span><span class="p">:</span> <span class="mi">1100</span><span class="p">,</span> <span class="s2">&quot;min_height&quot;</span><span class="p">:</span> <span class="mi">800</span><span class="p">,</span> <span class="s2">&quot;max_width&quot;</span><span class="p">:</span> <span class="mi">200</span><span class="p">,</span> <span class="s2">&quot;max_height&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">}</span>
+</span><span id="L-4"><a href="#L-4"><span class="linenos"> 4</span></a><span class="n">Dimensions</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;min_width&quot;</span><span class="p">:</span> <span class="mi">200</span><span class="p">,</span> <span class="s2">&quot;min_height&quot;</span><span class="p">:</span> <span class="mi">800</span><span class="p">,</span> <span class="s2">&quot;max_width&quot;</span><span class="p">:</span> <span class="mi">500</span><span class="p">,</span> <span class="s2">&quot;max_height&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">}</span>
 </span><span id="L-5"><a href="#L-5"><span class="linenos"> 5</span></a><span class="n">Defaults</span> <span class="o">=</span> <span class="p">{</span>
-</span><span id="L-6"><a href="#L-6"><span class="linenos"> 6</span></a>    <span class="s2">&quot;mode&quot;</span><span class="p">:</span> <span class="s2">&quot;MFA&quot;</span><span class="p">,</span>
+</span><span id="L-6"><a href="#L-6"><span class="linenos"> 6</span></a>    <span class="s2">&quot;mode&quot;</span><span class="p">:</span> <span class="s2">&quot;W2TGENGINE&quot;</span><span class="p">,</span>
 </span><span id="L-7"><a href="#L-7"><span class="linenos"> 7</span></a>    <span class="s2">&quot;output_path&quot;</span><span class="p">:</span> <span class="s2">&quot;/path/to/output&quot;</span><span class="p">,</span>
 </span><span id="L-8"><a href="#L-8"><span class="linenos"> 8</span></a>    <span class="s2">&quot;audio_path&quot;</span><span class="p">:</span> <span class="s2">&quot;/path/to/audio&quot;</span><span class="p">,</span>
 </span><span id="L-9"><a href="#L-9"><span class="linenos"> 9</span></a>    <span class="s2">&quot;textgrid_path&quot;</span><span class="p">:</span> <span class="s2">&quot;/path/to/textgrids&quot;</span><span class="p">,</span>
 </span><span id="L-10"><a href="#L-10"><span class="linenos">10</span></a>    <span class="s2">&quot;num_epochs&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
 </span><span id="L-11"><a href="#L-11"><span class="linenos">11</span></a><span class="p">}</span>
 </span><span id="L-12"><a href="#L-12"><span class="linenos">12</span></a>
-</span><span id="L-13"><a href="#L-13"><span class="linenos">13</span></a><span class="n">Mode</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;MFA&quot;</span><span class="p">,</span> <span class="s2">&quot;W2TG&quot;</span><span class="p">]</span>
+</span><span id="L-13"><a href="#L-13"><span class="linenos">13</span></a><span class="n">Mode</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;MFAENGINE&quot;</span><span class="p">,</span> <span class="s2">&quot;W2TGENGINE&quot;</span><span class="p">]</span>
 </span><span id="L-14"><a href="#L-14"><span class="linenos">14</span></a><span class="n">HELP_URL</span> <span class="o">=</span> <span class="s2">&quot;http://localhost:3000/help&quot;</span>
 </span></pre></div>
 
@@ -137,7 +137,7 @@
                 <section id="Dimensions">
                     <div class="attr variable">
             <span class="name">Dimensions</span>        =
-<span class="default_value">{&#39;min_width&#39;: 1100, &#39;min_height&#39;: 800, &#39;max_width&#39;: 200, &#39;max_height&#39;: None}</span>
+<span class="default_value">{&#39;min_width&#39;: 200, &#39;min_height&#39;: 800, &#39;max_width&#39;: 500, &#39;max_height&#39;: None}</span>
 
         
     </div>
@@ -150,7 +150,7 @@
                     <div class="attr variable">
             <span class="name">Defaults</span>        =
 <input id="Defaults-view-value" class="view-value-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
-            <label class="view-value-button pdoc-button" for="Defaults-view-value"></label><span class="default_value">{&#39;mode&#39;: &#39;MFA&#39;, &#39;output_path&#39;: &#39;/path/to/output&#39;, &#39;audio_path&#39;: &#39;/path/to/audio&#39;, &#39;textgrid_path&#39;: &#39;/path/to/textgrids&#39;, &#39;num_epochs&#39;: 10}</span>
+            <label class="view-value-button pdoc-button" for="Defaults-view-value"></label><span class="default_value">{&#39;mode&#39;: &#39;W2TGENGINE&#39;, &#39;output_path&#39;: &#39;/path/to/output&#39;, &#39;audio_path&#39;: &#39;/path/to/audio&#39;, &#39;textgrid_path&#39;: &#39;/path/to/textgrids&#39;, &#39;num_epochs&#39;: 10}</span>
 
         
     </div>
@@ -162,7 +162,7 @@
                 <section id="Mode">
                     <div class="attr variable">
             <span class="name">Mode</span>        =
-<span class="default_value">typing.Literal[&#39;MFA&#39;, &#39;W2TG&#39;]</span>
+<span class="default_value">typing.Literal[&#39;MFAENGINE&#39;, &#39;W2TGENGINE&#39;]</span>
 
         
     </div>

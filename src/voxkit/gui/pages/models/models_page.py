@@ -1,30 +1,61 @@
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QLabel
+from PyQt6.QtWidgets import QLabel, QMessageBox
 
-from voxkit.gui.frameworks.categorical_list import CategoricalListWidget
-from voxkit.storage.models import list_modelz, scrub_training_run
+from voxkit.gui.components import HuggingFaceButton
+from voxkit.gui.frameworks.categorical_table.categorical_table import CategoricalTableWidget
+from voxkit.storage import models
 
 from .import_dialog import ImportModelDialog
-from .utils import handle_export_lambda
-
+from .utils import handle_delete, handle_export, handle_import
+from voxkit.engines import engines
+ENGINE_IDS = engines.list_engines()
 # TODO : Implement Aligner managment logic by see frameworks/widget/categorical_list/api.py | __init__.py
 
+ENGINE_IDS = engines.list_engines()
 
-class ManageAlignersWidget(CategoricalListWidget):
+class ManageAlignersWidget(CategoricalTableWidget):
     """Widget to manage and display alignment models."""
 
     def __init__(self, parent=None):
-        mfa_models = list_modelz("MFAENGINE", True)
-        w2tg_models = list_modelz("W2TGENGINE", True)
-        self.parent = parent
-        self.data = {"MFAENGINE": mfa_models, "W2TGENGINE": w2tg_models}
         
-        super().__init__(self.data, parent) 
+        self.parent = parent
+        self.data = {}
 
-        self.export_requested.connect(handle_export_lambda(self, self.data))
+        def refresh_models_function() -> list[dict]:
+            try:
+                
+                model_dict = {} 
+                for engine in ENGINE_IDS:
+                    engine_models = models.list_models(engine)
+                    model_dict[engine] = engine_models
 
-        self.delete_requested.connect(lambda cat, items: self.scrub_training_runs(cat, items))
-        self.import_requested.connect(lambda cat: self.open_import_dialog(cat))
+                return model_dict
+            
+            except Exception as e:
+                print(f"Error refreshing models: {e}")
+                return {}
+            
+        def export_models_function(category: str, items: dict) -> tuple[bool, str]:
+            print(f"Export requested for category: {category}")
+            return handle_export(self, items, category)
+        
+        def import_model_function(category: str) -> tuple[bool, str]:
+            print(f"Import requested for category: {category}")
+            return handle_import(self, category)
+        
+        def delete_models_function(category: str, items: dict) -> None:
+            print(f"Delete requested for category: {category}, items: {items}")
+            return handle_delete(self, items, category)
+        
+        super().__init__(
+                refresh_data_function=refresh_models_function,
+                export_function=export_models_function,
+                import_function=import_model_function,
+                delete_function=delete_models_function,
+                columns_shown=["name","download_date", "id"],
+                huggingface_callback=self.on_huggingface_browse,
+                parent=self.parent
+                )
 
         self.setWindowTitle("Model Manager")
 
@@ -37,6 +68,16 @@ class ManageAlignersWidget(CategoricalListWidget):
         credit.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.layout().addWidget(credit)
 
+    def on_huggingface_browse(self):
+        """Handle HuggingFace button click"""
+        # TODO: Implement HuggingFace model browsing/import
+        QMessageBox.information(
+            self,
+            "HuggingFace Integration",
+            "HuggingFace model browsing will be available soon!\n\n"
+            "This will allow you to browse and import models directly from HuggingFace Hub."
+        )
+
     def scrub_training_runs(self, mode, items: dict):
         for model in items.keys():
             if "MFA" in mode:
@@ -47,18 +88,13 @@ class ManageAlignersWidget(CategoricalListWidget):
                 raise ValueError("Invalid mode")
             
             print(f"Scrubbing training run for model: {items}")
-            scrub_training_run(mode, items[model]["train_root"])
+            models.delete_model(mode, items[model]["id"])
 
     def reload_models(self):
         """Reload models in the dropdowns"""
-        mfa_models = list_modelz("MFAENGINE", True)
-        self.set_items("MFAENGINE", mfa_models)
-      
-        w2tg_models = list_modelz("W2TGENGINE", True)
-        self.set_items("W2TGENGINE", w2tg_models)
 
-        
-            
+        w2tg_models = models.list_models("W2TGENGINE")
+        self.set_items("W2TGENGINE", w2tg_models)
 
     def open_import_dialog(self, category):
         print(f"Opening import dialog for category: {category}")

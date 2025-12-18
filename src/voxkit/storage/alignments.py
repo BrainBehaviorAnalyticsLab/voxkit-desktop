@@ -16,6 +16,7 @@ Each dataset alignment follows a hierarchical structure:
     │   ├── alignment_id_2/
     │   │   ├── ...
     │   └── ...
+    └── ...
 
 API
 ---
@@ -129,7 +130,7 @@ def create_alignment(
     try:
         tg_path = None
         local = dataset_metadata["cached"]
-        if local:
+        if bool(local) is False:
             tg_path = Path(dataset_metadata["original_path"]) / "textgrids"
             tg_path.mkdir(parents=False, exist_ok=True)
 

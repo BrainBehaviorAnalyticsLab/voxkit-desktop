@@ -73,7 +73,7 @@ LineEditStyle = """
 
 ComboBoxStyle = """
     QComboBox {
-        padding: 4px;
+        padding: 0px 8px;
         border: 2px solid #d0d0d0;
         border-radius: 4px;
         color: #000000;

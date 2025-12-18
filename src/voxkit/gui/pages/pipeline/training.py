@@ -209,7 +209,7 @@ class TrainingPage(QWidget):
 
         # ───── Header ─────
         header = QHBoxLayout()
-        title = QLabel("Train Aligner")
+        title = QLabel("Ⓐ Train Aligner")
         title.setStyleSheet("font-size: 24px; font-weight: bold; color: #2c3e50;")
         header.addWidget(title)
         header.addStretch()
@@ -306,7 +306,7 @@ class TrainingPage(QWidget):
         self.train_dataset_dropdown.setPlaceholderText("Select Dataset")
         self.train_dataset_dropdown.setStyleSheet("""
             QComboBox {
-                padding: 8px;
+                padding: 0px 8px;
                 border: 1px solid #bdc3c7;
                 border-radius: 4px;
                 background-color: white;

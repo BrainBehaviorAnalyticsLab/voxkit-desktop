@@ -16,7 +16,7 @@ dependencies = [
     "pyqt6>=6.9.1",
     "torch==2.8.0",
     "torchaudio==2.8.0",
-    "pypllrcomputer @ git+https://github.com/BrainBehaviorAnalyticsLab/PyPLLRComputer.git@65a8e87",
+    "pypllrcomputer @ git+https://github.com/BrainBehaviorAnalyticsLab/PyPLLRComputer.git",
     "wav2textgrid @ git+https://github.com/pkadambi/Wav2TextGrid.git@8db3afd",
     "datasets>=4.3.0",
     "accelerate>=1.11.0",
@@ -40,6 +40,7 @@ docs = [
     "pdoc>=16.0.0",
 ]
 installation = [
+    "py2app>=0.28.9",
     "pyinstaller>=5.10.1",
 ]
 

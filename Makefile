@@ -24,8 +24,39 @@ watch: ## Watch for file changes and restart dev server (requires entr)
 	fi
 
 build: clean ## Build standalone executable for current platform
-	@echo "$(BLUE)Building standalone executable...$(RESET)"
-	@uv run --group installation build.py
+	@echo "$(BLUE)Building VoxKit for macOS...$(RESET)"
+	uv run --group installation python build.py build --entry main.py --name VoxKit --windowed
+
+build-info: ## Show information about the built app
+	@echo "$(BLUE)Checking build output...$(RESET)"
+	@if [ -d "dist/VoxKit" ]; then \
+		echo "$(GREEN)Found: dist/VoxKit/$(RESET)"; \
+		ls -lh dist/VoxKit/; \
+		echo ""; \
+		echo "$(BLUE)Checking executable...$(RESET)"; \
+		file dist/VoxKit/VoxKit; \
+		echo ""; \
+		echo "$(BLUE)Checking library dependencies...$(RESET)"; \
+		otool -L dist/VoxKit/VoxKit | head -10; \
+	else \
+		echo "$(RED)dist/VoxKit not found. Run 'make build' first.$(RESET)"; \
+	fi
+
+run-app: ## Run the built app from terminal (shows errors)
+	@echo "$(BLUE)Running VoxKit from terminal...$(RESET)"
+	@if [ -f "/Users/beckettfrey/Repos/waisman/PyPLLR_GUI/dist/VoxKit/VoxKit" ]; then \
+		/Users/beckettfrey/Repos/waisman/PyPLLR_GUI/dist/VoxKit/VoxKit; \
+	else \
+		echo "$(RED)dist/VoxKit/VoxKit not found. Run 'make build' first.$(RESET)"; \
+	fi
+
+open-app: ## Open the app bundle with macOS (background)
+	@echo "$(BLUE)Opening VoxKit.app...$(RESET)"
+	@if [ -d "dist/VoxKit" ]; then \
+		open dist/VoxKit; \
+	else \
+		echo "$(RED)dist/VoxKit not found. Run 'make build' first.$(RESET)"; \
+	fi
 
 clean: ## Clean build artifacts
 	@echo "$(BLUE)Cleaning build artifacts...$(RESET)"

@@ -25,32 +25,10 @@ The intended workflow for adding a new analysis implementation is:
 
 from __future__ import annotations
 
-import importlib
-import pkgutil
 from typing import List
 
 from .base import DatasetAnalyzer
-from .register import _REGISTERED_ANALYZERS
-
-
-def _import_all_analyzers() -> None:
-    """
-    Auto-import all analysis modules in the package to trigger their
-    registration. Modules should be named ``*_analyzer.py``.
-    """
-    print("[analyzer.__init__] Discovering analysis modules...")
-    for finder, name, _ in pkgutil.iter_modules(__path__):
-        print(f"[analyzer.__init__] Found module: {name}")
-        if name.endswith("_analyzer"):
-            full_name = f"{__package__}.{name}"
-            print(f"[analyzer.__init__] → Importing {full_name}")
-            try:
-                importlib.import_module(full_name)
-            except Exception as e:
-                print(f"[analyzer.__init__] Failed to import {full_name}: {e}")
-
-
-_import_all_analyzers()
+from .default_analyzer import DefaultAnalyzer
 
 
 class AnalyzerManager:
@@ -83,7 +61,8 @@ class AnalyzerManager:
             raise ValueError(f"No analyzer with id: {analyzer_id}")
 
 
+default_analyzer_instance = DefaultAnalyzer()
 # Singleton instance for unified export/interface
-ManageAnalyzers = AnalyzerManager(_REGISTERED_ANALYZERS)
+ManageAnalyzers = AnalyzerManager({default_analyzer_instance.name: default_analyzer_instance})
 
 __all__ = ["ManageAnalyzers"]

@@ -33,10 +33,10 @@ class PipelineFormStack(QWidget):
         # Left side - Navigation menu
         self.menu_list = QListWidget()
         self.menu_list.setMaximumWidth(Dimensions["max_width"])
-        self.menu_list.addItem("Ⓐ  Train Aligner")
+        self.menu_list.addItem("Ⓐ  Train Aligners")
         # self.menu_list.addItem("Ⓑ  Evaluate Aligner")
         self.menu_list.addItem("Ⓑ  Predict Alignments")
-        self.menu_list.addItem("ⓩ  Extract PLLR Scores")
+        self.menu_list.addItem("Ⓒ  Extract GOP Scoring")
         content_layout.addWidget(self.menu_list)
 
         # Right side - Stacked widget for different pipeline pages
@@ -54,14 +54,21 @@ class PipelineFormStack(QWidget):
         self.menu_list.currentRowChanged.connect(self.change_page)
         self.menu_list.setCurrentRow(0)
 
-    def reload_models(self):
+    def reload(self):
         """Reload models in the training page and predicting page"""
         training_page = self.stacked_widget.widget(0)
         if isinstance(training_page, TrainingStacker):
-            pass
-        predicting_page = self.stacked_widget.widget(2)
+            training_page.reload_models()
+            training_page.reload_datasets()
+            
+        predicting_page = self.stacked_widget.widget(1)
         if isinstance(predicting_page, PredictionStacker):
             predicting_page.reload_models()
+            predicting_page.reload_datasets()
+
+        pllr_page = self.stacked_widget.widget(2)
+        if isinstance(pllr_page, PLLRStacker):
+            pllr_page.reload_datasets()
             
     def change_page(self, index):
         """Change the displayed page based on menu selection with animation"""

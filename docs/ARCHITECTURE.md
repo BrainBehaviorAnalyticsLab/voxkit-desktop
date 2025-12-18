@@ -1,3 +1,0 @@
-# High-Level Architecture Overview
-
-
