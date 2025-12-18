@@ -14,28 +14,28 @@ faulthandler.enable()
 if getattr(sys, 'frozen', False):
     import _frozen_patch
     
-    # # Set Qt plugin path for PyInstaller bundle
-    # bundle_dir = sys._MEIPASS
-    # qt_plugins = os.path.join(bundle_dir, 'PyQt6', 'Qt6', 'plugins')
-    # if os.path.exists(qt_plugins):
-    #     os.environ['QT_PLUGIN_PATH'] = qt_plugins
-    
-    # # Also try the platform plugins specifically
-    # platform_plugins = os.path.join(bundle_dir, 'PyQt6', 'Qt6', 'plugins', 'platforms')
-    # if os.path.exists(platform_plugins):
-    #     os.environ['QT_QPA_PLATFORM_PLUGIN_PATH'] = platform_plugins
-
-        # Define the minimal required environment
+    # Define the minimal required environment
     minimal_env = {
         'HOME': os.environ.get('HOME') or os.path.expanduser('~'),
         'USER': os.environ.get('USER') or os.getlogin(),
         'TMPDIR': os.environ.get('TMPDIR') or '/tmp',
     }
     
+    # PyInstaller-specific: Add Qt plugin paths
+    if getattr(sys, '_MEIPASS', None):
+        bundle_dir = sys._MEIPASS
+        qt_plugins = os.path.join(bundle_dir, 'PyQt6', 'Qt6', 'plugins')
+        if os.path.exists(qt_plugins):
+            minimal_env['QT_PLUGIN_PATH'] = qt_plugins
+        
+        platform_plugins = os.path.join(bundle_dir, 'PyQt6', 'Qt6', 'plugins', 'platforms')
+        if os.path.exists(platform_plugins):
+            minimal_env['QT_QPA_PLATFORM_PLUGIN_PATH'] = platform_plugins
+    
     # Clear all environment variables
     os.environ.clear()
     
-    # Set only the minimal required ones
+    # Set the minimal required ones
     for key, value in minimal_env.items():
         if value:
             os.environ[key] = value
