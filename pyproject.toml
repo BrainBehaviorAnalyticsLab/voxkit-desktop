@@ -1,15 +1,100 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
 [project]
 name = "pypllr-gui"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [
+    {name = "Your Name", email = "your.email@example.com"}
+]
+
 dependencies = [
     "pyqt6>=6.9.1",
     "torch==2.8.0",
     "torchaudio==2.8.0",
-    "pypllrcomputer @ git+https://github.com/BrainBehaviorAnalyticsLab/PyPLLRComputer.git@65a8e87",
-    "wav2textgrid @ git+https://github.com/pkadambi/Wav2TextGrid.git@544287c",
+    "pypllrcomputer @ git+https://github.com/BrainBehaviorAnalyticsLab/PyPLLRComputer.git",
+    "wav2textgrid @ git+https://github.com/pkadambi/Wav2TextGrid.git@8db3afd",
     "datasets>=4.3.0",
     "accelerate>=1.11.0",
+    "keyring>=25.6.0",
+    "pre-commit>=4.3.0",
+    "pytest>=8.4.2",
+    "pydantic>=2.12.3",
+    "pdoc>=16.0.0",
 ]
+
+[dependency-groups]
+security = [
+    "safety>=3.6.2",
+]
+dev = [
+    "pre-commit>=4.3.0",
+    "ruff>=0.14.0",
+    "mypy>=1.18.2"
+]
+docs = [
+    "pdoc>=16.0.0",
+]
+installation = [
+    "py2app>=0.28.9",
+    "pyinstaller>=5.10.1",
+]
+
+[project.urls]
+Homepage = "https://github.com/yourusername/your-app-name"
+Repository = "https://github.com/yourusername/your-app-name"
+Issues = "https://github.com/yourusername/your-app-name/issues"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+src = ["src"]
+
+exclude = [
+    ".git",
+    ".mypy_cache",
+    ".ruff_cache",
+    ".venv",
+    "venv",
+    "build",
+    "dist",
+    "examples",
+    "__pycache__",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "F",   # pyflakes
+    "I",   # isort (import sorting)
+    "S",   # bandit (security)
+]
+
+ignore = [
+    "S101",   # Use of assert (OK in tests)
+    "S301",   # Pickle usage (needed for ML)
+]
+
+fixable = ["ALL"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["S101"]
+"scripts/**/*.py" = ["S101","S603"] # Allow subprocess in scripts
+
+[tool.ruff.lint.isort]
+known-first-party = ["Wav2TextGrid"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.mypy]
+python_version = "3.10"
+ignore_missing_imports = true
+
+[tool.setuptools.packages.find]
+where = ["src"]

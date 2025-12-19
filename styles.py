@@ -1,4 +1,3 @@
-
 GlobalStyleSheet = """
     QMainWindow {
         background-color: transparent;
@@ -7,7 +6,7 @@ GlobalStyleSheet = """
         background-color: #f5f5f5;
         color: #333;
         font-size: 13px;
-        border:     none;
+        border: none;
     }
     QGroupBox {
         background-color: white;
