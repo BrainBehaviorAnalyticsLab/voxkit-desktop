@@ -1,5 +1,10 @@
 # TODO : Update README
 
+[![Release](https://img.shields.io/github/v/release/BrainBehaviorAnalyticsLab/PyPLLR_GUI?label=Latest%20Release)](https://github.com/BrainBehaviorAnalyticsLab/PyPLLR_GUI/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/BrainBehaviorAnalyticsLab/PyPLLR_GUI/total)](https://github.com/BrainBehaviorAnalyticsLab/PyPLLR_GUI/releases)
+[![Project Management](https://img.shields.io/badge/Project-Jira%20Board-0052CC?logo=jira)](https://voxkit.atlassian.net/jira/software/projects/VOX/boards/2/)
+
+
 A modern PyQt6-based graphical user interface for phonetic alignment and PLLR (Phoneme-Level Likelihood Ratios) score extraction. This application provides an intuitive workflow for researchers working with speech data.
 
 ## Features
