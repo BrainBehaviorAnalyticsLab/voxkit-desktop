@@ -323,9 +323,18 @@ def import_dataset(dataset_path: Path) -> Tuple[bool, str]:
         Tuple of (success, message)
     """
     # Validate dataset structure
+
+    if not isinstance(dataset_path, Path):
+        dataset_path = Path(dataset_path)
+    if not dataset_path.exists():
+        return False, f"Dataset path '{dataset_path}' does not exist."
+    if not dataset_path.is_dir():
+        return False, f"Dataset path '{dataset_path}' is not a directory."
     valid, valid_msg = validate_dataset(dataset_path / "cache")
     
     now = generate_unique_id()
+
+    print(now)
     dataset_dest = _get_datasets_root() / now
     try:
         dataset_metadata = _get_dataset_metadata(dataset_path)
@@ -333,8 +342,9 @@ def import_dataset(dataset_path: Path) -> Tuple[bool, str]:
             return False, "Dataset metadata file not found in the provided dataset path."
         
         # Change metadata accordingly
+        dataset_metadata = dict(dataset_metadata)  # Make a copy to modify
         dataset_metadata["id"] = now
-        humannow = readable_from_unpique_id(now)
+        humannow = readable_from_unique_id(now)
         dataset_metadata["registration_date"] = humannow
 
         # Check cache consistency
@@ -352,10 +362,11 @@ def import_dataset(dataset_path: Path) -> Tuple[bool, str]:
         if not dataset_dest.exists():
             dataset_dest.mkdir(parents=False, exist_ok=False)
 
+        shutil.copytree(dataset_path, dataset_dest, dirs_exist_ok=True)
+
         with open(metadata_path, 'w') as f:
             json.dump(dataset_metadata, f, indent=2)
-
-        shutil.copytree(dataset_path, dataset_dest, dirs_exist_ok=True)
+            
         return True, "Dataset imported successfully."
     
     except Exception as e:
