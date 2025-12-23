@@ -1,5 +1,5 @@
 """
-Until compatible exports are avalible through the MFA package this will serve as the alterative 
+Until compatible exports are avalible through the MFA package this will serve as the alterative
 entrypoint for MFA logic bootstrapping the cli
 """
 
@@ -70,4 +70,3 @@ def run_mfa_evaluate(
     Run the Montreal Forced Aligner 'evaluate' subcommand as a subprocess.
     """
     pass
-    

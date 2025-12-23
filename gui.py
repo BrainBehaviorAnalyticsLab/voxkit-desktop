@@ -126,7 +126,6 @@ class AlignmentGUI(QMainWindow):
                 pipeline_widget.setStyleSheet(inactive_style)
             if manage_widget:
                 manage_widget.setStyleSheet(active_style)
-    
 
     def open_datasets(self):
         """Switch to Datasets view"""

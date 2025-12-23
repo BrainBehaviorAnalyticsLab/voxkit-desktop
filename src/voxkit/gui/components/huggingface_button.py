@@ -2,10 +2,8 @@
 HuggingFace branded button component with logo
 """
 
-from PyQt6.QtWidgets import QPushButton, QHBoxLayout, QWidget, QLabel
-from PyQt6.QtCore import Qt, QSize
-from PyQt6.QtGui import QPixmap, QIcon
-from PyQt6.QtSvgWidgets import QSvgWidget
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QWidget
 
 
 class HuggingFaceButton(QPushButton):
@@ -91,7 +89,7 @@ class HuggingFaceIconButton(QPushButton):
         """Set up the icon button UI"""
         self.setText("🤗")
         self.setFixedSize(38, 38)
-        
+
         self.setStyleSheet("""
             QPushButton {
                 background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
@@ -125,6 +123,7 @@ class HuggingFaceIconButton(QPushButton):
 # Example usage
 if __name__ == "__main__":
     import sys
+
     from PyQt6.QtWidgets import QApplication, QVBoxLayout, QWidget
 
     app = QApplication(sys.argv)

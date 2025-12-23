@@ -60,7 +60,7 @@ class PipelineFormStack(QWidget):
         if isinstance(training_page, TrainingStacker):
             training_page.reload_models()
             training_page.reload_datasets()
-            
+
         predicting_page = self.stacked_widget.widget(1)
         if isinstance(predicting_page, PredictionStacker):
             predicting_page.reload_models()
@@ -69,7 +69,7 @@ class PipelineFormStack(QWidget):
         pllr_page = self.stacked_widget.widget(2)
         if isinstance(pllr_page, PLLRStacker):
             pllr_page.reload_datasets()
-            
+
     def change_page(self, index):
         """Change the displayed page based on menu selection with animation"""
         if index >= 0:  # Valid index

@@ -16,14 +16,16 @@ Notes
 The storage root must be configured as a path starting with '~' to ensure
 it references the user's home directory.
 """
+
 from datetime import datetime
 from pathlib import Path
+
 from .config import STORAGE_ROOT
 
 
 def get_storage_root() -> Path:
     """Get the root directory for storing VoxKit data.
-    
+
     This uses ~ (home directory) so it works regardless of how the app is launched.
     """
     if STORAGE_ROOT.startswith("~"):

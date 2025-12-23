@@ -70,7 +70,7 @@ class AlignmentEngine(ABC):
         )
         self.human_readable_name = human_readable_name or self.__class__.__name__
         self.id = id or self.__class__.__name__
-        
+
     @abstractmethod
     def align(self, dataset_id: str, model_id: str) -> None:
         """
@@ -85,7 +85,7 @@ class AlignmentEngine(ABC):
             model_id: Identifier of the alignment model to use.
         """
         raise NotImplementedError()
-    
+
     @abstractmethod
     def train_aligner(
         self, audio_root: Path, textgrid_root: Path, base_model_id: str | None, new_model_id: str
@@ -167,7 +167,7 @@ class AlignmentEngine(ABC):
 
         if not path.exists():
             return None
-        
+
         with open(path, "r", encoding="utf-8") as f:
             return json.load(f)
 
@@ -201,7 +201,7 @@ class AlignmentEngine(ABC):
                 f"Settings path not given for tool type '{tool_type}' in this engine."
             )
         settings = self._load_json(Path(get_storage_root() / cfg.store_file))
-        
+
         if tool_type == "train":
             if settings is None:
                 # Get default settings if none exist

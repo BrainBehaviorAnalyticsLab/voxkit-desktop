@@ -22,6 +22,7 @@ class FieldType(Enum):
     LINEEDIT = "lineedit"
     COMBOBOX = "combobox"
 
+
 @dataclass
 class FieldConfig:
     """
@@ -77,6 +78,7 @@ class FieldConfig:
 
     # Validation
     validator: Optional[Callable] = None
+
 
 @dataclass
 class SettingsConfig:

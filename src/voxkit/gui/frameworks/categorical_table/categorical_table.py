@@ -1,22 +1,19 @@
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
-    QCheckBox,
+    QDialog,
+    QFormLayout,
     QGroupBox,
     QHBoxLayout,
     QHeaderView,
-    QInputDialog,
     QLabel,
     QMessageBox,
     QPushButton,
+    QScrollArea,
     QTableWidget,
     QTableWidgetItem,
     QVBoxLayout,
     QWidget,
-    QDialog,
-    QFormLayout,
-    QScrollArea,
 )
-
-from PyQt6.QtCore import Qt
 
 from voxkit.gui.components import HuggingFaceButton
 from voxkit.gui.frameworks._______.styles import Buttons, Colors, Labels
@@ -38,7 +35,7 @@ class CategoricalTableWidget(QWidget):
     ):
         """
         Initialize the CategoricalTableWidget.
-        
+
         Args:
             refresh_data_function: Callable that returns dict of categorical data
             export_function: Callable(category: str, items: list[dict]) -> (success: bool, message: str)
@@ -58,7 +55,7 @@ class CategoricalTableWidget(QWidget):
         self.single_selection_flag = single_selection_flag
         self.huggingface_callback = huggingface_callback
         self.current_category_index = 0
-        
+
         # Initialize data
         self.data = {}
         self.category_keys = []
@@ -74,18 +71,18 @@ class CategoricalTableWidget(QWidget):
 
         # Title header with optional HuggingFace button
         header_layout = QHBoxLayout()
-        
+
         title = QLabel("Model Management")
         title.setStyleSheet(Labels.TITLE)
         header_layout.addWidget(title)
-        
+
         # Add HuggingFace button if callback provided
         if self.huggingface_callback:
             header_layout.addStretch()
             self.hf_button = HuggingFaceButton(title="Browse Models")
             self.hf_button.clicked.connect(self.huggingface_callback)
             header_layout.addWidget(self.hf_button)
-        
+
         main_layout.addLayout(header_layout)
 
         main_layout.addSpacing(10)
@@ -222,7 +219,7 @@ class CategoricalTableWidget(QWidget):
             }
         """
         )
-        
+
         # Configure table
         header = self.table_widget.horizontalHeader()
         self.table_widget.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
@@ -231,7 +228,7 @@ class CategoricalTableWidget(QWidget):
             self.table_widget.setSelectionMode(QTableWidget.SelectionMode.SingleSelection)
         else:
             self.table_widget.setSelectionMode(QTableWidget.SelectionMode.MultiSelection)
-        
+
         table_container_layout.addWidget(self.table_widget)
 
         # Add empty state label
@@ -323,7 +320,7 @@ class CategoricalTableWidget(QWidget):
         """)
         self.delete_btn.clicked.connect(self.on_delete)
         action_layout.addWidget(self.delete_btn)
-        
+
         group.setLayout(action_layout)
         main_layout.addWidget(group)
 
@@ -357,7 +354,7 @@ class CategoricalTableWidget(QWidget):
     def update_display(self):
         """Update the display for the current category"""
         self.table_widget.clear()
-        
+
         if not self.category_keys:
             self.category_label.setText("No Categories")
             self.prev_btn.setEnabled(False)
@@ -379,7 +376,7 @@ class CategoricalTableWidget(QWidget):
 
         # Get category data
         category_data = self.data[current_category]
-        
+
         if not category_data:
             self.table_widget.hide()
             self.empty_label.show()
@@ -397,7 +394,7 @@ class CategoricalTableWidget(QWidget):
                 if isinstance(item, dict):
                     all_keys.update(item.keys())
             self.columns_shown = sorted(list(all_keys))
-        
+
         # Set up table
         display_columns = self.columns_shown + ["Actions"]
         self.table_widget.setRowCount(len(category_data))
@@ -408,17 +405,21 @@ class CategoricalTableWidget(QWidget):
         for row_idx, item_data in enumerate(category_data):
             # Data columns
             for col_idx, column_name in enumerate(self.columns_shown):
-                value = item_data.get(column_name, "Unknown") if isinstance(item_data, dict) else "Unknown"
+                value = (
+                    item_data.get(column_name, "Unknown")
+                    if isinstance(item_data, dict)
+                    else "Unknown"
+                )
                 table_item = QTableWidgetItem(str(value))
                 table_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 self.table_widget.setItem(row_idx, col_idx, table_item)
-            
+
             # View button in centered container
             button_container = QWidget()
             button_layout = QHBoxLayout(button_container)
             button_layout.setContentsMargins(0, 0, 0, 0)
             button_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            
+
             view_btn = QPushButton("View")
             view_btn.setFixedSize(60, 24)
             view_btn.setStyleSheet(f"""
@@ -439,7 +440,7 @@ class CategoricalTableWidget(QWidget):
             view_btn.clicked.connect(lambda checked, idx=row_idx: self.view_item_details(idx))
             button_layout.addWidget(view_btn)
             self.table_widget.setCellWidget(row_idx, len(self.columns_shown), button_container)
-        
+
         # Configure column widths for optimal stretching
         header = self.table_widget.horizontalHeader()
         # Make data columns resize to contents or stretch
@@ -458,10 +459,10 @@ class CategoricalTableWidget(QWidget):
         """Show all details for an item"""
         if not self.category_keys:
             return
-            
+
         current_category = self.category_keys[self.current_category_index]
         category_data = self.data[current_category]
-        
+
         if 0 <= row_index < len(category_data):
             item_data = category_data[row_index]
             self.show_detail_dialog(item_data, row_index)
@@ -472,9 +473,9 @@ class CategoricalTableWidget(QWidget):
         dialog.setWindowTitle(f"Item Details - Row {row_index + 1}")
         dialog.setMinimumWidth(450)
         dialog.setMinimumHeight(350)
-        
+
         layout = QVBoxLayout(dialog)
-        
+
         # Title
         title = QLabel(f"All Fields for Row {row_index + 1}")
         title.setStyleSheet(f"""
@@ -488,7 +489,7 @@ class CategoricalTableWidget(QWidget):
             }}
         """)
         layout.addWidget(title)
-        
+
         # Create scrollable area for fields
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
@@ -499,20 +500,20 @@ class CategoricalTableWidget(QWidget):
                 background-color: white;
             }}
         """)
-        
+
         # Container for form layout
         container = QWidget()
         form_layout = QFormLayout(container)
         form_layout.setSpacing(10)
         form_layout.setContentsMargins(10, 10, 10, 10)
-        
+
         # Add all fields
         if isinstance(item_data, dict):
             sorted_keys = sorted(item_data.keys())
-            
+
             for key in sorted_keys:
                 value = item_data[key]
-                
+
                 # Key label
                 key_label = QLabel(f"{key}:")
                 key_label.setStyleSheet(f"""
@@ -522,7 +523,7 @@ class CategoricalTableWidget(QWidget):
                         min-width: 120px;
                     }}
                 """)
-                
+
                 # Value label
                 value_label = QLabel(str(value))
                 value_label.setWordWrap(True)
@@ -535,22 +536,22 @@ class CategoricalTableWidget(QWidget):
                         border: 1px solid {Colors.BORDER};
                     }}
                 """)
-                
+
                 form_layout.addRow(key_label, value_label)
-        
+
         scroll.setWidget(container)
         layout.addWidget(scroll)
-        
+
         # Close button
         close_btn = QPushButton("Close")
         close_btn.setStyleSheet(Buttons.SECONDARY)
         close_btn.clicked.connect(dialog.close)
-        
+
         button_layout = QHBoxLayout()
         button_layout.addStretch()
         button_layout.addWidget(close_btn)
         layout.addLayout(button_layout)
-        
+
         dialog.exec()
 
     def prev_category(self):
@@ -569,7 +570,7 @@ class CategoricalTableWidget(QWidget):
         """Select all items in the current table"""
         if self.single_selection_flag:
             return  # Not applicable in single selection mode
-        
+
         self.table_widget.selectAll()
 
     def deselect_all(self):
@@ -581,19 +582,19 @@ class CategoricalTableWidget(QWidget):
         selected = []
         if not self.category_keys:
             return selected
-            
+
         current_category = self.category_keys[self.current_category_index]
         category_data = self.data[current_category]
-        
+
         # Get selected rows from table
         selected_rows = self.table_widget.selectionModel().selectedRows()
         for index in selected_rows:
             row = index.row()
             if row < len(category_data):
                 selected.append(category_data[row])
-        
+
         return selected
-    
+
     def set_items(self, mode, items):
         """Set the items for a specific category"""
         if mode not in self.data:
@@ -615,7 +616,7 @@ class CategoricalTableWidget(QWidget):
             return
 
         current_category = self.category_keys[self.current_category_index]
-        
+
         try:
             success, message = self.export_function(current_category, selected_items)
             if not message:
@@ -641,7 +642,7 @@ class CategoricalTableWidget(QWidget):
                 f"An error occurred during export: {str(e)}",
                 QMessageBox.StandardButton.Ok,
             )
-    
+
     def on_delete(self):
         """Handle delete button click"""
         selected_items = self.get_selected_items()
@@ -666,18 +667,18 @@ class CategoricalTableWidget(QWidget):
 
         if reply == QMessageBox.StandardButton.Yes:
             current_category = self.category_keys[self.current_category_index]
-            
+
             try:
                 success, message = self.delete_function(current_category, selected_items)
-                
+
                 if not message:
                     return
-                
+
                 if success:
                     # Refresh data after successful deletion
                     self.refresh_data()
                     self.update_display()
-                    
+
                     QMessageBox.information(
                         self,
                         "Deletion Successful",
@@ -711,17 +712,17 @@ class CategoricalTableWidget(QWidget):
             return
 
         current_category = self.category_keys[self.current_category_index]
-        
+
         try:
             success, message = self.import_function(current_category)
-            
+
             if not message:
                 return
             if success:
                 # Refresh data after successful import
                 self.refresh_data()
                 self.update_display()
-                
+
                 QMessageBox.information(
                     self,
                     "Import Successful",
@@ -747,6 +748,7 @@ class CategoricalTableWidget(QWidget):
 # Example usage
 if __name__ == "__main__":
     import sys
+
     from PyQt6.QtWidgets import QApplication
 
     app = QApplication(sys.argv)
@@ -754,18 +756,58 @@ if __name__ == "__main__":
     # Sample data - now each category contains a list of dictionaries
     sample_data = {
         "MFA Models": [
-            {"name": "english_us_arpa", "model_path": "/models/mfa/english_us_arpa", "download_date": "2025-01-15", "size": "125MB"},
-            {"name": "german_mfa", "model_path": "/models/mfa/german_mfa", "download_date": "2025-02-20", "size": "98MB"},
-            {"name": "french_prosodylab", "model_path": "/models/mfa/french_prosodylab", "download_date": "2025-03-10", "size": "110MB"},
+            {
+                "name": "english_us_arpa",
+                "model_path": "/models/mfa/english_us_arpa",
+                "download_date": "2025-01-15",
+                "size": "125MB",
+            },
+            {
+                "name": "german_mfa",
+                "model_path": "/models/mfa/german_mfa",
+                "download_date": "2025-02-20",
+                "size": "98MB",
+            },
+            {
+                "name": "french_prosodylab",
+                "model_path": "/models/mfa/french_prosodylab",
+                "download_date": "2025-03-10",
+                "size": "110MB",
+            },
         ],
         "W2TG Models": [
-            {"name": "charsiu_en", "model_path": "/models/w2tg/charsiu_en", "download_date": "2025-04-05", "version": "1.0"},
-            {"name": "custom_model_v1", "model_path": "/models/w2tg/custom_v1", "download_date": "2025-05-12", "version": "1.1"},
-            {"name": "custom_model_v2", "model_path": "/models/w2tg/custom_v2", "download_date": "2025-06-18", "version": "2.0"},
+            {
+                "name": "charsiu_en",
+                "model_path": "/models/w2tg/charsiu_en",
+                "download_date": "2025-04-05",
+                "version": "1.0",
+            },
+            {
+                "name": "custom_model_v1",
+                "model_path": "/models/w2tg/custom_v1",
+                "download_date": "2025-05-12",
+                "version": "1.1",
+            },
+            {
+                "name": "custom_model_v2",
+                "model_path": "/models/w2tg/custom_v2",
+                "download_date": "2025-06-18",
+                "version": "2.0",
+            },
         ],
         "Dictionaries": [
-            {"name": "english_us", "path": "/dicts/en_us.dict", "download_date": "2025-01-01", "entries": "50000"},
-            {"name": "german", "path": "/dicts/de.dict", "download_date": "2025-02-01", "entries": "45000"},
+            {
+                "name": "english_us",
+                "path": "/dicts/en_us.dict",
+                "download_date": "2025-01-01",
+                "entries": "50000",
+            },
+            {
+                "name": "german",
+                "path": "/dicts/de.dict",
+                "download_date": "2025-02-01",
+                "entries": "45000",
+            },
         ],
     }
 
@@ -798,7 +840,7 @@ if __name__ == "__main__":
 
     # Specify which columns to show (or leave None to auto-detect)
     columns_shown = ["name", "download_date"]
-    
+
     # Create widget with single selection mode disabled (multi-select)
     widget = CategoricalTableWidget(
         refresh_data_function=refresh_data,

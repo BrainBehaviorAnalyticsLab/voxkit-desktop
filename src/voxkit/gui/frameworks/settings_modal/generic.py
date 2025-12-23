@@ -93,7 +93,7 @@ class GenericDialog(QDialog):
         # Setup overlay and blur if parent exists
         if parent and config.apply_blur:
             self._setup_overlay(parent)
-        
+
         self._save_defaults()
         self._setup_ui(config.title, config.dimensions)
         self._create_fields()
@@ -133,7 +133,6 @@ class GenericDialog(QDialog):
             parent: Parent widget to apply blur effect to.
         """
         try:
-
             main_window = parent.parent
             overlay = OverlayWidget(main_window)
             overlay.resize(main_window.size())

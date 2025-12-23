@@ -14,9 +14,9 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from voxkit.storage.validation import validate_paths
 
 from voxkit.gui.workers.worker_thread import WorkerThread
-from voxkit.storage.validation import validate_paths
 
 from .styles import BrowseButtonStyle
 
