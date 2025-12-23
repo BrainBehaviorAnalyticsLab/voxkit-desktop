@@ -16,14 +16,16 @@ Notes
 The storage root must be configured as a path starting with '~' to ensure
 it references the user's home directory.
 """
+
 from datetime import datetime
 from pathlib import Path
+
 from .config import STORAGE_ROOT
 
 
 def get_storage_root() -> Path:
     """Get the root directory for storing VoxKit data.
-    
+
     This uses ~ (home directory) so it works regardless of how the app is launched.
     """
     if STORAGE_ROOT.startswith("~"):
@@ -32,8 +34,10 @@ def get_storage_root() -> Path:
         raise ValueError("STORAGE_ROOT must be a valid path starting with '~'")
 
 
-def generate_unique_id(prefix: str = None) -> str:
-    """Generate a unique identifier with the given prefix and current timestamp including microseconds."""
+def generate_unique_id(prefix: str | None = None) -> str:
+    """Generate a unique identifier with the given prefix and current timestamp
+    including microseconds.
+    """
     now = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
     if prefix:
         return f"{prefix}_{now}"

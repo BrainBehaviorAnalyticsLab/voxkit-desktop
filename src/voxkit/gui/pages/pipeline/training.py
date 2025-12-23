@@ -18,6 +18,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 from voxkit.gui.pages.pipeline.model_eval import QComboBox
+from voxkit.storage.validation import validate_path, validate_paths
 
 from voxkit.config import Defaults
 from voxkit.engines import ManageEngines
@@ -25,11 +26,11 @@ from voxkit.gui.frameworks.settings_modal import GenericDialog
 from voxkit.gui.workers.worker_thread import WorkerThread
 from voxkit.storage.datasets import get_dataset_path, list_datasets
 from voxkit.storage.models import list_models
-from voxkit.storage.validation import validate_path, validate_paths
 
 from .styles import BrowseButtonStyle
 
 TrainingTools = ManageEngines.get_tool_providers("train")
+
 
 class TrainingPage(QWidget):
     def __init__(self, parent):
@@ -73,16 +74,15 @@ class TrainingPage(QWidget):
                 self, "No Dataset Selected", "Please select a dataset from the dropdown."
             )
             return
-        
+
         # Get dataset path
         audio_path = get_dataset_path(selected_dataset)
         if not audio_path:
             QMessageBox.warning(
-                self, "Invalid Dataset",
-                f"Could not find path for dataset '{selected_dataset}'."
+                self, "Invalid Dataset", f"Could not find path for dataset '{selected_dataset}'."
             )
             return
-        
+
         # Validate inputs
         paths = {
             "Training Audio Directory": audio_path,
@@ -147,7 +147,6 @@ class TrainingPage(QWidget):
             new_model_id=model_name,
         )
 
-        
         return "Model training completed successfully"
 
     def on_train_finished(self, success, message):
@@ -167,8 +166,7 @@ class TrainingPage(QWidget):
         """Handle settings button click on training page"""
 
         self.settings_dialog = GenericDialog(
-            parent=self,
-            config=TrainingTools[self.selected_engine].get_settings_config("train")
+            parent=self, config=TrainingTools[self.selected_engine].get_settings_config("train")
         )
         result = self.settings_dialog.exec()
 
@@ -189,7 +187,7 @@ class TrainingPage(QWidget):
         self.engine_panel_dropdowns[self.selected_engine].addItems(
             list(model_names) if model_names else []
         )
-    
+
     def reload_datasets(self):
         """Reload datasets in the dropdown"""
         self.train_dataset_dropdown.clear()
@@ -200,7 +198,7 @@ class TrainingPage(QWidget):
         else:
             self.train_dataset_dropdown.addItem("No datasets registered")
             self.train_dataset_dropdown.setEnabled(False)
-        
+
     def init_ui(self):
         self.setMinimumWidth(600)
         layout = QVBoxLayout(self)
@@ -237,7 +235,7 @@ class TrainingPage(QWidget):
         self.mode_group.setExclusive(True)
 
         # Maps
-        self.engine_panel_radios   = {}
+        self.engine_panel_radios = {}
         self.engine_panel_dropdowns = {}
 
         # ------------------------------------------------------------------
@@ -301,7 +299,7 @@ class TrainingPage(QWidget):
         dataset_label = QLabel("Training Dataset")
         dataset_label.setStyleSheet("font-weight: bold; color: #2c3e50;")
         layout.addWidget(dataset_label)
-        
+
         self.train_dataset_dropdown = QComboBox()
         self.train_dataset_dropdown.setPlaceholderText("Select Dataset")
         self.train_dataset_dropdown.setStyleSheet("""
@@ -325,7 +323,7 @@ class TrainingPage(QWidget):
                 height: 12px;
             }
         """)
-        
+
         # Populate with registered datasets
         datasets = list_datasets()
         if datasets:
@@ -333,7 +331,7 @@ class TrainingPage(QWidget):
         else:
             self.train_dataset_dropdown.addItem("No datasets registered")
             self.train_dataset_dropdown.setEnabled(False)
-        
+
         layout.addWidget(self.train_dataset_dropdown)
 
         # Training Text Grid Directory

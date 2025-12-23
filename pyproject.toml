@@ -4,19 +4,19 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "pypllr-gui"
 version = "0.1.0"
-description = "Add your description here"
+description = "AI/ML Research -> Clinical Applications (Speech Pathology)"
 readme = "README.md"
 requires-python = ">=3.11"
 license = {text = "MIT"}
 authors = [
-    {name = "Your Name", email = "your.email@example.com"}
+    {name = "Beckett Frey", email = "bfrey6@wisc.edu"}
 ]
 
 dependencies = [
     "pyqt6>=6.9.1",
     "torch==2.8.0",
     "torchaudio==2.8.0",
-    "pypllrcomputer @ git+https://github.com/BrainBehaviorAnalyticsLab/PyPLLRComputer.git",
+    "pypllrcomputer @ git+https://github.com/BrainBehaviorAnalyticsLab/PyPLLRComputer.git@48a0c934e75f73235ba5a002538b8588fd6697e7",
     "wav2textgrid @ git+https://github.com/pkadambi/Wav2TextGrid.git@8db3afd",
     "datasets>=4.3.0",
     "accelerate>=1.11.0",
@@ -28,9 +28,6 @@ dependencies = [
 ]
 
 [dependency-groups]
-security = [
-    "safety>=3.6.2",
-]
 dev = [
     "pre-commit>=4.3.0",
     "ruff>=0.14.0",
@@ -84,6 +81,11 @@ fixable = ["ALL"]
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = ["S101"]
 "scripts/**/*.py" = ["S101","S603"] # Allow subprocess in scripts
+"src/voxkit/services/**/*.py" = ["S603", "S108"] # Allow subprocess and temp dirs in services
+"build.py" = ["S103", "S603", "S607"] # Allow chmod and subprocess in build script
+"hooks/**/*.py" = ["E402"] # Allow imports after code in hooks
+"main.py" = ["E402", "S108"] # Allow imports after code and temp dir in main
+"src/voxkit/gui/pages/pipeline/evaluation_stacker.py" = ["S603", "S607"] # Allow subprocess in eval
 
 [tool.ruff.lint.isort]
 known-first-party = ["Wav2TextGrid"]

@@ -1,7 +1,14 @@
 from pathlib import Path
+
 import pytest
-from .test_setup import activate_test_environment, deactivate_test_environment, mock_get_storage_root, ENGINE_IDS
+
 from ..utils import get_storage_root
+from .test_setup import (
+    ENGINE_IDS,
+    activate_test_environment,
+    deactivate_test_environment,
+    mock_get_storage_root,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -16,8 +23,9 @@ def manage_test_environment():
 class TestModels:
     class TestCreateModel:
         def test_create_model_success(self, monkeypatch):
-            from ..models import ModelMetadata, create_model
             from .. import models
+            from ..models import ModelMetadata, create_model
+
             monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
             for engine_id in ENGINE_IDS:
                 success, message = create_model(
@@ -32,10 +40,10 @@ class TestModels:
                 assert message["name"] == "test_model"
                 assert message["engine_id"] == engine_id
 
-    
         def test_create_model_invalid_engine(self, monkeypatch):
-            from ..models import create_model
             from .. import models
+            from ..models import create_model
+
             monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
 
             success, message = create_model(
@@ -46,10 +54,10 @@ class TestModels:
             assert "Unsupported engine_id" in message
             assert Path(get_storage_root() / "INVALID_ENGINE").exists() is False
 
-
         def test_create_multiple_models(self, monkeypatch):
-            from ..models import create_model
             from .. import models
+            from ..models import create_model
+
             monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
 
             engine_id = ENGINE_IDS[0]
@@ -67,8 +75,9 @@ class TestModels:
                 created_ids.add(message["id"])
 
         def test_model_paths_created(self, monkeypatch):
-            from ..models import create_model
             from .. import models
+            from ..models import create_model
+
             monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
 
             engine_id = ENGINE_IDS[0]
@@ -87,11 +96,12 @@ class TestModels:
             assert model_path.parent.exists(), "Model directory does not exist"
             assert data_path.exists()
             assert eval_path.exists()
-            assert train_path.exists()  
+            assert train_path.exists()
 
         def test_model_fits_modelmetadata(self, monkeypatch):
-            from ..models import ModelMetadata, create_model
             from .. import models
+            from ..models import ModelMetadata, create_model
+
             monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
 
             engine_id = ENGINE_IDS[0]
@@ -108,8 +118,9 @@ class TestModels:
 
     class TestListModels:
         def test_list_models_empty(self, monkeypatch):
-            from ..models import list_models
             from .. import models
+            from ..models import list_models
+
             monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
 
             engine_id = ENGINE_IDS[0]
@@ -118,8 +129,9 @@ class TestModels:
             assert len(models_list) == 0
 
         def test_list_models_non_empty(self, monkeypatch):
-            from ..models import create_model, list_models
             from .. import models
+            from ..models import create_model, list_models
+
             monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
 
             engine_id = ENGINE_IDS[0]
@@ -135,8 +147,9 @@ class TestModels:
             assert len(models_list) == 3
 
         def test_list_models_output_format(self, monkeypatch):
-            from ..models import create_model, list_models
             from .. import models
+            from ..models import create_model, list_models
+
             monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
 
             engine_id = ENGINE_IDS[0]
@@ -156,8 +169,9 @@ class TestModels:
             assert not missing, f"Missing keys in model metadata: {missing}"
 
         def test_list_models_multiple_engines(self, monkeypatch):
-            from ..models import create_model, list_models
             from .. import models
+            from ..models import create_model, list_models
+
             monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
 
             # Create models for different engines
@@ -175,8 +189,9 @@ class TestModels:
 
     class TestDeleteModel:
         def test_delete_model_success(self, monkeypatch):
-            from ..models import create_model, delete_model, list_models
             from .. import models
+            from ..models import create_model, delete_model, list_models
+
             monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
 
             for engine_id in ENGINE_IDS:
@@ -202,22 +217,26 @@ class TestModels:
                 assert model_id not in model_ids
 
         def test_delete_model_nonexistent(self, monkeypatch):
-            from ..models import delete_model
             from .. import models
+            from ..models import delete_model
+
             monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
 
             engine_id = ENGINE_IDS[0]
             fake_model_id = "nonexistent_model_id"
 
-            with pytest.raises(TypeError) as _:
-                delete_model(
-                    engine_id=engine_id,
-                    model_id=fake_model_id,
-                )
+            success, msg = delete_model(
+                engine_id=engine_id,
+                model_id=fake_model_id,
+            )
+
+            assert success is False
+            assert "not found" in msg
 
         def test_delete_model_multiple(self, monkeypatch):
-            from ..models import create_model, delete_model, list_models
             from .. import models
+            from ..models import create_model, delete_model, list_models
+
             monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
 
             engine_id = ENGINE_IDS[0]
@@ -245,8 +264,9 @@ class TestModels:
             assert len(models_list) == 0
 
         def test_delete_model_invalid_engine(self, monkeypatch):
-            from ..models import create_model, delete_model
             from .. import models
+            from ..models import create_model, delete_model
+
             monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
 
             engine_id = ENGINE_IDS[0]
@@ -260,16 +280,20 @@ class TestModels:
 
             # Attempt to delete with invalid engine_id
             invalid_engine_id = "INVALID_ENGINE"
-            with pytest.raises(TypeError) as _:
-                delete_model(
-                    engine_id=invalid_engine_id,
-                    model_id=model_id,
-                )
+
+            success, msg = delete_model(
+                engine_id=invalid_engine_id,
+                model_id=model_id,
+            )
+
+            assert success is False
+            assert "not found" in msg
 
     class TestGetModelMetadata:
         def test_get_model_metadata_success(self, monkeypatch):
-            from ..models import create_model, get_model_metadata
             from .. import models
+            from ..models import create_model, get_model_metadata
+
             monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
 
             for engine_id in ENGINE_IDS:
@@ -291,8 +315,9 @@ class TestModels:
                 assert metadata["engine_id"] == engine_id
 
         def test_get_model_metadata_nonexistent(self, monkeypatch):
-            from ..models import get_model_metadata
             from .. import models
+            from ..models import get_model_metadata
+
             monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
 
             engine_id = ENGINE_IDS[0]
@@ -303,10 +328,11 @@ class TestModels:
                     engine_id=engine_id,
                     model_id=fake_model_id,
                 )
-    
+
         def test_get_model_metadata_multiple(self, monkeypatch):
-            from ..models import create_model, get_model_metadata
             from .. import models
+            from ..models import create_model, get_model_metadata
+
             monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
 
             engine_id = ENGINE_IDS[0]
@@ -330,10 +356,10 @@ class TestModels:
                 assert metadata["id"] == model_id
                 assert metadata["engine_id"] == engine_id
 
-        
         def test_get_model_metadata_invalid_engine(self, monkeypatch):
-            from ..models import create_model, get_model_metadata
             from .. import models
+            from ..models import create_model, get_model_metadata
+
             monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
 
             engine_id = ENGINE_IDS[0]
@@ -354,8 +380,9 @@ class TestModels:
                 )
 
         def test_get_model_metadata_output_format(self, monkeypatch):
-            from ..models import create_model, get_model_metadata
             from .. import models
+            from ..models import create_model, get_model_metadata
+
             monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
 
             engine_id = ENGINE_IDS[0]
@@ -376,5 +403,3 @@ class TestModels:
             required_keys = set(models.ModelMetadata.__annotations__.keys())
             missing = required_keys - set(metadata.keys())
             assert not missing, f"Missing keys in model metadata: {missing}"
-
-            

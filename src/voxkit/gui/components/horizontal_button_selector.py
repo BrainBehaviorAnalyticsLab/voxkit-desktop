@@ -100,7 +100,9 @@ class ScalableButton(QPushButton):
                     padding: 6px 12px;
                 }}
                 QPushButton:hover {{
-                    background-color: rgba({gray_value + 20}, {gray_value + 20}, {gray_value + 20}, {opacity + 0.2});
+                    background-color: rgba(
+                        {gray_value + 20}, {gray_value + 20}, {gray_value + 20}, {opacity + 0.2}
+                    );
                 }}
             """)
 
@@ -352,7 +354,6 @@ class HorizontalButtonSelector(QWidget):
         if not (0 <= index < len(self.buttons)) or self.is_animating:
             return
 
-        old_index = self.current_index
         self.current_index = index
 
         # Scroll to center
@@ -465,7 +466,6 @@ class HorizontalButtonSelector(QWidget):
         # Check if the closest button changed - if so, update selection
         # BUT only if we're not currently animating (to prevent double-triggering on clicks)
         if closest_index != -1 and closest_index != self.current_index and not self.is_animating:
-            old_index = self.current_index
             self.current_index = closest_index
 
             # Emit signal

@@ -1,4 +1,5 @@
 from typing import Callable, Optional
+
 from PyQt6.QtWidgets import QMessageBox
 
 from voxkit.gui.frameworks.settings_modal import (
@@ -53,7 +54,7 @@ class ImportModelDialog(GenericDialog):
             dimensions=(450, 250),
             apply_blur=True,
             fields=fields,
-            store_file=f"{self.engine_id}/imported_models_dialog.json",   
+            store_file=f"{self.engine_id}/imported_models_dialog.json",
         )
 
         super().__init__(
@@ -76,7 +77,7 @@ class ImportModelDialog(GenericDialog):
         super().accept()
 
     def _placeholder_import(self, model_path: str):
-        parts = model_path.split('/') if model_path else []
+        parts = model_path.split("/") if model_path else []
         model_name = parts[-1] if parts else (model_path or "NONE")
         print(f"Creating destination for engine: {self.engine_id}, key: {model_name}")
         success, message = models.create_model(
@@ -84,11 +85,7 @@ class ImportModelDialog(GenericDialog):
             model_name=model_name,
         )
         if not success:
-            QMessageBox.critical(
-                self,
-                "Import Failed",
-                f"Failed to create model entry: {message}"
-            )
+            QMessageBox.critical(self, "Import Failed", f"Failed to create model entry: {message}")
         else:
             dest_model_path = message["model_path"]
         result = download_and_copy_huggingface_model(model_path, destination=dest_model_path)
@@ -97,7 +94,7 @@ class ImportModelDialog(GenericDialog):
             print("Failed to download model")
         else:
             print(f"Model imported successfully to: {result}")
-        
+
 
 def main():
     # Example usage:

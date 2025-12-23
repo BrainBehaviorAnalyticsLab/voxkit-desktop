@@ -1,7 +1,6 @@
 # TODO : Add module docstring
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QHBoxLayout, QLabel, QListWidget, QSizePolicy, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QHBoxLayout, QListWidget, QVBoxLayout, QWidget
 
 from voxkit.config import Dimensions
 from voxkit.gui.components import AnimatedStackedWidget
@@ -60,7 +59,7 @@ class PipelineFormStack(QWidget):
         if isinstance(training_page, TrainingStacker):
             training_page.reload_models()
             training_page.reload_datasets()
-            
+
         predicting_page = self.stacked_widget.widget(1)
         if isinstance(predicting_page, PredictionStacker):
             predicting_page.reload_models()
@@ -69,7 +68,7 @@ class PipelineFormStack(QWidget):
         pllr_page = self.stacked_widget.widget(2)
         if isinstance(pllr_page, PLLRStacker):
             pllr_page.reload_datasets()
-            
+
     def change_page(self, index):
         """Change the displayed page based on menu selection with animation"""
         if index >= 0:  # Valid index

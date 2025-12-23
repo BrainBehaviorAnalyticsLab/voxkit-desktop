@@ -5,7 +5,6 @@ from PyQt6.QtCore import Qt
 # Add these imports at the top of your file
 from PyQt6.QtWidgets import (
     QButtonGroup,
-    QComboBox,
     QDialog,
     QFileDialog,
     QGroupBox,
@@ -21,15 +20,14 @@ from PyQt6.QtWidgets import (
 
 from voxkit.config import Defaults
 from voxkit.engines import engines
-from voxkit.gui.frameworks.settings_modal import GenericDialog
-from voxkit.gui.workers.worker_thread import WorkerThread
-from voxkit.storage import models, datasets, alignments
-from voxkit.gui.utils import validate_path, validate_paths
 from voxkit.gui.components import MultiColumnComboBox
-
-from .styles import BrowseButtonStyle
+from voxkit.gui.frameworks.settings_modal import GenericDialog
+from voxkit.gui.utils import validate_path, validate_paths
+from voxkit.gui.workers.worker_thread import WorkerThread
+from voxkit.storage import alignments, datasets, models
 
 TrainingTools = engines.get_tool_providers("train")
+
 
 class TrainingStacker(QWidget):
     def __init__(self, parent):
@@ -50,29 +48,47 @@ class TrainingStacker(QWidget):
             if radio.isChecked():
                 self.selected_engine = engine_id
                 break
-        
+
         # Show/hide appropriate dropdowns
         for engine_id, dropdown in self.engine_panel_dropdowns.items():
             dropdown.setVisible(engine_id == self.selected_engine)
-        
+
         print(f"Engine changed to: {self.selected_engine}")
 
     def on_dataset_selected(self):
         """Handle dataset selection change and load corresponding alignments"""
         selected_dataset_id = self.train_dataset_dropdown.current_id()
-        
+
         # Load alignments for the selected dataset
         alignments_meta = alignments.list_alignments(selected_dataset_id)
 
         if alignments_meta:
             data = []
             for a in alignments_meta:
-                data.append({"id": a["id"], "data": (a["engine_id"], a["model_metadata"]["name"], a["alignment_date"], a['status'])})
-            self.train_alignment_dropdown.set_data(data, ["Method", "Model", "Date", "Status"], placeholder="Click to select an alignment")
+                data.append(
+                    {
+                        "id": a["id"],
+                        "data": (
+                            a["engine_id"],
+                            a["model_metadata"]["name"],
+                            a["alignment_date"],
+                            a["status"],
+                        ),
+                    }
+                )
+            self.train_alignment_dropdown.set_data(
+                data,
+                ["Method", "Model", "Date", "Status"],
+                placeholder="Click to select an alignment",
+            )
             self.train_alignment_dropdown.setEnabled(True)
 
         else:
-            self.train_alignment_dropdown.set_data([{"id": None, "data": ("No alignments registered", "", "")}], ["Method", "Model", "Date", "Status"], placeholder="No alignments registered")
+            self.train_alignment_dropdown.set_data(
+                [{"id": None, "data": ("No alignments registered", "", "")}],
+                ["Method", "Model", "Date", "Status"],
+                placeholder="No alignments registered",
+            )
             self.train_alignment_dropdown.setEnabled(False)
 
     def browse_directory(self, line_edit):
@@ -97,16 +113,15 @@ class TrainingStacker(QWidget):
                 self, "No Dataset Selected", "Please select a dataset from the dropdown."
             )
             return
-        
+
         # Get dataset path
         audio_path = datasets._get_dataset_root(selected_dataset_id)
         if not audio_path:
             QMessageBox.warning(
-                self, "Invalid Dataset",
-                f"Could not find path for dataset '{selected_dataset_id}'."
+                self, "Invalid Dataset", f"Could not find path for dataset '{selected_dataset_id}'."
             )
             return
-        
+
         # Get the alignments metadata
         align_index = self.train_alignment_dropdown.currentIndex()
         selected_alignment_id = self.train_alignment_dropdown.itemData(align_index)
@@ -115,15 +130,18 @@ class TrainingStacker(QWidget):
                 self, "No Alignment Selected", "Please select an alignment from the dropdown."
             )
             return
-        
-        alignment_meta = alignments.get_alignment_metadata(selected_dataset_id, selected_alignment_id)
+
+        alignment_meta = alignments.get_alignment_metadata(
+            selected_dataset_id, selected_alignment_id
+        )
         if not alignment_meta:
             QMessageBox.warning(
-                self, "Invalid Alignment",
-                f"Could not find metadata for alignment '{selected_alignment_id}'."
+                self,
+                "Invalid Alignment",
+                f"Could not find metadata for alignment '{selected_alignment_id}'.",
             )
             return
-        
+
         # Validate inputs
         paths = {
             "Training Audio Directory": audio_path,
@@ -142,7 +160,7 @@ class TrainingStacker(QWidget):
         if not model_name:
             QMessageBox.warning(self, "Invalid Model Name", "Please enter a valid model name.")
             return
-        
+
         print(f"Checking if model name '{model_name}' is already taken in {mode}...")
         names_taken = models.list_models(mode)
         names_taken = [m["name"] for m in names_taken]
@@ -184,7 +202,9 @@ class TrainingStacker(QWidget):
         )
 
         selected_model_index = self.engine_panel_dropdowns[self.selected_engine].currentIndex()
-        base_model_id = self.engine_panel_dropdowns[self.selected_engine].itemData(selected_model_index)
+        base_model_id = self.engine_panel_dropdowns[self.selected_engine].itemData(
+            selected_model_index
+        )
 
         TrainingTools[self.selected_engine].train_aligner(
             audio_root=Path(audio_path),
@@ -193,7 +213,6 @@ class TrainingStacker(QWidget):
             new_model_id=model_name,
         )
 
-        
         return "Model training completed successfully"
 
     def on_train_finished(self, success, message):
@@ -213,8 +232,7 @@ class TrainingStacker(QWidget):
         """Handle settings button click on training page"""
 
         self.settings_dialog = GenericDialog(
-            parent=self,
-            config=TrainingTools[self.selected_engine].get_settings_config("train")
+            parent=self, config=TrainingTools[self.selected_engine].get_settings_config("train")
         )
         result = self.settings_dialog.exec()
 
@@ -234,30 +252,44 @@ class TrainingStacker(QWidget):
                 if models_meta:
                     data = []
                     for m in models_meta:
-                        data.append({"id": m["id"], "data": (m["name"], m["download_date"], m['id'])})
+                        data.append(
+                            {"id": m["id"], "data": (m["name"], m["download_date"], m["id"])}
+                        )
                     combo.set_data(data, ["Name", "Download Date", "ID"])
                 else:
-                    combo.set_data([{"id": None, "data": ("No models registered", "", "")}], ["Name", "Download Date", "ID"])
+                    combo.set_data(
+                        [{"id": None, "data": ("No models registered", "", "")}],
+                        ["Name", "Download Date", "ID"],
+                    )
             except Exception as e:
                 print("Error reloading models:", e)
-    
+
     def reload_datasets(self):
         """Reload datasets in the dropdown"""
         datasets_meta = datasets.list_datasets_metadata()
         if datasets_meta:
             data = []
             for d in datasets_meta:
-                data.append({"id": d["id"], "data": (d["name"], d["description"], d['id'])})
-            self.train_dataset_dropdown.set_data(data, ["Name", "Description", "ID"], placeholder="Click to select a dataset")
+                data.append({"id": d["id"], "data": (d["name"], d["description"], d["id"])})
+            self.train_dataset_dropdown.set_data(
+                data, ["Name", "Description", "ID"], placeholder="Click to select a dataset"
+            )
             self.train_dataset_dropdown.setEnabled(True)
         else:
-            self.train_dataset_dropdown.set_data([{"id": None, "data": ("No datasets registered", "", "")}], ["Name", "Description", "ID"], placeholder="No datasets registered")
+            self.train_dataset_dropdown.set_data(
+                [{"id": None, "data": ("No datasets registered", "", "")}],
+                ["Name", "Description", "ID"],
+                placeholder="No datasets registered",
+            )
             self.train_dataset_dropdown.setEnabled(False)
 
-        self.train_alignment_dropdown.set_data([{"id": None, "data": ("Select a dataset first", "", "")}], ["Method", "Model", "Date", "Status"], placeholder="Select a dataset first")
+        self.train_alignment_dropdown.set_data(
+            [{"id": None, "data": ("Select a dataset first", "", "")}],
+            ["Method", "Model", "Date", "Status"],
+            placeholder="Select a dataset first",
+        )
         self.train_alignment_dropdown.setEnabled(False)
-        
-        
+
     def init_ui(self):
         self.setMinimumWidth(600)
         layout = QVBoxLayout(self)
@@ -309,7 +341,7 @@ class TrainingStacker(QWidget):
         self.mode_group.setExclusive(True)
 
         # Maps
-        self.engine_panel_radios   = {}
+        self.engine_panel_radios = {}
         self.engine_panel_dropdowns = {}
 
         # ------------------------------------------------------------------
@@ -334,16 +366,21 @@ class TrainingStacker(QWidget):
             combo.setFixedWidth(300)
 
             models_meta = models.list_models(engine_id)
-            
+
             if models_meta:
                 data = []
                 for m in models_meta:
-                    data.append({"id": m["id"], "data": (m["name"], m["download_date"], m['id'])})
-                combo.set_data(data, ["Name", "Download Date", "ID"], placeholder="➁ Click to select a model")
+                    data.append({"id": m["id"], "data": (m["name"], m["download_date"], m["id"])})
+                combo.set_data(
+                    data, ["Name", "Download Date", "ID"], placeholder="➁ Click to select a model"
+                )
             else:
-                combo.set_data([{"id": None, "data": ("No models registered", "", "")}], ["Name", "Download Date", "ID"], placeholder="No models registered")
-            
-            
+                combo.set_data(
+                    [{"id": None, "data": ("No models registered", "", "")}],
+                    ["Name", "Download Date", "ID"],
+                    placeholder="No models registered",
+                )
+
             self.engine_panel_dropdowns[engine_id] = combo
 
             # ---------- layout ----------
@@ -362,7 +399,7 @@ class TrainingStacker(QWidget):
             rw.setFixedWidth(160)
             rw.setStyleSheet("background-color: white;")
             hbox.addWidget(rw)
-            
+
             # Add spacing to align dropdown with description box
             hbox.addSpacing(25)
 
@@ -384,12 +421,14 @@ class TrainingStacker(QWidget):
             """)
             desc_layout = QHBoxLayout(desc_container)
             desc_layout.setContentsMargins(8, 6, 8, 6)
-            
+
             desc = QLabel(engine.description or "No description")
-            desc.setStyleSheet("color: #7f8c8d; font-size: 11px; background: transparent; border: none;")
+            desc.setStyleSheet(
+                "color: #7f8c8d; font-size: 11px; background: transparent; border: none;"
+            )
             desc.setWordWrap(True)
             desc_layout.addWidget(desc)
-            
+
             engine_vbox.addWidget(desc_container)
             engine_vbox.addSpacing(5)
 
@@ -401,7 +440,7 @@ class TrainingStacker(QWidget):
         dataset_label = QLabel("③ Choose a Training Dataset")
         dataset_label.setStyleSheet("font-weight: bold; color: #2c3e50;")
         layout.addWidget(dataset_label)
-        
+
         self.train_dataset_dropdown = MultiColumnComboBox()
         self.train_dataset_dropdown.setStyleSheet("""
             QComboBox {
@@ -416,29 +455,37 @@ class TrainingStacker(QWidget):
                 color: #999;
             }
         """)
-        
+
         # Populate with registered datasets
         datasets_meta = datasets.list_datasets_metadata()
         if datasets_meta:
             data = []
             for d in datasets_meta:
-                data.append({"id": d["id"], "data": (d["name"], d["registration_date"], d["description"])})
-            self.train_dataset_dropdown.set_data(data, ["Name", "Date", "Description"], placeholder="Click to select a dataset")
+                data.append(
+                    {"id": d["id"], "data": (d["name"], d["registration_date"], d["description"])}
+                )
+            self.train_dataset_dropdown.set_data(
+                data, ["Name", "Date", "Description"], placeholder="Click to select a dataset"
+            )
             self.train_dataset_dropdown.setEnabled(True)
         else:
-            self.train_dataset_dropdown.set_data([{"id": None, "data": ("No datasets registered", "", "")}], ["Name", "Date", "Description"], placeholder="No datasets registered")
+            self.train_dataset_dropdown.set_data(
+                [{"id": None, "data": ("No datasets registered", "", "")}],
+                ["Name", "Date", "Description"],
+                placeholder="No datasets registered",
+            )
             self.train_dataset_dropdown.setEnabled(False)
-        
+
         # Connect to selection handler
         self.train_dataset_dropdown.currentIndexChanged.connect(self.on_dataset_selected)
-        
+
         layout.addWidget(self.train_dataset_dropdown)
-        
+
         # Alignment selection dropdown (initially disabled)
         alignment_label = QLabel("④ Choose an Alignment")
         alignment_label.setStyleSheet("font-weight: bold; color: #2c3e50;")
         layout.addWidget(alignment_label)
-        
+
         self.train_alignment_dropdown = MultiColumnComboBox()
         self.train_alignment_dropdown.setStyleSheet("""
             QComboBox {
@@ -454,8 +501,11 @@ class TrainingStacker(QWidget):
             }
         """)
 
-
-        self.train_alignment_dropdown.set_data([{"id": None, "data": ("Select a dataset first", "", "")}], ["Method", "Model", "Date", "Status"], placeholder="Select a dataset first")
+        self.train_alignment_dropdown.set_data(
+            [{"id": None, "data": ("Select a dataset first", "", "")}],
+            ["Method", "Model", "Date", "Status"],
+            placeholder="Select a dataset first",
+        )
         self.train_alignment_dropdown.setEnabled(False)
         layout.addWidget(self.train_alignment_dropdown)
 

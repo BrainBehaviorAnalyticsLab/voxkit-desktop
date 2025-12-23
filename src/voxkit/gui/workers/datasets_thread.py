@@ -33,15 +33,18 @@ class DatasetRegistrationWorker(QThread):
 
     def run(self):
         self.progress.emit("Validating dataset structure...")
-        
+
         # First validate the dataset
         success = datasets.validate_dataset(self.dataset_path)
-        
+
         if not success:
-            self.finished.emit(False, " Dataset validation failed. " \
-            "Please ensure the dataset follows the Kaldi organization pattern.")
+            self.finished.emit(
+                False,
+                " Dataset validation failed. "
+                "Please ensure the dataset follows the Kaldi organization pattern.",
+            )
             return
-        
+
         success, message = datasets.create_dataset(
             name=self.dataset_name,
             description=self.description,
@@ -55,26 +58,23 @@ class DatasetRegistrationWorker(QThread):
 
         if not success:
             self.finished.emit(False, message)
-            return  
+            return
         else:
             self.progress.emit("Dataset metadata created successfully.")
-        
+
         # Determine output path for CSV file
         dataset_dir = os.path.join(datasets._get_datasets_root(), message["id"])
 
         csv_path = os.path.join(dataset_dir, f"{self.analysis_method.lower()}_summary.csv")
-        
-        csv_data = ManageAnalyzers.get_analyzers()[self.analysis_method].analyze(
-            self.dataset_path
-        )
+
+        csv_data = ManageAnalyzers.get_analyzers()[self.analysis_method].analyze(self.dataset_path)
 
         csv_success, csv_message = self._save_csv(csv_data, csv_path)
-        
+
         if not csv_success:
             self.finished.emit(True, f"Warning: {csv_message}")
         else:
             self.finished.emit(True, csv_message)
-
 
     def _save_csv(self, data: list[dict], path: str) -> tuple[bool, str]:
         """
@@ -82,7 +82,7 @@ class DatasetRegistrationWorker(QThread):
 
         Args:
             data: List of dictionaries where each dictionary represents a row.
-            path: Output path for the CSV file.    
+            path: Output path for the CSV file.
         Returns:
             Tuple of (success, message) where success is True if the file was saved successfully.
         """

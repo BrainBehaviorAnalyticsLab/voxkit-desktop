@@ -45,13 +45,14 @@ class MFAEngine(AlignmentEngine):
             reference_url="https://montreal-forced-aligner.readthedocs.io/en/latest/",
             description=(
                 "The Montreal Forced Aligner (MFA) is a tool for "
-                "aligning audio files to their corresponding transcripts with a focus on speech pathology. "
+                "aligning audio files to their corresponding transcripts with a focus on "
+                "speech pathology. "
             ),
             human_readable_name="MFA",
             id=id,
         )
 
-    def align(self, audio_root: Path, output_root: Path, model_id: str) -> None:
+    def align(self, dataset_id: str, model_id: str) -> None:
         print(f"Aligning with MFA using model: {model_id}")
         pass  # Implement the alignment logic using MFA here
 

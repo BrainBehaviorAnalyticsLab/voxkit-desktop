@@ -3,12 +3,12 @@ Export handler for copying model files to a download folder
 """
 
 import shutil
-from pathlib import Path
 from datetime import datetime
-import json
+from pathlib import Path
+
+from PyQt6.QtWidgets import QFileDialog, QMessageBox
 
 from voxkit.storage import models
-from PyQt6.QtWidgets import QFileDialog, QMessageBox
 
 
 def handle_import(parent_widget, current_category: str):
@@ -29,15 +29,13 @@ def handle_import(parent_widget, current_category: str):
 
     if not import_path:
         return False, ""
-    
-
 
     return models.import_models(current_category, Path(import_path))
 
 
 def handle_delete(parent_widget, selected_items: list, current_category: str) -> tuple[bool, str]:
     """
-    Handle deleting selected models from storage.   
+    Handle deleting selected models from storage.
 
     Args:
         parent_widget: Parent widget for dialogs
@@ -51,7 +49,7 @@ def handle_delete(parent_widget, selected_items: list, current_category: str) ->
             success, msg = models.delete_model(current_category, item["id"])
             if not success:
                 return False, f"Failed to delete model {item['id']}: {msg}"
-            
+
         return True, "Selected models deleted successfully."
     except Exception as e:
         return False, f"Error deleting models: {str(e)}"
@@ -81,13 +79,12 @@ def handle_export(
 
         if not export_base_dir:
             return False, ""
-        
-        folder_name = f'voxkit_models_{datetime.now().strftime("%Y%m%d_%H%M%S")}'
+
+        folder_name = f"voxkit_models_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
         # Create the export folder
         export_folder = Path(export_base_dir) / folder_name
         export_folder.mkdir(parents=True, exist_ok=True)
-
 
         # Track success/failure
         copied_count = 0
@@ -95,7 +92,6 @@ def handle_export(
 
         # Copy each selected item
         for item in selected_items:
-
             if not item:
                 failed_items.append(f"{item} (not found in data)")
                 continue
@@ -104,7 +100,7 @@ def handle_export(
             if isinstance(item, dict):
                 source_path = models._get_model_root(current_category, item["id"])
             else:
-               failed_items.append(f"{item} (invalid item format)")
+                failed_items.append(f"{item} (invalid item format)")
 
             if not source_path.exists():
                 failed_items.append(f"{str(source_path)} (source path does not exist)")
@@ -118,8 +114,6 @@ def handle_export(
                 copied_count += 1
             else:
                 failed_items.append(f"{item} (unknown type)")
-
-        
 
         # Build result message
         if copied_count == len(selected_items):
@@ -169,9 +163,7 @@ def handle_export_lambda(widget, data):
         current_category = widget.category_keys[widget.current_category_index]
 
         # Call the main export function
-        success, message = handle_export(
-            widget, folder_name, selected_items, data, current_category
-        )
+        success, message = handle_export(widget, selected_items, current_category)
 
         # Show result to user
         if success:

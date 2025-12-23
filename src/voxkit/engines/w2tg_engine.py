@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 
 from voxkit.gui.frameworks.settings_modal import (
@@ -6,7 +5,7 @@ from voxkit.gui.frameworks.settings_modal import (
     FieldType,
     SettingsConfig,
 )
-from voxkit.storage import alignments, models, datasets
+from voxkit.storage import alignments, datasets, models
 from Wav2TextGrid.wav2textgrid import align_dirs
 from Wav2TextGrid.wav2textgrid_train import train_aligner
 
@@ -114,11 +113,11 @@ class W2TGEngine(AlignmentEngine):
             dataset_id=dataset_id,
         )
         print(f"Alignment creation result: {result}, message: {msg}")
-        
+
         if result is False:
             print(f"Alignment creation failed: {msg}")
             return
-        
+
         alignment_meta = msg
         dataset_meta = datasets.get_dataset_metadata(dataset_id)
         model_meta = models.get_model_metadata(self.id, model_id)
@@ -141,16 +140,23 @@ class W2TGEngine(AlignmentEngine):
                 filetype=settings.get("file_type", "wav"),
                 use_speaker_adaptation=settings.get("use_speaker_adaptation", False),
             )
-            alignments.update_alignment(dataset_id=dataset_id, alignment_id=alignment_meta["id"], updates={"status": "completed"})
+            alignments.update_alignment(
+                dataset_id=dataset_id,
+                alignment_id=alignment_meta["id"],
+                updates={"status": "completed"},
+            )
 
         except Exception as e:
             print(f"Alignment failed: {e}")
-            alignments.update_alignment(dataset_id=dataset_id, alignment_id=alignment_meta["id"], updates={"status": "failed"})
+            alignments.update_alignment(
+                dataset_id=dataset_id,
+                alignment_id=alignment_meta["id"],
+                updates={"status": "failed"},
+            )
 
     def train_aligner(
         self, audio_root: Path, textgrid_root: Path, base_model_id: str | None, new_model_id: str
     ) -> None:
-        
         new_model_actual_id = None
         try:
             successs, message = models.create_model(
@@ -160,7 +166,7 @@ class W2TGEngine(AlignmentEngine):
 
             if not successs:
                 raise ValueError(f"Failed to create model entry: {message}")
-            
+
             model_meta = message
             model_path = Path(model_meta["model_path"])
             data_path = Path(model_meta["data_path"])
@@ -169,19 +175,22 @@ class W2TGEngine(AlignmentEngine):
             new_model_actual_id = model_meta["id"]
 
             settings = self.get_settings("train")
-            base_model_path = models.get_model_metadata(engine_id=self.id, model_id=base_model_id)["model_path"] if base_model_id else None
+            base_model_path = (
+                models.get_model_metadata(engine_id=self.id, model_id=base_model_id)["model_path"]
+                if base_model_id
+                else None
+            )
 
             if base_model_path is None:
-                raise ValueError(
-                    f"Invalid base model specified: {base_model_id}. "
-                )
-            print(f'Args received for train_aligner: '
-                    f'audio_root={audio_root}, textgrid_root={textgrid_root}, '
-                    f'base_model_path={base_model_path}, model_path={model_path}, '
-                    f'eval_path={eval_path}, new_model_id={new_model_id}, '
-                    f'ntrain_epochs={settings.get("epochs", 50)}')
-                  
-                  
+                raise ValueError(f"Invalid base model specified: {base_model_id}. ")
+            print(
+                f"Args received for train_aligner: "
+                f"audio_root={audio_root}, textgrid_root={textgrid_root}, "
+                f"base_model_path={base_model_path}, model_path={model_path}, "
+                f"eval_path={eval_path}, new_model_id={new_model_id}, "
+                f"ntrain_epochs={settings.get('epochs', 50)}"
+            )
+
             print(f"Training aligner with settings: {settings}")
             print(f"Using base model path: {base_model_path}")
             train_aligner(

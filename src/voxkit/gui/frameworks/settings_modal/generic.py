@@ -1,7 +1,7 @@
 import json
 import os
 from pathlib import Path
-from typing import Any
+from typing import Any, Union
 
 from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, Qt
 from PyQt6.QtWidgets import (
@@ -87,13 +87,13 @@ class GenericDialog(QDialog):
             raise ValueError("File path must be within the storage root directory.")
 
         self.field_configs = config.fields or []
-        self.field_widgets = {}
+        self.field_widgets: dict[str, Any] = {}
         self._apply_blur = config.apply_blur
 
         # Setup overlay and blur if parent exists
         if parent and config.apply_blur:
             self._setup_overlay(parent)
-        
+
         self._save_defaults()
         self._setup_ui(config.title, config.dimensions)
         self._create_fields()
@@ -121,7 +121,7 @@ class GenericDialog(QDialog):
             json.dump(defaults, f, indent=4)
             print(f"Default settings saved to {self.store_values_path}")
 
-    def _setup_overlay(self, parent):
+    def _setup_overlay(self, parent) -> None:
         """
         Setup overlay widget and apply blur effect to parent window.
 
@@ -133,8 +133,17 @@ class GenericDialog(QDialog):
             parent: Parent widget to apply blur effect to.
         """
         try:
+            if not hasattr(parent, "parent") or parent.parent is None:
+                return
 
-            main_window = parent.parent
+            parent_func = parent.parent
+            if not callable(parent_func):
+                return
+
+            main_window = parent_func()
+            if main_window is None:
+                return
+
             overlay = OverlayWidget(main_window)
             overlay.resize(main_window.size())
             overlay.show()
@@ -234,7 +243,7 @@ class GenericDialog(QDialog):
         main_layout.addWidget(container)
 
         # Center dialog on parent
-        if self.parent:
+        if self.parent is not None and hasattr(self.parent, "parent"):
             try:
                 main_window = self.parent.parent
                 self.move(
@@ -291,6 +300,7 @@ class GenericDialog(QDialog):
         Raises:
             ValueError: If field_type is not recognized.
         """
+        widget: Union[QSpinBox, QDoubleSpinBox, QLineEdit, QComboBox]
         if config.field_type == FieldType.SPINBOX:
             widget = self._create_spinbox(config)
         elif config.field_type == FieldType.DOUBLE_SPINBOX:
@@ -453,7 +463,8 @@ class GenericDialog(QDialog):
             >>> print(values)
             {'batch_size': 32, 'learning_rate': 0.001, 'use_gpu': True}
         """
-        values = {}
+
+        values: dict[str, Union[int, float, str]] = {}
         for name, widget in self.field_widgets.items():
             if isinstance(widget, QSpinBox) or isinstance(widget, QDoubleSpinBox):
                 values[name] = widget.value()

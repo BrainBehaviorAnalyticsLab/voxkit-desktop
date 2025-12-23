@@ -1,14 +1,14 @@
 from PyQt6.QtWidgets import QFileDialog, QMessageBox
+
 from voxkit.storage import datasets
 
 
-
 def on_export(self):
-    """Handle export button click for selected dataset""" 
+    """Handle export button click for selected dataset"""
     if not self.selected_dataset:
         QMessageBox.warning(self, "No Dataset Selected", "Please select a dataset to export.")
-        return 
-    
+        return
+
     dir_path = QFileDialog.getExistingDirectory(
         self,
         "Select Directory to Save Exported Dataset",
@@ -26,6 +26,7 @@ def on_export(self):
     else:
         QMessageBox.critical(self, "Export Failed", message)
 
+
 def on_delete(self):
     """Handle delete button click for selected dataset"""
     if not self.selected_dataset:
@@ -39,4 +40,3 @@ def on_delete(self):
 
         else:
             QMessageBox.critical(self, "Delete Failed", message)
-        

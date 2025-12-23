@@ -15,6 +15,7 @@ from PyQt6.QtWidgets import (
 
 from .styles import Buttons, Colors, Labels
 
+
 class CategoryListItem(QWidget):
     """Custom widget for each list item with checkbox, date, and info button"""
 
@@ -374,7 +375,7 @@ class CategoricalListWidget(QWidget):
         """)
         self.delete_btn.clicked.connect(self.on_delete)
         action_layout.addWidget(self.delete_btn)
-        
+
         group.setLayout(action_layout)
         main_layout.addWidget(group)
 
@@ -465,7 +466,7 @@ class CategoricalListWidget(QWidget):
             if widget and isinstance(widget, CategoryListItem) and widget.is_checked():
                 selected[widget.item_key] = widget.item_data
         return selected
-    
+
     def set_items(self, mode, items):
         """Set the items for a specific category"""
         if mode not in self.data:
@@ -501,7 +502,7 @@ class CategoricalListWidget(QWidget):
                 f"Exporting {len(selected_items)} item(s) to '{folder_name}'",
                 QMessageBox.StandardButton.Ok,
             )
-    
+
     def on_delete(self):
         """Handle delete button click"""
         selected_items = self.get_selected_items()
@@ -519,7 +520,8 @@ class CategoricalListWidget(QWidget):
         reply = QMessageBox.question(
             self,
             "Confirm Deletion",
-            f"Are you sure you want to delete {len(selected_items.keys())} item(s)?\n\nThis action cannot be undone.",
+            f"Are you sure you want to delete {len(selected_items.keys())} item(s)?\n\n"
+            "This action cannot be undone.",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.No,
         )
