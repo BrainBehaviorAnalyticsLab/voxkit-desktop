@@ -1,4 +1,4 @@
-.PHONY: help watch build clean
+.PHONY: help setup watch build clean
 .DEFAULT_GOAL := help
 
 # Colors for output
@@ -12,6 +12,13 @@ help:
 	@echo "$(BLUE)VoxKit - Dev Commands$(RESET)"
 	@echo "======================================"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "$(GREEN)%-15s$(RESET) %s\n", $$1, $$2}'
+
+setup: ## Install dependencies and setup pre-commit hooks
+	@echo "$(BLUE)Installing dependencies with uv sync...$(RESET)"
+	uv sync
+	@echo "$(BLUE)Installing pre-commit hooks...$(RESET)"
+	uv run pre-commit install
+	@echo "$(GREEN)Setup completed successfully!$(RESET)"
 
 watch: ## Watch for file changes and restart dev server (requires entr)
 	@if command -v entr >/dev/null 2>&1; then \
@@ -38,22 +45,6 @@ build-info: ## Show information about the built app
 		echo ""; \
 		echo "$(BLUE)Checking library dependencies...$(RESET)"; \
 		otool -L dist/VoxKit/VoxKit | head -10; \
-	else \
-		echo "$(RED)dist/VoxKit not found. Run 'make build' first.$(RESET)"; \
-	fi
-
-run-app: ## Run the built app from terminal (shows errors)
-	@echo "$(BLUE)Running VoxKit from terminal...$(RESET)"
-	@if [ -f "/Users/beckettfrey/Repos/waisman/PyPLLR_GUI/dist/VoxKit/VoxKit" ]; then \
-		/Users/beckettfrey/Repos/waisman/PyPLLR_GUI/dist/VoxKit/VoxKit; \
-	else \
-		echo "$(RED)dist/VoxKit/VoxKit not found. Run 'make build' first.$(RESET)"; \
-	fi
-
-open-app: ## Open the app bundle with macOS (background)
-	@echo "$(BLUE)Opening VoxKit.app...$(RESET)"
-	@if [ -d "dist/VoxKit" ]; then \
-		open dist/VoxKit; \
 	else \
 		echo "$(RED)dist/VoxKit not found. Run 'make build' first.$(RESET)"; \
 	fi
