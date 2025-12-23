@@ -3,7 +3,7 @@ name: Release Build
 on:
   push:
     branches:
-      - release
+      - main
     tags:
       - 'v*'
 
@@ -79,7 +79,7 @@ jobs:
             
             🍎 **Platform:** macOS (Apple Silicon & Intel)
             
-            Automated build from release branch.
+            Automated build from main branch.
             
             ## Installation
             1. Download VoxKit-macOS.app.zip
