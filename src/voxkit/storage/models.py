@@ -131,9 +131,12 @@ def create_model(
         train_path.mkdir(parents=True, exist_ok=False)
         metadata_path = model_root / "voxkit_model.json"
 
+        # Convert Path objects to strings for JSON serialization
+        json_metadata = {k: str(v) if isinstance(v, Path) else v for k, v in model_metadata.items()}
+
         # Create metadata file and write metadata
         with open(metadata_path, "w") as f:
-            json.dump(model_metadata, f, indent=4)
+            json.dump(json_metadata, f, indent=4)
 
         return True, model_metadata
 
@@ -310,10 +313,16 @@ def import_models(engine_id, new_models_root: Path) -> Tuple[bool, str]:
 
                     shutil.copytree(new_model_path, dest_path, dirs_exist_ok=True)
 
+                    # Convert Path objects to strings for JSON serialization
+                    json_metadata = {
+                        k: str(v) if isinstance(v, Path) else v for k, v in new_metadata.items()
+                    }
+
                     # Overwrite metadata file with new IDs and paths
                     new_metadata_path = dest_path / "voxkit_model.json"
+
                     with open(new_metadata_path, "w") as f:
-                        json.dump(new_metadata, f, indent=4)
+                        json.dump(json_metadata, f, indent=4)
 
                 except Exception as e:
                     return False, f"{new_model_path.name} (error: {str(e)})"

@@ -41,11 +41,11 @@ ENGINE_IDS = engines.list_engines()
 class DatasetsPage(QWidget):
     """Main datasets management page"""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None):
         super().__init__(parent)
         self.parent_window = parent
         self.registration_worker = None
-        self.selected_dataset: datasets.DatasetMetadata | None = None
+        self.selected_dataset: dict | None = None
         self.init_ui()
         self.refresh_datasets()
 
@@ -815,6 +815,9 @@ class DatasetsPage(QWidget):
         self.registration_worker = DatasetRegistrationWorker(
             dataset_path, dataset_name, description, cache, anonymize, transcribed, analysis_method
         )
+        if self.registration_worker is None:
+            return
+
         self.registration_worker.progress.connect(self.show_progress)
         self.registration_worker.finished.connect(self.registration_complete)
         self.registration_worker.start()

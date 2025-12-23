@@ -1,4 +1,10 @@
-from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, QRect, Qt, pyqtProperty
+from PyQt6.QtCore import (  # type: ignore[attr-defined]
+    QEasingCurve,
+    QPropertyAnimation,
+    QRect,
+    Qt,
+    pyqtProperty,
+)
 from PyQt6.QtGui import QBrush, QColor, QPainter, QPen
 from PyQt6.QtWidgets import QWidget
 
@@ -18,7 +24,7 @@ class ToggleSwitch(QWidget):
         self._thumb_pos = self.width() - self.height() if self._checked else 0
 
     # --- Expose to Qt's meta-system ---
-    @pyqtProperty(float)
+    @pyqtProperty(float)  # type: ignore[no-redef]
     def thumb_pos(self):
         return self._thumb_pos
 
