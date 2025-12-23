@@ -1,9 +1,8 @@
-# 🌉 VoxKit
-[![Release](https://img.shields.io/github/v/release/BrainBehaviorAnalyticsLab/PyPLLR_GUI?label=Latest%20Release)](https://github.com/BrainBehaviorAnalyticsLab/PyPLLR_GUI/releases/latest) [![Downloads](https://img.shields.io/github/downloads/BrainBehaviorAnalyticsLab/PyPLLR_GUI/total)](https://github.com/BrainBehaviorAnalyticsLab/PyPLLR_GUI/releases) [![Tests](https://img.shields.io/github/actions/workflow/status/BrainBehaviorAnalyticsLab/PyPLLR_GUI/tests.yml?branch=main&label=tests)](https://github.com/BrainBehaviorAnalyticsLab/PyPLLR_GUI/actions/workflows/tests.yml) [![Project Management](https://img.shields.io/badge/Project-Jira%20Board-0052CC?logo=jira)](https://voxkit.atlassian.net/jira/software/projects/VOX/boards/2/)
+# 🌉 VoxKit [![Project Management](https://img.shields.io/badge/Project-Jira%20Board-0052CC?logo=jira)](https://voxkit.atlassian.net/jira/software/projects/VOX/boards/2/) 
+[![Release](https://img.shields.io/github/v/release/BrainBehaviorAnalyticsLab/PyPLLR_GUI?label=Latest%20Release)](https://github.com/BrainBehaviorAnalyticsLab/PyPLLR_GUI/releases/latest) [![Downloads](https://img.shields.io/github/downloads/BrainBehaviorAnalyticsLab/PyPLLR_GUI/total)](https://github.com/BrainBehaviorAnalyticsLab/PyPLLR_GUI/releases) 
 
----
-
-Providing cross-functional Speech Pathology research teams with the capability to connect their researchers with state of the art speech analysis tools and forced alignment. Effectively bridging the gap between cutting edge AI/ML capability and clinical applications in speech pathology.
+[![Tests](https://img.shields.io/github/actions/workflow/status/BrainBehaviorAnalyticsLab/PyPLLR_GUI/tests.yml?branch=main&label=Tests)](https://github.com/BrainBehaviorAnalyticsLab/PyPLLR_GUI/actions/workflows/tests.yml)
+![Code Quality](https://img.shields.io/github/actions/workflow/status/BrainBehaviorAnalyticsLab/PyPLLR_GUI/code-quality.yml?branch=main&label=Code%20Quality)
 
 ---
 
