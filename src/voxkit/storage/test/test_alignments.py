@@ -134,10 +134,10 @@ class TestAlignments:
             )
 
     def test_create_alignment_invalid_dataset(self, monkeypatch, sample_model):
-        from .. import models
+        from .. import datasets
         from ..alignments import create_alignment
 
-        monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
+        monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
 
         dataset_id = "NON_EXISTENT_DATASET"
         engine_id = sample_model["engine_id"]
@@ -154,12 +154,11 @@ class TestAlignments:
         assert "Dataset" in result
 
     def test_create_alignment_non_cached_dataset(self, monkeypatch, sample_model):
-        from .. import datasets, models
+        from .. import datasets
         from ..alignments import AlignmentMetadata, create_alignment
         from ..datasets import create_dataset
 
         monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
-        monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
 
         # Create a non-cached dataset
         dataset_path = mock_get_storage_root() / "fake_datasets" / "valid"
@@ -259,7 +258,10 @@ class TestAlignments:
             assert fetched_metadata is None
 
         def test_get_alignment_metadata_invalid_dataset(self, monkeypatch, sample_model):
+            from .. import datasets
             from ..alignments import get_alignment_metadata
+
+            monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
 
             invalid_dataset_id = "NON_EXISTENT_DATASET"
             alignment_id = "ANY_ALIGNMENT_ID"
@@ -273,8 +275,10 @@ class TestAlignments:
 
     class TestListAlignments:
         def test_list_alignments_invalid_dataset(self, monkeypatch):
+            from .. import datasets
             from ..alignments import list_alignments
 
+            monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
             invalid_dataset_id = "NON_EXISTENT_DATASET"
 
             alignments_list = list_alignments(dataset_id=invalid_dataset_id)
@@ -282,10 +286,10 @@ class TestAlignments:
             assert alignments_list == []
 
         def test_list_alignments_success(self, monkeypatch, sample_dataset, sample_model):
-            from .. import models
+            from .. import datasets
             from ..alignments import create_alignment, list_alignments
 
-            monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
+            monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
 
             dataset_id = sample_dataset["id"]
             engine_id = sample_model["engine_id"]
@@ -366,8 +370,11 @@ class TestAlignments:
             assert delete_success is False
             assert "not found" in delete_msg
 
-        def test_delete_alignment_invalid_dataset(self):
+        def test_delete_alignment_invalid_dataset(self, monkeypatch):
+            from .. import datasets
             from ..alignments import delete_alignment
+
+            monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
 
             invalid_dataset_id = "NON_EXISTENT_DATASET"
             alignment_id = "ANY_ALIGNMENT_ID"

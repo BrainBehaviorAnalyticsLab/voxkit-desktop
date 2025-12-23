@@ -76,10 +76,10 @@ class TestDatasets:
 
     class TestCreateDataset:
         def test_create_dataset_success_no_cache(self, monkeypatch):
-            from .. import models
+            from .. import datasets
             from ..datasets import DatasetMetadata, create_dataset
 
-            monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
+            monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
 
             success, message = create_dataset(
                 name="test_dataset",
@@ -101,10 +101,10 @@ class TestDatasets:
             assert message["description"] == "A test dataset"
 
         def test_create_dataset_success_with_cache(self, monkeypatch):
-            from .. import models
+            from .. import datasets
             from ..datasets import DatasetMetadata, create_dataset
 
-            monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
+            monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
 
             success, message = create_dataset(
                 name="test_dataset_cached",

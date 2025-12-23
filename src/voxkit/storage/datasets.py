@@ -45,8 +45,8 @@ import shutil
 from pathlib import Path
 from typing import Any, List, Literal, Tuple, TypedDict
 
-from .config import ALIGNMENTS_ROOT, DATASETS_ROOT
-from .utils import generate_unique_id, get_storage_root, readable_from_unique_id
+from voxkit.storage.config import ALIGNMENTS_ROOT, DATASETS_ROOT
+from voxkit.storage.utils import generate_unique_id, get_storage_root, readable_from_unique_id
 
 
 class DatasetMetadata(TypedDict):

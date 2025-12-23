@@ -225,11 +225,13 @@ class TestModels:
             engine_id = ENGINE_IDS[0]
             fake_model_id = "nonexistent_model_id"
 
-            with pytest.raises(TypeError) as _:
-                delete_model(
-                    engine_id=engine_id,
-                    model_id=fake_model_id,
-                )
+            success, msg = delete_model(
+                engine_id=engine_id,
+                model_id=fake_model_id,
+            )
+
+            assert success is False
+            assert "not found" in msg
 
         def test_delete_model_multiple(self, monkeypatch):
             from .. import models
@@ -278,11 +280,14 @@ class TestModels:
 
             # Attempt to delete with invalid engine_id
             invalid_engine_id = "INVALID_ENGINE"
-            with pytest.raises(TypeError) as _:
-                delete_model(
-                    engine_id=invalid_engine_id,
-                    model_id=model_id,
-                )
+
+            success, msg = delete_model(
+                engine_id=invalid_engine_id,
+                model_id=model_id,
+            )
+
+            assert success is False
+            assert "not found" in msg
 
     class TestGetModelMetadata:
         def test_get_model_metadata_success(self, monkeypatch):
