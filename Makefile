@@ -1,4 +1,4 @@
-.PHONY: help setup watch build clean
+.PHONY: help
 .DEFAULT_GOAL := help
 
 # Colors for output
