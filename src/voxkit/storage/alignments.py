@@ -41,7 +41,7 @@ from pathlib import Path
 from typing import List, Literal, Tuple, TypedDict
 
 from .config import ALIGNMENTS_ROOT
-from .datasets import DatasetMetadata, _get_dataset_root, get_dataset_metadata
+from .datasets import _get_dataset_root, get_dataset_metadata
 from .models import ModelMetadata, get_model_metadata
 from .utils import generate_unique_id, readable_from_unique_id
 

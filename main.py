@@ -21,7 +21,7 @@ if getattr(sys, "frozen", False):
 
     # PyInstaller-specific: Add Qt plugin paths
     if getattr(sys, "_MEIPASS", None):
-        bundle_dir = sys._MEIPASS
+        bundle_dir = sys._MEIPASS  # type: ignore[attr-defined]
         qt_plugins = os.path.join(bundle_dir, "PyQt6", "Qt6", "plugins")
         if os.path.exists(qt_plugins):
             minimal_env["QT_PLUGIN_PATH"] = qt_plugins

@@ -166,7 +166,7 @@ class AlignmentEngine(ABC):
             path = Path(path)
 
         if not path.exists():
-            return None
+            return {}
 
         with open(path, "r", encoding="utf-8") as f:
             return json.load(f)

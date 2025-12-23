@@ -52,7 +52,7 @@ class MFAEngine(AlignmentEngine):
             id=id,
         )
 
-    def align(self, audio_root: Path, output_root: Path, model_id: str) -> None:
+    def align(self, dataset_id: str, model_id: str) -> None:
         print(f"Aligning with MFA using model: {model_id}")
         pass  # Implement the alignment logic using MFA here
 

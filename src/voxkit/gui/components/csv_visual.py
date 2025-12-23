@@ -8,7 +8,7 @@ search, filtering, and export capabilities.
 import csv
 import os
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (

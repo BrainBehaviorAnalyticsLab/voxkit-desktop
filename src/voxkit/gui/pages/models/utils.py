@@ -163,9 +163,7 @@ def handle_export_lambda(widget, data):
         current_category = widget.category_keys[widget.current_category_index]
 
         # Call the main export function
-        success, message = handle_export(
-            widget, folder_name, selected_items, data, current_category
-        )
+        success, message = handle_export(widget, selected_items, current_category)
 
         # Show result to user
         if success:

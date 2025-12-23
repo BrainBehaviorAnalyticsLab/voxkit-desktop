@@ -69,4 +69,4 @@ def run_mfa_evaluate(
     """
     Run the Montreal Forced Aligner 'evaluate' subcommand as a subprocess.
     """
-    pass
+    raise NotImplementedError("MFA evaluate is not yet implemented")

@@ -1,3 +1,5 @@
+from typing import Any
+
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QLabel, QMessageBox
 
@@ -22,7 +24,7 @@ class ManageAlignersWidget(CategoricalTableWidget):
         self.parent = parent
         self.data = {}
 
-        def refresh_models_function() -> list[dict]:
+        def refresh_models_function() -> dict[str, list[dict[Any, Any]]]:
             try:
                 model_dict = {}
                 for engine in ENGINE_IDS:
@@ -35,7 +37,7 @@ class ManageAlignersWidget(CategoricalTableWidget):
                 print(f"Error refreshing models: {e}")
                 return {}
 
-        def export_models_function(category: str, items: dict) -> tuple[bool, str]:
+        def export_models_function(category: str, items: list[dict[Any, Any]]) -> tuple[bool, str]:
             print(f"Export requested for category: {category}")
             return handle_export(self, items, category)
 
@@ -43,7 +45,7 @@ class ManageAlignersWidget(CategoricalTableWidget):
             print(f"Import requested for category: {category}")
             return handle_import(self, category)
 
-        def delete_models_function(category: str, items: dict) -> None:
+        def delete_models_function(category: str, items: list[dict[Any, Any]]) -> tuple[bool, str]:
             print(f"Delete requested for category: {category}, items: {items}")
             return handle_delete(self, items, category)
 

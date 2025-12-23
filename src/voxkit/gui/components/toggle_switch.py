@@ -22,7 +22,7 @@ class ToggleSwitch(QWidget):
     def thumb_pos(self):
         return self._thumb_pos
 
-    @thumb_pos.setter
+    @thumb_pos.setter  # type: ignore[no-redef]
     def thumb_pos(self, pos):
         self._thumb_pos = pos
         self.update()
