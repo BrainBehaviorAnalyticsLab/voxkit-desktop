@@ -38,11 +38,14 @@ class CategoricalTableWidget(QWidget):
 
         Args:
             refresh_data_function: Callable that returns dict of categorical data
-            export_function: Callable(category: str, items: list[dict]) -> (success: bool, message: str)
+            export_function: Callable(category: str, items: list[dict])
+                -> (success: bool, message: str)
             import_function: Callable(category: str) -> (success: bool, message: str)
-            delete_function: Callable(category: str, items: list[dict]) -> (success: bool, message: str)
+            delete_function: Callable(category: str, items: list[dict])
+                -> (success: bool, message: str)
             columns_shown: Optional list of column names to display
-            single_selection_flag: If True, only one item can be selected at a time (default: False)
+            single_selection_flag: If True, only one item can be selected at a time
+                (default: False)
             huggingface_callback: Optional callback for HuggingFace button click
             parent: Parent widget
         """
@@ -221,7 +224,6 @@ class CategoricalTableWidget(QWidget):
         )
 
         # Configure table
-        header = self.table_widget.horizontalHeader()
         self.table_widget.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         # Set selection mode based on single_selection_flag
         if self.single_selection_flag:
@@ -660,7 +662,8 @@ class CategoricalTableWidget(QWidget):
         reply = QMessageBox.question(
             self,
             "Confirm Deletion",
-            f"Are you sure you want to delete {len(selected_items)} item(s)?\n\nThis action cannot be undone.",
+            f"Are you sure you want to delete {len(selected_items)} item(s)?\n\n"
+            "This action cannot be undone.",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.No,
         )

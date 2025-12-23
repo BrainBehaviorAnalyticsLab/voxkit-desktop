@@ -520,7 +520,8 @@ class CategoricalListWidget(QWidget):
         reply = QMessageBox.question(
             self,
             "Confirm Deletion",
-            f"Are you sure you want to delete {len(selected_items.keys())} item(s)?\n\nThis action cannot be undone.",
+            f"Are you sure you want to delete {len(selected_items.keys())} item(s)?\n\n"
+            "This action cannot be undone.",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.No,
         )

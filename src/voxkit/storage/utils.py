@@ -35,7 +35,9 @@ def get_storage_root() -> Path:
 
 
 def generate_unique_id(prefix: str = None) -> str:
-    """Generate a unique identifier with the given prefix and current timestamp including microseconds."""
+    """Generate a unique identifier with the given prefix and current timestamp
+    including microseconds.
+    """
     now = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
     if prefix:
         return f"{prefix}_{now}"

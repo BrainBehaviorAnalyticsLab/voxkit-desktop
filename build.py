@@ -231,7 +231,8 @@ def main():
         "-a",
         action="append",
         default=[],
-        help="Additional data to bundle. Format src:dest (POSIX) or src;dest (Windows). Can be passed multiple times.",
+        help="Additional data to bundle. Format src:dest (POSIX) or src;dest (Windows). "
+        "Can be passed multiple times.",
     )
     build_p.add_argument(
         "--hidden-import",

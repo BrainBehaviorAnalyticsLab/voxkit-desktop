@@ -84,6 +84,11 @@ fixable = ["ALL"]
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = ["S101"]
 "scripts/**/*.py" = ["S101","S603"] # Allow subprocess in scripts
+"src/voxkit/services/**/*.py" = ["S603", "S108"] # Allow subprocess and temp dirs in services
+"build.py" = ["S103", "S603", "S607"] # Allow chmod and subprocess in build script
+"hooks/**/*.py" = ["E402"] # Allow imports after code in hooks
+"main.py" = ["E402", "S108"] # Allow imports after code and temp dir in main
+"src/voxkit/gui/pages/pipeline/evaluation_stacker.py" = ["S603", "S607"] # Allow subprocess in eval
 
 [tool.ruff.lint.isort]
 known-first-party = ["Wav2TextGrid"]

@@ -690,7 +690,8 @@ class DatasetsPage(QWidget):
         reply = QMessageBox.question(
             self,
             "Confirm Delete",
-            f"Are you sure you want to delete the alignment with model '{alignment['model_metadata']['id']}'?",
+            f"Are you sure you want to delete the alignment with model "
+            f"'{alignment['model_metadata']['id']}'?",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
         )
 

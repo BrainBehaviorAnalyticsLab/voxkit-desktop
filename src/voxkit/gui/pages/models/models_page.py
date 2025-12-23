@@ -9,7 +9,8 @@ from .import_dialog import ImportModelDialog
 from .utils import handle_delete, handle_export, handle_import
 
 ENGINE_IDS = engines.list_engines()
-# TODO : Implement Aligner managment logic by see frameworks/widget/categorical_list/api.py | __init__.py
+# TODO : Implement Aligner managment logic by see
+# frameworks/widget/categorical_list/api.py | __init__.py
 
 ENGINE_IDS = engines.list_engines()
 

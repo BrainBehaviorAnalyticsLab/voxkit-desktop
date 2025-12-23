@@ -32,7 +32,8 @@ class MultiColumnComboBox(QComboBox):
         """
         Populate the combo box with multi-column data.
 
-        :param rows: List of dicts with 'id' key and 'data' key containing tuple/list of column values
+        :param rows: List of dicts with 'id' key and 'data' key containing
+                     tuple/list of column values
                      e.g., [{'id': 1, 'data': ("Alice", 30, "New York")}, ...]
         :param headers: Optional list of column headers
         :param placeholder: Optional placeholder text to show when no item is selected

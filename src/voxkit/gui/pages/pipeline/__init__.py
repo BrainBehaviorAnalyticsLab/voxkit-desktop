@@ -1,7 +1,6 @@
 # TODO : Add module docstring
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QHBoxLayout, QLabel, QListWidget, QSizePolicy, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QHBoxLayout, QListWidget, QVBoxLayout, QWidget
 
 from voxkit.config import Dimensions
 from voxkit.gui.components import AnimatedStackedWidget

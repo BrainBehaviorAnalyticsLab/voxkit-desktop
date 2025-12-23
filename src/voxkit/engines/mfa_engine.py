@@ -45,7 +45,8 @@ class MFAEngine(AlignmentEngine):
             reference_url="https://montreal-forced-aligner.readthedocs.io/en/latest/",
             description=(
                 "The Montreal Forced Aligner (MFA) is a tool for "
-                "aligning audio files to their corresponding transcripts with a focus on speech pathology. "
+                "aligning audio files to their corresponding transcripts with a focus on "
+                "speech pathology. "
             ),
             human_readable_name="MFA",
             id=id,

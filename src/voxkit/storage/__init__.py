@@ -2,7 +2,8 @@
 VoxKit Storage Module
 -----------
 
-    This package contains modules for managing persistent storage of datasets, models, and alignments within the VoxKit framework.
+    This package contains modules for managing persistent storage of
+    datasets, models, and alignments within the VoxKit framework.
 
 Imports
 -------
@@ -21,12 +22,14 @@ __email__ = "beckett.frey@gmail.com"
 __version__ = "0.0.1"
 
 
+# Import utils but don't call get_storage_root() at module import time
+from . import alignments, datasets, models, utils
+
+
 def _ensure_storage_root():
     """Ensure storage root directory exists. Called lazily when needed."""
     try:
         from pathlib import Path
-
-        from . import utils
 
         storage_root = Path(utils.get_storage_root())
         if not storage_root.exists():
@@ -37,11 +40,9 @@ def _ensure_storage_root():
         raise e
 
 
-# Import utils but don't call get_storage_root() at module import time
-from . import alignments, datasets, models, utils
-
 __all__ = [
     "alignments",
     "datasets",
     "models",
+    "utils",
 ]

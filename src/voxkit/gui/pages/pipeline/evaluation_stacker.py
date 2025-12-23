@@ -179,9 +179,18 @@ class EvaluationStacker(QWidget):
         try:
             # Example evaluation logic (replace with real evaluation later)
             subprocess.run(
-                f'python scripts/evaluate_aligner.py --method "{method}" '
-                f'--reference "{ref_path}" --predicted "{pred_path}" --output "{out_path}"',
-                shell=True,
+                [
+                    "python",
+                    "scripts/evaluate_aligner.py",
+                    "--method",
+                    method,
+                    "--reference",
+                    ref_path,
+                    "--predicted",
+                    pred_path,
+                    "--output",
+                    out_path,
+                ],
                 check=True,
             )
             return f"Evaluation completed successfully using {method}"

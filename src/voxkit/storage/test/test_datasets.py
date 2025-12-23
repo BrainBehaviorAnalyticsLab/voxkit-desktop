@@ -46,10 +46,6 @@ def generate_fake_datasets():
     dataset_path.mkdir(parents=True, exist_ok=True)
 
 
-def mock_get_storage_root():
-    return Path("./temp_test_storage_datasets")
-
-
 @pytest.fixture(autouse=True)
 def manage_test_environment():
     # Setup before each test

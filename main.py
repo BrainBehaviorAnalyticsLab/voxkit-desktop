@@ -12,7 +12,6 @@ faulthandler.enable()
 
 # Apply patches for frozen (PyInstaller) environment
 if getattr(sys, "frozen", False):
-
     # Define the minimal required environment
     minimal_env = {
         "HOME": os.environ.get("HOME") or os.path.expanduser("~"),

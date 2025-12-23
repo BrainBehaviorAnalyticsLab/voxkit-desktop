@@ -357,7 +357,8 @@ def import_dataset(dataset_path: Path) -> Tuple[bool, str]:
             if not original_location_exists:
                 return (
                     False,
-                    f"Original dataset path {dataset_metadata['original_path']} does not exist; cannot import non-cached dataset.",
+                    f"Original dataset path {dataset_metadata['original_path']} "
+                    "does not exist; cannot import non-cached dataset.",
                 )
 
         # Validate dataset
@@ -422,7 +423,8 @@ def validate_dataset(dataset_path: Path) -> Tuple[bool, str]:
         if not os.path.isdir(subdir_path):
             return (
                 False,
-                f"Expected speaker directories in dataset path '{dataset_path}', found file '{subdir_path}'.",
+                f"Expected speaker directories in dataset path '{dataset_path}', "
+                f"found file '{subdir_path}'.",
             )
         if not os.listdir(subdir_path):
             return False, f"Speaker directory '{subdir_path}' is empty."
@@ -458,7 +460,8 @@ def validate_dataset(dataset_path: Path) -> Tuple[bool, str]:
         if len(audio_files) != len(label_files):
             return (
                 False,
-                f"Mismatch between number of audio and label files in speaker directory '{speaker_path}'.",
+                f"Mismatch between number of audio and label files in speaker "
+                f"directory '{speaker_path}'.",
             )
 
     return True, "Dataset is valid."

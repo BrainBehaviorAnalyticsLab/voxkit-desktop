@@ -522,7 +522,8 @@ class PLLRStacker(QWidget):
             print(f"[LOGIC] Settings loaded: {pllr_settings}")
         else:
             print(f"[LOGIC] Settings file not found at: {path_to_pllr_settings}")
-            for key in PLLR_SETTINGS_CONFIG.fields:
+            config = get_pllr_settings_config()
+            for key in config.fields:
                 pllr_settings[key.name] = key.default_value
             print(f"[LOGIC] Default settings loaded: {pllr_settings}")
         print("[LOGIC] Calling compute_pllr()...")
@@ -543,7 +544,9 @@ class PLLRStacker(QWidget):
                 framewise_proba_df=framewise_path,
                 recompute_probas=pllr_settings.get("recompute_probas", True),
                 likelihood_dct=pllr_settings.get("likelihood_dct", None),
-                # aggregation_function=pllr_settings.get("aggregation_function", "aggregate_by_phoneme_occurrence"),
+                # aggregation_function=pllr_settings.get(
+                #     "aggregation_function", "aggregate_by_phoneme_occurrence"
+                # ),
             )
             print("[LOGIC] compute_pllr() completed successfully")
             return "PLLR extracted successfully"
