@@ -30,6 +30,10 @@ watch: ## Watch for file changes and restart dev server (requires entr)
 		uv run main.py; \
 	fi
 
+dev: ## Run the development server
+	@echo "$(BLUE)Starting development server...$(RESET)"
+	uv run main.py
+
 build: clean ## Build standalone executable for current platform
 	@echo "$(BLUE)Building VoxKit for macOS...$(RESET)"
 	uv run --group installation python build.py build --entry main.py --name VoxKit --windowed
