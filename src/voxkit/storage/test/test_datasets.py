@@ -432,7 +432,7 @@ class TestDatasets:
             )
 
             assert imp_success is False
-            assert "Dataset metadata file not found" in imp_message
+            assert "does not exist" in imp_message
 
         def test_import_dataset_empty_cache_true(self, monkeypatch):
             from ..datasets import import_dataset, create_dataset, _get_datasets_root
