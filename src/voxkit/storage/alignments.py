@@ -38,7 +38,7 @@ import json
 import os
 import shutil
 from pathlib import Path
-from typing import List, Tuple, TypedDict
+from typing import List, Literal, Tuple, TypedDict
 
 from .config import ALIGNMENTS_ROOT
 from .datasets import DatasetMetadata, _get_dataset_root, get_dataset_metadata
@@ -56,7 +56,7 @@ class AlignmentMetadata(TypedDict):
     tg_path: str
 
 
-def _get_alignments_root(dataset_id: DatasetMetadata["id"]) -> Path | None:
+def _get_alignments_root(dataset_id: str) -> Path | None:
     """Get the root directory for storing alignments for a given dataset.
 
     Args:
@@ -74,9 +74,7 @@ def _get_alignments_root(dataset_id: DatasetMetadata["id"]) -> Path | None:
     return None
 
 
-def _get_alignment_root(
-    dataset_id: DatasetMetadata["id"], alignment_id: AlignmentMetadata["id"]
-) -> Path | None:
+def _get_alignment_root(dataset_id: str, alignment_id: str) -> Path | None:
     """Get the root directory for a specific alignment by ID.
 
     Args:
@@ -95,8 +93,8 @@ def _get_alignment_root(
 
 
 def create_alignment(
-    dataset_id: DatasetMetadata["id"], engine_id: str, model_id: ModelMetadata["id"]
-) -> tuple[True, AlignmentMetadata] | tuple[False, str]:
+    dataset_id: str, engine_id: str, model_id: str
+) -> tuple[Literal[True], AlignmentMetadata] | tuple[Literal[False], str]:
     """Create a new alignment entry in the storage.
 
     Args:
@@ -165,9 +163,7 @@ def create_alignment(
         return False, f"Failed to create alignment metadata: {str(e)}"
 
 
-def get_alignment_metadata(
-    dataset_id: DatasetMetadata["id"], alignment_id: AlignmentMetadata["id"]
-) -> AlignmentMetadata:
+def get_alignment_metadata(dataset_id: str, alignment_id: str) -> AlignmentMetadata | None:
     """Get the metadata for a specific alignment by ID."""
     alignment_root = _get_alignment_root(dataset_id, alignment_id)
     if not alignment_root:
@@ -184,9 +180,7 @@ def get_alignment_metadata(
         raise e
 
 
-def update_alignment(
-    dataset_id: DatasetMetadata["id"], alignment_id: AlignmentMetadata["id"], updates: dict
-) -> Tuple[bool, str]:
+def update_alignment(dataset_id: str, alignment_id: str, updates: dict) -> Tuple[bool, str]:
     """Update the status of an alignment.
 
     Args:
@@ -221,7 +215,7 @@ def update_alignment(
         return False, f"Failed to update alignment metadata: {str(e)}"
 
 
-def list_alignments(dataset_id: DatasetMetadata["id"]) -> List[AlignmentMetadata]:
+def list_alignments(dataset_id: str) -> List[AlignmentMetadata]:
     """List all alignment metadata for a given dataset.
 
     Args:
@@ -249,9 +243,7 @@ def list_alignments(dataset_id: DatasetMetadata["id"]) -> List[AlignmentMetadata
     return alignments_found
 
 
-def delete_alignment(
-    dataset_id: DatasetMetadata["id"], alignment_id: AlignmentMetadata["id"]
-) -> Tuple[bool, str]:
+def delete_alignment(dataset_id: str, alignment_id: str) -> Tuple[bool, str]:
     """
     Delete an alignment given its dataset ID and alignment ID.
 

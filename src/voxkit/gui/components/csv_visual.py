@@ -43,9 +43,9 @@ class CSVVisualizationWidget(QWidget):
     def __init__(self, csv_path: Optional[str] = None, parent=None):
         super().__init__(parent)
         self.csv_path = csv_path
-        self.data = []
-        self.headers = []
-        self.filtered_data = []
+        self.data: list[Any] = []
+        self.headers: list[str] = []
+        self.filtered_data: list[Any] = []
 
         self._init_ui()
 

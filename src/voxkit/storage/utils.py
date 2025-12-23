@@ -34,7 +34,7 @@ def get_storage_root() -> Path:
         raise ValueError("STORAGE_ROOT must be a valid path starting with '~'")
 
 
-def generate_unique_id(prefix: str = None) -> str:
+def generate_unique_id(prefix: str | None = None) -> str:
     """Generate a unique identifier with the given prefix and current timestamp
     including microseconds.
     """

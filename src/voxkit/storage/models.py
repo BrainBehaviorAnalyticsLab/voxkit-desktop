@@ -39,7 +39,7 @@ Notes
 import json
 import shutil
 from pathlib import Path
-from typing import Tuple, TypedDict
+from typing import Literal, Tuple, TypedDict
 
 from voxkit.storage.utils import generate_unique_id, get_storage_root, readable_from_unique_id
 
@@ -57,7 +57,7 @@ class ModelMetadata(TypedDict):
     id: str
 
 
-def _get_model_root(engine_id: str, model_id: ModelMetadata["id"]) -> Path | None:
+def _get_model_root(engine_id: str, model_id: str) -> Path | None:
     """Get the root directory for storing models for a given engine.
 
     Args:
@@ -85,7 +85,9 @@ def _get_models_root(engine_id: str) -> Path | None:
     return None
 
 
-def create_model(engine_id: str, model_name: str) -> Tuple[True, ModelMetadata] | Tuple[False, str]:
+def create_model(
+    engine_id: str, model_name: str
+) -> tuple[Literal[True], ModelMetadata] | tuple[Literal[False], str]:
     """Create a new model entry in the storage.
 
     Args:
@@ -114,10 +116,10 @@ def create_model(engine_id: str, model_name: str) -> Tuple[True, ModelMetadata] 
         model_metadata = ModelMetadata(
             name=model_name or f"Model_{now}",
             engine_id=engine_id,
-            model_path=str(model_path),
-            data_path=str(data_path),
-            eval_path=str(eval_path),
-            train_path=str(train_path),
+            model_path=model_path,
+            data_path=data_path,
+            eval_path=eval_path,
+            train_path=train_path,
             download_date=humandate,
             id=now,
         )
@@ -245,6 +247,9 @@ def delete_model(engine_id: str, model_id: str) -> Tuple[bool, str]:
     print(f"Attempting to delete model: engine_id={engine_id}, model_id={model_id}")
     model_path = _get_model_root(engine_id, model_id)
 
+    if not model_path:
+        return False, f"Model {model_id} not found"
+
     print(f"Deleting model at path: {model_path}")
     shutil.rmtree(model_path)
     return True, "Model deleted successfully."
@@ -290,12 +295,12 @@ def import_models(engine_id, new_models_root: Path) -> Tuple[bool, str]:
                     new_metadata = ModelMetadata(
                         name=metadata["name"],
                         engine_id=metadata["engine_id"],
-                        model_path=str(
-                            Path(engine_models_root / MODELS_ROOT / model_id / "entrypoint.model")
+                        model_path=Path(
+                            engine_models_root / MODELS_ROOT / model_id / "entrypoint.model"
                         ),
-                        data_path=str(Path(engine_models_root / MODELS_ROOT / model_id / "data")),
-                        eval_path=str(Path(engine_models_root / MODELS_ROOT / model_id / "eval")),
-                        train_path=str(Path(engine_models_root / MODELS_ROOT / model_id / "train")),
+                        data_path=Path(engine_models_root / MODELS_ROOT / model_id / "data"),
+                        eval_path=Path(engine_models_root / MODELS_ROOT / model_id / "eval"),
+                        train_path=Path(engine_models_root / MODELS_ROOT / model_id / "train"),
                         download_date=readable_from_unique_id(model_id),
                         id=model_id,
                     )

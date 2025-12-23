@@ -9,4 +9,4 @@ from PyInstaller.utils.hooks import collect_all
 datas, binaries, hiddenimports = collect_all("typeguard")
 
 # Disable typeguard's runtime checking in frozen apps
-excludedimports = []
+excludedimports: list[str] = []

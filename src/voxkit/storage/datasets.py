@@ -43,7 +43,7 @@ import json
 import os
 import shutil
 from pathlib import Path
-from typing import List, Tuple, TypedDict
+from typing import Any, List, Literal, Tuple, TypedDict
 
 from .config import ALIGNMENTS_ROOT, DATASETS_ROOT
 from .utils import generate_unique_id, get_storage_root, readable_from_unique_id
@@ -71,7 +71,7 @@ def _get_datasets_root() -> Path:
     return root
 
 
-def _get_dataset_root(dataset_id: DatasetMetadata["id"]) -> Path | None:
+def _get_dataset_root(dataset_id: str) -> Path | None:
     """Get the root directory for a specific dataset by ID.
 
     Args:
@@ -109,7 +109,7 @@ def create_dataset(
     cached: bool,
     anonymize: bool,
     transcribed: bool = False,
-) -> tuple[bool, str]:
+) -> tuple[Literal[True], DatasetMetadata] | tuple[Literal[False], str]:
     """Create a dataset metadata dictionary and create necessary directories.
 
     Args:
@@ -173,7 +173,7 @@ def create_dataset(
         return False, f"Failed to create dataset metadata: {str(e)}"
 
 
-def get_dataset_metadata(dataset_id: DatasetMetadata["id"]) -> DatasetMetadata | None:
+def get_dataset_metadata(dataset_id: str) -> DatasetMetadata | None:
     """Get the metadata for a specific dataset.
 
     Args:
@@ -234,6 +234,9 @@ def update_dataset_metadata(
     try:
         metadata = get_dataset_metadata(dataset_id)
 
+        if not metadata:
+            return False, f"Dataset {dataset_id} not found"
+
         if updates["description"] is not None:
             metadata["description"] = updates["description"]
         if updates["cached"] is not None:
@@ -258,7 +261,7 @@ def update_dataset_metadata(
         return False, f"Failed to update dataset metadata: {str(e)}"
 
 
-def delete_dataset(dataset_id: DatasetMetadata["id"]) -> Tuple[bool, str]:
+def delete_dataset(dataset_id: str) -> Tuple[bool, str]:
     """Delete a registered dataset.
 
     Args:
@@ -286,7 +289,7 @@ def delete_dataset(dataset_id: DatasetMetadata["id"]) -> Tuple[bool, str]:
         return False, f"Failed to delete dataset: {str(e)}"
 
 
-def export_dataset(dataset_id: DatasetMetadata["id"], output_root: Path) -> Tuple[bool, str]:
+def export_dataset(dataset_id: str, output_root: Path) -> Tuple[bool, str]:
     """Export an existing dataset to a specified output path.
 
     Args:
@@ -341,12 +344,12 @@ def import_dataset(dataset_path: Path) -> Tuple[bool, str]:
     print(now)
     dataset_dest = _get_datasets_root() / now
     try:
-        dataset_metadata = _get_dataset_metadata(dataset_path)
-        if dataset_metadata is None:
+        dataset_metadata_typed = _get_dataset_metadata(dataset_path)
+        if dataset_metadata_typed is None:
             return False, "Dataset metadata file not found in the provided dataset path."
 
         # Change metadata accordingly
-        dataset_metadata = dict(dataset_metadata)  # Make a copy to modify
+        dataset_metadata: dict[str, Any] = dict(dataset_metadata_typed)  # Make a copy to modify
         dataset_metadata["id"] = now
         humannow = readable_from_unique_id(now)
         dataset_metadata["registration_date"] = humannow

@@ -87,7 +87,7 @@ class GenericDialog(QDialog):
             raise ValueError("File path must be within the storage root directory.")
 
         self.field_configs = config.fields or []
-        self.field_widgets = {}
+        self.field_widgets: dict[str, Any] = {}
         self._apply_blur = config.apply_blur
 
         # Setup overlay and blur if parent exists
