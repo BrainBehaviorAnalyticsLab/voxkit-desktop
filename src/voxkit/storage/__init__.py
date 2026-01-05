@@ -40,6 +40,8 @@ def _ensure_storage_root():
         raise e
 
 
+_ensure_storage_root()
+
 __all__ = [
     "alignments",
     "datasets",

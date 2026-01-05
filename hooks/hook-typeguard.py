@@ -1,6 +1,6 @@
 """
 PyInstaller hook for typeguard
-Disables runtime type checking in frozen applications
+Collects typeguard dependencies at build time
 """
 
 from PyInstaller.utils.hooks import collect_all
@@ -8,5 +8,6 @@ from PyInstaller.utils.hooks import collect_all
 # Collect everything from typeguard
 datas, binaries, hiddenimports = collect_all("typeguard")
 
-# Disable typeguard's runtime checking in frozen apps
-excludedimports: list[str] = []
+# No excludedimports needed
+excludedimports = []
+

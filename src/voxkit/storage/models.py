@@ -196,7 +196,8 @@ def list_models(engine_id: str) -> list[ModelMetadata]:
     try:
         models_root = Path(f"{get_storage_root()}/{engine_id}/{MODELS_ROOT}")
         if not models_root.exists():
-            raise FileNotFoundError(f"Models root does not exist: {models_root}")
+            models_root.mkdir(parents=True, exist_ok=True)
+            return []
 
         models_found = []
         for dir in models_root.iterdir():
