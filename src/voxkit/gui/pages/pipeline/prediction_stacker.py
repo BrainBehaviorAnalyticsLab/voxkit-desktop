@@ -332,6 +332,10 @@ class PredictionStacker(QWidget):
         layout.addWidget(self.predict_status)
 
         layout.addStretch()
+        
+        # Set initial visibility of dropdowns based on selected engine
+        self.on_mode_changed()
+        
         return self
 
     def on_predict_settings(self):
