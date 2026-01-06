@@ -565,8 +565,8 @@ class TrainingStacker(QWidget):
         layout.addWidget(self.train_status)
 
         layout.addStretch()
-        
+
         # Set initial visibility of dropdowns based on selected engine
         self.on_mode_changed()
-        
+
         return self
