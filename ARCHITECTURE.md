@@ -50,10 +50,11 @@ The persistence and data management layer that handles CRUD operations for all V
 - **models**: Manage alignment model metadata and storage
 - **alignments**: Store and retrieve alignment outputs for datasets
 - **utils**: Shared utilities for ID generation and storage root management
+- **config**: Storage configuration constants and directory structure definitions
 
 **Storage Structure:**
 ```
-~/.tpe-speech-analysis2/                    # Root storage directory
+~/.voxkit/                                  # Root storage directory
 ├── datasets/                               # Dataset storage
 │   └── {dataset_id}/
 │       ├── voxkit_dataset.json             # Dataset metadata

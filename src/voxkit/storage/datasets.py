@@ -1,11 +1,9 @@
-"""
-Dataset Management Module
--------------------------
+"""Dataset Management Module.
 
-    Specialized CRUD operations for managing datasets within the VoxKit storage system.
+Specialized CRUD operations for managing datasets within the VoxKit storage system.
 
-Directory Structure (Many per Environment)
--------------------------------
+Directory Structure
+-------------------
 Each dataset follows a hierarchical structure:
 
     my_dataset/
@@ -20,22 +18,23 @@ Each dataset follows a hierarchical structure:
             └── ...
 
 API
------
-- create_dataset: Create a new dataset metadata and directories.
-- get_dataset_metadata: Retrieve metadata for a specific dataset.
-- list_datasets_metadata: List all existing datasets.
-- update_dataset_metadata: Update metadata fields for a specific dataset.
-- delete_dataset: Delete a registered dataset and its metadata.
-- export_dataset: Export a dataset to a specified output path.
-- import_dataset: Import an existing dataset into VoxKit storage.
+---
+- **create_dataset**: Create a new dataset with metadata and directories
+- **get_dataset_metadata**: Retrieve metadata for a specific dataset
+- **list_datasets_metadata**: List all existing datasets
+- **update_dataset_metadata**: Update metadata fields for a specific dataset
+- **delete_dataset**: Delete a registered dataset and its metadata
+- **export_dataset**: Export a dataset to a specified output path
+- **import_dataset**: Import an existing dataset into VoxKit storage
+- **validate_dataset**: Validate dataset structure and organization
 
 Notes
 -----
 - All dataset IDs are unique timestamps with microsecond precision
 - Failed operations automatically clean up partial changes
 - Dataset validation occurs before creation to prevent invalid data
-- Cached datasets are copied for faster access
-- transcribed flag indicates presence of transcriptions
+- Cached datasets are copied for faster access during operations
+- The `transcribed` flag indicates presence of transcription files
 - Importing datasets adjusts metadata and validates structure
 """
 
@@ -61,10 +60,10 @@ class DatasetMetadata(TypedDict):
 
 
 def _get_datasets_root() -> Path:
-    """Get the root directory for storage relative to voxkit storage root.
+    """Get the root directory for datasets storage.
 
     Returns:
-        Path to datasets storage root
+        Path to datasets storage root directory
     """
     root = get_storage_root() / DATASETS_ROOT
     root.mkdir(parents=False, exist_ok=True)
@@ -77,7 +76,9 @@ def _get_dataset_root(dataset_id: str) -> Path | None:
     Args:
         dataset_id: Identifier of the dataset
 
-    Returns:"""
+    Returns:
+        Path to dataset root directory or None if not found
+    """
     datasets_root = _get_datasets_root()
     if datasets_root and dataset_id:
         dataset_root = datasets_root / dataset_id
@@ -91,6 +92,9 @@ def _get_dataset_metadata(dataset_root: Path) -> DatasetMetadata | None:
 
     Args:
         dataset_root: Path to the dataset root directory
+
+    Returns:
+        Dataset metadata dictionary or None if not found or invalid
     """
     try:
         metadata_path = dataset_root / "voxkit_dataset.json"
@@ -118,9 +122,10 @@ def create_dataset(
         original_path: Original path to the dataset
         cached: Whether the dataset is cached in storage
         anonymize: Whether the dataset should be anonymized
+        transcribed: Whether the dataset includes transcription files
 
     Returns:
-        Tuple of (success, message)
+        Tuple of (True, DatasetMetadata) on success or (False, error_message) on failure
     """
     # Validate dataset structure
     valid, msg = validate_dataset(Path(original_path))
@@ -229,7 +234,7 @@ def update_dataset_metadata(
         updates: Dictionary of metadata fields to update
 
     Returns:
-        Tuple of (success, message)
+        Tuple of (True, success_message) on success or (False, error_message) on failure
     """
     try:
         metadata = get_dataset_metadata(dataset_id)
@@ -268,7 +273,7 @@ def delete_dataset(dataset_id: str) -> Tuple[bool, str]:
         dataset_id: ID of the dataset to delete
 
     Returns:
-        Tuple of (success, message)
+        Tuple of (True, success_message) on success or (False, error_message) on failure
     """
     if not dataset_id:
         return False, "Dataset ID cannot be empty."
@@ -293,11 +298,11 @@ def export_dataset(dataset_id: str, output_root: Path) -> Tuple[bool, str]:
     """Export an existing dataset to a specified output path.
 
     Args:
-        dataset_id: Identifier of the dataset to export.
-        output_root: Path to the output directory where the dataset will be copied.
+        dataset_id: Identifier of the dataset to export
+        output_root: Path to the output directory where the dataset will be copied
 
     Returns:
-        Tuple of (success, message)
+        Tuple of (True, success_message) on success or (False, error_message) on failure
     """
 
     if not output_root.exists():
@@ -324,10 +329,10 @@ def import_dataset(dataset_path: Path) -> Tuple[bool, str]:
     """Import an existing dataset into VoxKit storage.
 
     Args:
-        dataset_path: Path to the dataset to import.
+        dataset_path: Path to the dataset to import
 
     Returns:
-        Tuple of (success, message)
+        Tuple of (True, success_message) on success or (False, error_message) on failure
     """
     # Validate dataset structure
 
@@ -389,7 +394,7 @@ def import_dataset(dataset_path: Path) -> Tuple[bool, str]:
 
 
 def validate_dataset(dataset_path: Path) -> Tuple[bool, str]:
-    """Validate if a dataset follows the organization pattern.
+    """Validate if a dataset follows the expected organization pattern.
 
     Expected structure:
 
@@ -407,9 +412,7 @@ def validate_dataset(dataset_path: Path) -> Tuple[bool, str]:
         dataset_path: Path to dataset root directory
 
     Returns:
-        Tuple of (is_valid, message) where:
-            is_valid: True if dataset is valid, False otherwise
-            message: Description of validation result or issues found
+        Tuple of (True, validation_message) if valid or (False, error_description) if invalid
     """
     if not isinstance(dataset_path, Path):
         dataset_path = Path(dataset_path)

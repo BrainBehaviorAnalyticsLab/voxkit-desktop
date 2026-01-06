@@ -1,20 +1,21 @@
-"""
-VoxKit Storage Module
------------
+"""VoxKit Storage Module.
 
-    This package contains modules for managing persistent storage of
-    datasets, models, and alignments within the VoxKit framework.
+This package contains modules for managing persistent storage of datasets,
+models, and alignments within the VoxKit framework.
 
-Imports
+Modules
 -------
-- datasets: CRUD operations for managing datasets.
-- alignments: CRUD operations for managing dataset alignments.
-- models: CRUD operations for managing models.
+- **datasets**: CRUD operations for managing datasets
+- **models**: CRUD operations for managing models
+- **alignments**: CRUD operations for managing dataset alignments
+- **utils**: Utility functions for storage operations
+- **config**: Storage configuration constants
 
 Notes
 -----
-- Filesystem initialization occurs on import.
-- Add other storage-related modules here as needed.
+- Filesystem initialization occurs on import
+- Storage root is automatically created if it doesn't exist
+- All IDs use timestamp-based unique identifiers with microsecond precision
 """
 
 __author__ = "Beckett Frey"
