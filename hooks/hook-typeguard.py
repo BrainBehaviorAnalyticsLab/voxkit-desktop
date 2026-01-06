@@ -1,7 +1,9 @@
+"""PyInstaller hook for typeguard
+
+Collects typeguard dependencies at build time.
 """
-PyInstaller hook for typeguard
-Collects typeguard dependencies at build time
-"""
+
+from __future__ import annotations
 
 from PyInstaller.utils.hooks import collect_all
 
@@ -9,5 +11,4 @@ from PyInstaller.utils.hooks import collect_all
 datas, binaries, hiddenimports = collect_all("typeguard")
 
 # No excludedimports needed
-excludedimports = []
-
+excludedimports: list[str] = []

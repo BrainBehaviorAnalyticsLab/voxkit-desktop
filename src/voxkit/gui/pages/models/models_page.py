@@ -14,8 +14,6 @@ ENGINE_IDS = engines.list_engines()
 # TODO : Implement Aligner managment logic by see
 # frameworks/widget/categorical_list/api.py | __init__.py
 
-ENGINE_IDS = engines.list_engines()
-
 
 class ManageAlignersWidget(CategoricalTableWidget):
     """Widget to manage and display alignment models."""

@@ -116,7 +116,7 @@ def create_model(
         model_metadata = ModelMetadata(
             name=model_name or f"Model_{now}",
             engine_id=engine_id,
-            model_path=model_path,
+            model_path=model_path.with_suffix(".model"),
             data_path=data_path,
             eval_path=eval_path,
             train_path=train_path,
@@ -204,9 +204,13 @@ def list_models(engine_id: str) -> list[ModelMetadata]:
             if dir.is_dir():
                 metadata_path = dir / "voxkit_model.json"
                 if metadata_path.exists():
-                    with open(metadata_path, "r") as f:
-                        metadata = json.load(f)
-                        models_found.append(metadata)
+                    try:
+                        with open(metadata_path, "r") as f:
+                            metadata = json.load(f)
+                            models_found.append(metadata)
+                    except json.JSONDecodeError as e:
+                        print(f"Skipping invalid JSON in {metadata_path}: {e}")
+                        continue
         return models_found
 
     except Exception as e:
