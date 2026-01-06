@@ -18,11 +18,13 @@ it references the user's home directory.
 """
 
 from datetime import datetime
+from functools import lru_cache
 from pathlib import Path
 
 from .config import STORAGE_ROOT
 
 
+@lru_cache(maxsize=1)
 def get_storage_root() -> Path:
     """Get the root directory for storing VoxKit data.
 
