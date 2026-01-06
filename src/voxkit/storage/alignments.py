@@ -1,11 +1,9 @@
-"""
-Dataset Alignment Storage Module
---------------------------------
+"""Dataset Alignment Storage Module.
 
-    Specialized CRUD operations for managing dataset alignments within the VoxKit storage system.
+Specialized CRUD operations for managing dataset alignments within the VoxKit storage system.
 
-Directory Structure (None or Many per Dataset)
----------------------------------------
+Directory Structure
+-------------------
 Each dataset alignment follows a hierarchical structure:
 
     dataset_id/
@@ -14,24 +12,25 @@ Each dataset alignment follows a hierarchical structure:
     │   │   ├── textgrids/             # Directory for TextGrid files
     │   │   └── voxkit_alignment.json  # Alignment metadata
     │   ├── alignment_id_2/
-    │   │   ├── ...
+    │   │   └── ...
     │   └── ...
     └── ...
 
 API
 ---
-- create_alignment: Create a new alignment entry in storage.
-- get_alignment_metadata: Retrieve metadata for a specific alignment.
-- update_alignment: Update the status or details of an existing alignment.
-- list_alignments: List all alignments for a given dataset.
-- delete_alignment: Remove an alignment from storage.
+- **create_alignment**: Create a new alignment entry in storage
+- **get_alignment_metadata**: Retrieve metadata for a specific alignment
+- **update_alignment**: Update the status or details of an existing alignment
+- **list_alignments**: List all alignments for a given dataset
+- **delete_alignment**: Remove an alignment from storage
 
 Notes
 -----
-- All paths are managed using pathlib.
-- Added branching by engine_id may be neccesary to bridge different alignment formats.
-- Error handling only exposes messages.
-- Raises FileNotFoundError if alignment or metadata not found.
+- All paths are managed using pathlib
+- Engine-specific branching may be necessary to bridge different alignment formats
+- Error handling only exposes user-friendly messages
+- Alignment IDs are generated using unique timestamps with microsecond precision
+- TextGrid paths depend on whether the dataset is cached locally or not
 """
 
 import json
@@ -82,7 +81,7 @@ def _get_alignment_root(dataset_id: str, alignment_id: str) -> Path | None:
         alignment_id: Identifier of the alignment
 
     Returns:
-        Path to the alignment root directory or None if not found.
+        Path to the alignment root directory or None if not found
     """
     alignments_root = _get_alignments_root(dataset_id)
     if alignments_root:
@@ -98,12 +97,12 @@ def create_alignment(
     """Create a new alignment entry in the storage.
 
     Args:
+        dataset_id: Identifier of the dataset to align
         engine_id: Identifier of the alignment engine
         model_id: Identifier of the alignment model to use
-        local: Whether the alignment is to be performed locally
 
     Returns:
-        Tuple of (success, message or metadata)
+        Tuple of (True, AlignmentMetadata) on success or (False, error_message) on failure
     """
     # Fetch model metadata
     model_metadata = get_model_metadata(engine_id, model_id)
@@ -164,7 +163,18 @@ def create_alignment(
 
 
 def get_alignment_metadata(dataset_id: str, alignment_id: str) -> AlignmentMetadata | None:
-    """Get the metadata for a specific alignment by ID."""
+    """Get the metadata for a specific alignment by ID.
+
+    Args:
+        dataset_id: Identifier of the dataset containing the alignment
+        alignment_id: Identifier of the alignment
+
+    Returns:
+        AlignmentMetadata dictionary or None if not found
+
+    Raises:
+        Exception: If metadata file cannot be loaded
+    """
     alignment_root = _get_alignment_root(dataset_id, alignment_id)
     if not alignment_root:
         return None
@@ -181,7 +191,7 @@ def get_alignment_metadata(dataset_id: str, alignment_id: str) -> AlignmentMetad
 
 
 def update_alignment(dataset_id: str, alignment_id: str, updates: dict) -> Tuple[bool, str]:
-    """Update the status of an alignment.
+    """Update the status or metadata of an alignment.
 
     Args:
         dataset_id: Identifier of the dataset containing the alignment
@@ -189,7 +199,7 @@ def update_alignment(dataset_id: str, alignment_id: str, updates: dict) -> Tuple
         updates: Dictionary of updates to apply to the alignment metadata
 
     Returns:
-        Tuple of (success, message)
+        Tuple of (True, success_message) on success or (False, error_message) on failure
     """
     alignment_root = _get_alignment_root(dataset_id, alignment_id)
     if not alignment_root:
@@ -219,10 +229,10 @@ def list_alignments(dataset_id: str) -> List[AlignmentMetadata]:
     """List all alignment metadata for a given dataset.
 
     Args:
-        dataset_id: Identifier of the dataset to list alignments
+        dataset_id: Identifier of the dataset to list alignments for
 
     Returns:
-        List of alignment metadata dictionaries
+        List of AlignmentMetadata dictionaries
     """
     alignments_root = _get_alignments_root(dataset_id)
     if not alignments_root:
@@ -244,15 +254,14 @@ def list_alignments(dataset_id: str) -> List[AlignmentMetadata]:
 
 
 def delete_alignment(dataset_id: str, alignment_id: str) -> Tuple[bool, str]:
-    """
-    Delete an alignment given its dataset ID and alignment ID.
+    """Delete an alignment given its dataset ID and alignment ID.
 
     Args:
         dataset_id: Identifier of the dataset containing the alignment
         alignment_id: Identifier of the alignment to delete
 
     Returns:
-        Tuple of (success, message)
+        Tuple of (True, success_message) on success or (False, error_message) on failure
     """
     alignment_root = _get_alignment_root(dataset_id, alignment_id)
     if not alignment_root:
