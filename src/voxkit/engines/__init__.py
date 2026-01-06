@@ -57,6 +57,7 @@ from __future__ import annotations
 from typing import List
 
 from .base import AlignmentEngine, ToolType
+from .mfa_engine import MFAEngine
 from .w2tg_engine import W2TGEngine
 
 
@@ -99,6 +100,7 @@ class EngineManager:
 
 # Singleton instance for unified export/interface
 w2tg = W2TGEngine(id="W2TGENGINE")
-engines = EngineManager({w2tg.id: w2tg})
+mfa = MFAEngine(id="MFAENGINE")
+engines = EngineManager({w2tg.id: w2tg, mfa.id: mfa})
 
 __all__ = ["engines"]
