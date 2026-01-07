@@ -2,8 +2,6 @@ name: Release Build
 
 on:
   push:
-    branches:
-      - main
     tags:
       - 'v*'
 
@@ -41,14 +39,10 @@ jobs:
       - name: Build .app bundle
         run: make build
       
-      - name: Get version from tag or commit
+      - name: Get version from tag
         id: get_version
         run: |
-          if [[ $GITHUB_REF == refs/tags/* ]]; then
-            VERSION=${GITHUB_REF#refs/tags/}
-          else
-            VERSION="v$(date +'%Y.%m.%d')-$(git rev-parse --short HEAD)"
-          fi
+          VERSION=${GITHUB_REF#refs/tags/}
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Building version: $VERSION"
       
@@ -78,8 +72,6 @@ jobs:
             **VoxKit Release ${{ steps.get_version.outputs.version }}**
             
             🍎 **Platform:** macOS (Apple Silicon & Intel)
-            
-            Automated build from main branch.
             
             ## Installation
             1. Download VoxKit-macOS.app.zip
