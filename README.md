@@ -54,8 +54,8 @@ src/voxkit/
 **Getting-started:**
 ```bash
 # Clone repository
-git clone https://github.com/BrainBehaviorAnalyticsLab/PyPLLR_GUI.git
-cd PyPLLR_GUI
+git clone https://github.com/BrainBehaviorAnalyticsLab/voxkit-desktop.git
+cd voxkit-desktop
 
 # As easy as...
 
@@ -65,7 +65,7 @@ make help
 # (2) Install precommit and initialize environment
 make setup
 
-# (3) Start app (developer mode)   
+# (3) Start app (developer mode)
 make dev
 ```
 
