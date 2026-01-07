@@ -1,10 +1,23 @@
-# 🌉 VoxKit [![Project Management](https://img.shields.io/badge/Project-Jira%20Board-0052CC?logo=jira)](https://voxkit.atlassian.net/jira/software/projects/VOX/boards/2/)
-[![Release](https://img.shields.io/github/v/release/BrainBehaviorAnalyticsLab/voxkit-desktop?label=Latest%20Release)](https://github.com/BrainBehaviorAnalyticsLab/voxkit-desktop/releases/latest) [![Downloads](https://img.shields.io/github/downloads/BrainBehaviorAnalyticsLab/voxkit-desktop/total)](https://github.com/BrainBehaviorAnalyticsLab/voxkit-desktop/releases)
+# 🌉 VoxKit
 
-[![Tests](https://img.shields.io/github/actions/workflow/status/BrainBehaviorAnalyticsLab/voxkit-desktop/tests.yml?branch=main&label=Tests)](https://github.com/BrainBehaviorAnalyticsLab/voxkit-desktop/actions/workflows/tests.yml)
-![Code Quality](https://img.shields.io/github/actions/workflow/status/BrainBehaviorAnalyticsLab/voxkit-desktop/code-quality.yml?branch=main&label=Code%20Quality)
+[![Project Management](https://img.shields.io/badge/Project-Jira%20Board-0052CC?logo=jira&style=flat-square)](https://voxkit.atlassian.net/jira/software/projects/VOX/boards/2/) 
+[![Docs](https://img.shields.io/badge/Docs-Auto--Generated-blue?logo=readthedocs&style=flat-square)](https://brainbehavioranalyticslab.github.io/PyPLLR_GUI/)
 
+[![Release](https://img.shields.io/github/v/release/BrainBehaviorAnalyticsLab/PyPLLR_GUI?label=Latest%20Release&style=flat-square)](https://github.com/BrainBehaviorAnalyticsLab/PyPLLR_GUI/releases/latest) 
+[![Downloads](https://img.shields.io/github/downloads/BrainBehaviorAnalyticsLab/PyPLLR_GUI/total?style=flat-square)](https://github.com/BrainBehaviorAnalyticsLab/PyPLLR_GUI/releases)
+
+[![Tests](https://img.shields.io/github/actions/workflow/status/BrainBehaviorAnalyticsLab/PyPLLR_GUI/tests.yml?branch=main&label=Tests&style=flat-square)](https://github.com/BrainBehaviorAnalyticsLab/PyPLLR_GUI/actions/workflows/tests.yml)
+[![Code Quality](https://img.shields.io/github/actions/workflow/status/BrainBehaviorAnalyticsLab/PyPLLR_GUI/code-quality.yml?branch=main&label=Code%20Quality&style=flat-square)](https://github.com/BrainBehaviorAnalyticsLab/PyPLLR_GUI/actions/workflows/code-quality.yml)
+
+ > A PyQt-based platform that helps bridge AI/ML research and clinical speech-language pathology (SLP) applications. It provides an accessible interface to advanced audio analysis tools, such as forced alignment engines, while remaining flexible enough to support diverse research workflows.
 ---
+
+## 🔎 Quick Links
+
+- 🏗️ [ARCHITECTURE](./ARCHITECTURE.md) - Codebase terminology
+- 📚 [RESEARCH](./RESEARCH.md) - Papers & research background
+- ✍️ [CONTRIBUTING](./CONTRIBUTING.md) - Contribution guidelines
+- 🌐 [Website](<TODO>) - Main site
 
 ## Project Structure
 
@@ -32,13 +45,6 @@ src/voxkit/
 
 
 ## Developers
-
-**Orientation:**
-
-- See [ARCHITECTURE](./ARCHITECTURE.md) for codebase terminology...
-- See [RESEARCH](./RESEARCH.md) for papers and research background...
-- See [CONTRIBUTING](./CONTRIBUTING.md) for contibution guidelines...
-- See [Documentation](<TODO>) for the rendered documentation...
 
 **Prerequisites:**
 - [python](https://www.python.org/downloads/release/python-31114/) code language
