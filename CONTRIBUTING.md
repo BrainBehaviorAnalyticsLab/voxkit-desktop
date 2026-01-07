@@ -13,13 +13,13 @@ Thank you for your interest, this document provides guidelines and instructions 
 
 **Finding an Issue:**
 
-1. Check [open issues](https://github.com/BrainBehaviorAnalyticsLab/PyPLLR_GUI/issues)
+1. Check [open issues](https://github.com/BrainBehaviorAnalyticsLab/voxkit-desktop/issues)
 2. Look for issues labeled `good first issue` for beginner-friendly tasks
 3. Comment on the issue to express interest before starting work
 
 **Reporting a Bug:**
 
-1. Check if it's already reported in [issues](https://github.com/BrainBehaviorAnalyticsLab/PyPLLR_GUI/issues)
+1. Check if it's already reported in [issues](https://github.com/BrainBehaviorAnalyticsLab/voxkit-desktop/issues)
 2. If not, create a new issue with:
    - Clear, descriptive title
    - Steps to reproduce
@@ -32,7 +32,7 @@ Thank you for your interest, this document provides guidelines and instructions 
 - **Large features, architectural changes, or shifts in project direction** should be proposed in **Jira**.
 - **Bugs and small, well-scoped features** can be raised as **GitHub issues**.
 
-1. Check [small feature requests](https://github.com/BrainBehaviorAnalyticsLab/PyPLLR_GUI/issues?q=is%3Aissue+label%3Aenhancement)
+1. Check [small feature requests](https://github.com/BrainBehaviorAnalyticsLab/voxkit-desktop/issues?q=is%3Aissue+label%3Aenhancement)
 2. Open an issue describing:
    - The problem you're trying to solve
    - Your proposed solution

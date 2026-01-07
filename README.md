@@ -1,8 +1,8 @@
-# 🌉 VoxKit [![Project Management](https://img.shields.io/badge/Project-Jira%20Board-0052CC?logo=jira)](https://voxkit.atlassian.net/jira/software/projects/VOX/boards/2/) 
-[![Release](https://img.shields.io/github/v/release/BrainBehaviorAnalyticsLab/PyPLLR_GUI?label=Latest%20Release)](https://github.com/BrainBehaviorAnalyticsLab/PyPLLR_GUI/releases/latest) [![Downloads](https://img.shields.io/github/downloads/BrainBehaviorAnalyticsLab/PyPLLR_GUI/total)](https://github.com/BrainBehaviorAnalyticsLab/PyPLLR_GUI/releases) 
+# 🌉 VoxKit [![Project Management](https://img.shields.io/badge/Project-Jira%20Board-0052CC?logo=jira)](https://voxkit.atlassian.net/jira/software/projects/VOX/boards/2/)
+[![Release](https://img.shields.io/github/v/release/BrainBehaviorAnalyticsLab/voxkit-desktop?label=Latest%20Release)](https://github.com/BrainBehaviorAnalyticsLab/voxkit-desktop/releases/latest) [![Downloads](https://img.shields.io/github/downloads/BrainBehaviorAnalyticsLab/voxkit-desktop/total)](https://github.com/BrainBehaviorAnalyticsLab/voxkit-desktop/releases)
 
-[![Tests](https://img.shields.io/github/actions/workflow/status/BrainBehaviorAnalyticsLab/PyPLLR_GUI/tests.yml?branch=main&label=Tests)](https://github.com/BrainBehaviorAnalyticsLab/PyPLLR_GUI/actions/workflows/tests.yml)
-![Code Quality](https://img.shields.io/github/actions/workflow/status/BrainBehaviorAnalyticsLab/PyPLLR_GUI/code-quality.yml?branch=main&label=Code%20Quality)
+[![Tests](https://img.shields.io/github/actions/workflow/status/BrainBehaviorAnalyticsLab/voxkit-desktop/tests.yml?branch=main&label=Tests)](https://github.com/BrainBehaviorAnalyticsLab/voxkit-desktop/actions/workflows/tests.yml)
+![Code Quality](https://img.shields.io/github/actions/workflow/status/BrainBehaviorAnalyticsLab/voxkit-desktop/code-quality.yml?branch=main&label=Code%20Quality)
 
 ---
 
@@ -48,8 +48,8 @@ src/voxkit/
 **Getting-started:**
 ```bash
 # Clone repository
-git clone https://github.com/BrainBehaviorAnalyticsLab/PyPLLR_GUI.git
-cd PyPLLR_GUI
+git clone https://github.com/BrainBehaviorAnalyticsLab/voxkit-desktop.git
+cd voxkit-desktop
 
 # As easy as...
 
@@ -59,7 +59,7 @@ make help
 # (2) Install precommit and initialize environment
 make setup
 
-# (3) Start app (developer mode)   
+# (3) Start app (developer mode)
 make dev
 ```
 
