@@ -133,14 +133,7 @@ class GenericDialog(QDialog):
             parent: Parent widget to apply blur effect to.
         """
         try:
-            if not hasattr(parent, "parent") or parent.parent is None:
-                return
-
-            parent_func = parent.parent
-            if not callable(parent_func):
-                return
-
-            main_window = parent_func()
+            main_window = parent.parent
             if main_window is None:
                 return
 

@@ -1,10 +1,17 @@
 from typing import Any
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QLabel, QMessageBox
+from PyQt6.QtWidgets import QDialog, QLabel, QMessageBox
 
 from voxkit.engines import engines
 from voxkit.gui.frameworks.categorical_table.categorical_table import CategoricalTableWidget
+from voxkit.gui.frameworks.settings_modal import (
+    FieldConfig,
+    FieldType,
+    GenericDialog,
+    SettingsConfig,
+)
+from voxkit.gui.workers import ModelRegistrationWorker
 from voxkit.storage import models
 
 from .import_dialog import ImportModelDialog
@@ -14,7 +21,6 @@ ENGINE_IDS = engines.list_engines()
 # TODO : Implement Aligner managment logic by see
 # frameworks/widget/categorical_list/api.py | __init__.py
 
-ENGINE_IDS = engines.list_engines()
 
 
 class ManageAlignersWidget(CategoricalTableWidget):
@@ -23,6 +29,7 @@ class ManageAlignersWidget(CategoricalTableWidget):
     def __init__(self, parent=None):
         self.parent = parent
         self.data = {}
+        self.registration_worker = None
 
         def refresh_models_function() -> dict[str, list[dict[Any, Any]]]:
             try:
@@ -61,6 +68,9 @@ class ManageAlignersWidget(CategoricalTableWidget):
 
         self.setWindowTitle("Model Manager")
 
+        # Add register button to the models group
+        self._add_register_button()
+
         self.layout().setSpacing(20)
         self.layout().setContentsMargins(0, 0, 0, 0)
 
@@ -69,6 +79,60 @@ class ManageAlignersWidget(CategoricalTableWidget):
         credit.setStyleSheet("color: #999; font-size: 10px; padding: 5px;")
         credit.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.layout().addWidget(credit)
+
+    def _add_register_button(self):
+        """Add the '+ Register New Model' button to the models group"""
+        from PyQt6.QtWidgets import QHBoxLayout, QPushButton, QWidget
+
+        from voxkit.gui.frameworks._______.styles import Colors
+
+        # Find the models group box (it's the widget containing the table)
+        models_group = None
+        for i in range(self.layout().count()):
+            widget = self.layout().itemAt(i).widget()
+            if widget and hasattr(widget, "layout") and widget.layout() is not None:
+                # Check if this widget contains the table_widget
+                for j in range(widget.layout().count()):
+                    item = widget.layout().itemAt(j)
+                    if item and item.widget() == self.table_widget:
+                        models_group = widget
+                        break
+            if models_group:
+                break
+
+        if not models_group:
+            return
+
+        # Create button container
+        button_container = QWidget()
+        button_container.setStyleSheet("background-color: transparent;")
+        button_layout = QHBoxLayout(button_container)
+        button_layout.setContentsMargins(0, 0, 0, 10)
+
+        plus_btn = QPushButton("+ Register New Model")
+        plus_btn.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {Colors.INFO};
+                color: white;
+                border: none;
+                border-radius: 5px;
+                padding: 8px 16px;
+                font-size: 13px;
+                font-weight: bold;
+            }}
+            QPushButton:hover {{
+                background-color: #2980b9;
+            }}
+            QPushButton:pressed {{
+                background-color: #21618c;
+            }}
+        """)
+        plus_btn.clicked.connect(self.open_registration_dialog)
+        button_layout.addWidget(plus_btn)
+        button_layout.addStretch()
+
+        # Insert button at the beginning of the models group layout
+        models_group.layout().insertWidget(0, button_container)
 
     def on_huggingface_browse(self):
         """Handle HuggingFace button click"""
@@ -107,6 +171,95 @@ class ManageAlignersWidget(CategoricalTableWidget):
             self.reload_models()
         # Clean up
         self.parent.setGraphicsEffect(None)
+
+    def open_registration_dialog(self):
+        """Open the model registration settings dialog"""
+        # Create settings config
+        config = SettingsConfig(
+            title="Register New Model",
+            dimensions=(400, 250),
+            apply_blur=False,
+            store_file="model_registration_settings.json",
+            fields=[
+                FieldConfig(
+                    name="model_path",
+                    label="Model Path",
+                    field_type=FieldType.LINEEDIT,
+                    default_value="",
+                    placeholder="Browse for model directory...",
+                    tooltip="Path to the model directory or file",
+                ),
+                FieldConfig(
+                    name="model_name",
+                    label="Model Name",
+                    field_type=FieldType.LINEEDIT,
+                    default_value="",
+                    placeholder="e.g., english_us_arpa",
+                    tooltip="Unique identifier for this model",
+                ),
+                FieldConfig(
+                    name="engine_id",
+                    label="Engine",
+                    field_type=FieldType.COMBOBOX,
+                    default_value=ENGINE_IDS[0] if ENGINE_IDS else "MFAENGINE",
+                    options=ENGINE_IDS,
+                    tooltip="Select the engine for this model",
+                ),
+            ],
+        )
+
+        # Create and show dialog
+        dialog = GenericDialog(self, config=config)
+        result = dialog.exec()
+
+        if result == QDialog.DialogCode.Accepted:
+            # Get values from dialog
+            values = dialog.get_values()
+            print("Registration values:", values)
+            self.process_registration(values)
+
+    def process_registration(self, values: dict):
+        """Process the registration with values from the dialog"""
+        model_path = values.get("model_path", "").strip()
+        model_name = values.get("model_name", "").strip()
+        engine_id = values.get("engine_id", "MFAENGINE")
+
+        # Validation
+        if not model_path:
+            QMessageBox.warning(self, "Input Error", "Please provide a model path.")
+            return
+
+        if not model_name:
+            QMessageBox.warning(self, "Input Error", "Please enter a model name.")
+            return
+
+        # Start registration in worker thread
+        print(
+            f"Starting model registration with params: {model_path}, {model_name}, "
+            f"engine_id={engine_id}"
+        )
+        self.registration_worker = ModelRegistrationWorker(model_path, model_name, engine_id)
+
+        if self.registration_worker is None:
+            return
+
+        self.registration_worker.progress.connect(self.show_progress)
+        self.registration_worker.finished.connect(self.registration_complete)
+        self.registration_worker.start()
+
+    def show_progress(self, message):
+        """Show progress message"""
+        print(message)
+
+    def registration_complete(self, success, message):
+        """Handle registration completion"""
+        if success:
+            QMessageBox.information(self, "Success", message)
+            # Refresh models list
+            self.refresh_data()
+            self.update_display()
+        else:
+            QMessageBox.critical(self, "Registration Failed", message)
 
 
 #  Example usage

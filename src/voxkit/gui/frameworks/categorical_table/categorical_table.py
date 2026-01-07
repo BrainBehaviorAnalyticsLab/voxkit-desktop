@@ -231,20 +231,9 @@ class CategoricalTableWidget(QWidget):
         else:
             self.table_widget.setSelectionMode(QTableWidget.SelectionMode.MultiSelection)
 
+        # Set minimum height to prevent layout shifts
+        self.table_widget.setMinimumHeight(200)
         table_container_layout.addWidget(self.table_widget)
-
-        # Add empty state label
-        self.empty_label = QLabel("No items in this category")
-        self.empty_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.empty_label.setStyleSheet(f"""
-            QLabel {{
-                color: {Colors.TEXT_TERTIARY};
-                font-style: italic;
-                font-size: 14px;
-            }}
-        """)
-        self.empty_label.hide()
-        table_container_layout.addWidget(self.empty_label)
 
         main_layout.addWidget(models_group, stretch=1)
 
@@ -356,13 +345,14 @@ class CategoricalTableWidget(QWidget):
     def update_display(self):
         """Update the display for the current category"""
         self.table_widget.clear()
+        self.table_widget.setRowCount(0)
 
         if not self.category_keys:
             self.category_label.setText("No Categories")
             self.prev_btn.setEnabled(False)
             self.next_btn.setEnabled(False)
-            self.table_widget.hide()
-            self.empty_label.show()
+            # Show empty table with no columns
+            self.table_widget.setColumnCount(0)
             return
 
         # Update category label
@@ -380,13 +370,9 @@ class CategoricalTableWidget(QWidget):
         category_data = self.data[current_category]
 
         if not category_data:
-            self.table_widget.hide()
-            self.empty_label.show()
-            return
-
-        # Show table and hide empty label
-        self.empty_label.hide()
-        self.table_widget.show()
+            # Show empty table - just set up columns but no rows
+            # Will still show headers if columns were previously shown
+            pass
 
         # Determine columns to show
         if not self.columns_shown:

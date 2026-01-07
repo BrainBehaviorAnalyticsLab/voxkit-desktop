@@ -194,12 +194,6 @@ class TrainingStacker(QWidget):
     def train_model_logic(self, audio_path, textgrid_path, model_name, model):
         """Actual model training logic"""
         print("Training logic would be implemented here.")
-        print(
-            f"Audio Path: {audio_path}"
-            f"\nTextGrid Path: {textgrid_path}"
-            f"\nModel Name: {model_name}"
-            f"\nModel: {model}"
-        )
 
         selected_model_index = self.engine_panel_dropdowns[self.selected_engine].currentIndex()
         base_model_id = self.engine_panel_dropdowns[self.selected_engine].itemData(
@@ -349,6 +343,8 @@ class TrainingStacker(QWidget):
         # ------------------------------------------------------------------
         for idx, (engine_id, engine) in enumerate(TrainingTools.items()):
             # ---------- radio ----------
+            print(engine.id)
+            print("ABOVE________")
             radio = QRadioButton(f"{engine.name()}")
             radio.setToolTip(engine.description)
             radio.toggled.connect(self.on_mode_changed)
@@ -569,4 +565,8 @@ class TrainingStacker(QWidget):
         layout.addWidget(self.train_status)
 
         layout.addStretch()
+
+        # Set initial visibility of dropdowns based on selected engine
+        self.on_mode_changed()
+
         return self

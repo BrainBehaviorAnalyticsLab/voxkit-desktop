@@ -272,7 +272,7 @@ class PredictionStacker(QWidget):
             QComboBox:disabled {
                 background-color: #f5f5f5;
                 color: #999;
-            }                                
+            }
         """)
         # Populate with registered datasets
         dataset_list = datasets.list_datasets_metadata()
@@ -332,6 +332,10 @@ class PredictionStacker(QWidget):
         layout.addWidget(self.predict_status)
 
         layout.addStretch()
+
+        # Set initial visibility of dropdowns based on selected engine
+        self.on_mode_changed()
+
         return self
 
     def on_predict_settings(self):

@@ -1,29 +1,79 @@
-"""
-Until compatible exports are avalible through the MFA package this will serve as the alterative
-entrypoint for MFA logic bootstrapping the cli
-"""
-
-import logging
 import subprocess
-from typing import Optional
+
+
+def run_mfa_align(corpus_dir, model_path, output_dir, eval_dir=None) -> None:
+    """
+    Run MFA align command with the provided arguments.
+
+    Args:
+        args (List[str]): List of command-line arguments for MFA align.
+    """
+
+    cmd = [
+        "conda",
+        "run",
+        "-n",
+        "aligner",
+        "mfa",
+        "align",
+        corpus_dir,
+        "english_us_arpa",
+        model_path,
+        output_dir,
+    ]
+
+    if eval_dir:
+        cmd.append("--reference_alignments")
+        cmd.append(eval_dir)
+
+    try:
+        print(f"[mfa.run_mfa_align] Running MFA align with command: {' '.join(cmd)}")
+        subprocess.run(cmd, check=True)
+        print("[mfa.run_mfa_align] MFA alignment completed successfully.")
+    except subprocess.CalledProcessError as e:
+        print(f"[mfa.run_mfa_align] MFA alignment failed with error: {e}")
+        raise
 
 
 def run_mfa_adapt(
-    corpus_dir: str,
-    dictionary_path: str,
-    acoustic_model_path: str,
-    output_model_path: str,
-    timeout: Optional[float] = None,
-    capture_output: bool = True,
-) -> subprocess.CompletedProcess:
+    corpus_dir,
+    base_model_path,
+    output_model_path,
+    dictionary_name="english_us_arpa",
+    num_iterations=1,
+) -> None:
     """
-    Run the Montreal Forced Aligner 'adapt' subcommand as a subprocess.
+    Run MFA adapt command with the provided arguments.
 
-    Raises:
-      FileNotFoundError: if the MFA CLI is not available on PATH.
-      subprocess.CalledProcessError: if the command exits with non-zero status.
-      subprocess.TimeoutExpired: if the command times out.
+    Args:
+        corpus_dir (str): Path to the corpus directory (must contain audio + TextGrid files).
+        base_model_path (str): Path to the base model file.
+        output_model_path (str): Path where the adapted model will be saved.
+        dictionary_name (str): Name of the dictionary to use (default: "english_us_arpa").
+        num_iterations (int): Number of adaptation iterations.
     """
+    # First, ensure the dictionary is downloaded
+    download_cmd = [
+        "conda",
+        "run",
+        "-n",
+        "aligner",
+        "mfa",
+        "model",
+        "download",
+        "dictionary",
+        "english_us_arpa",
+    ]
+
+    try:
+        print("[mfa.run_mfa_adapt] Ensuring dictionary is downloaded...")
+        subprocess.run(download_cmd, check=True, capture_output=True, text=True)
+    except subprocess.CalledProcessError:
+        print(
+            "[mfa.run_mfa_adapt] Dictionary already downloaded or "
+            "download failed (continuing anyway)"
+        )
+
     cmd = [
         "conda",
         "run",
@@ -32,41 +82,32 @@ def run_mfa_adapt(
         "mfa",
         "adapt",
         corpus_dir,
-        dictionary_path,
-        acoustic_model_path,
+        dictionary_name,
+        base_model_path,
         output_model_path,
-        "--clean",
-        "--clean",  # wipe any previous broken temp files
-        "-t",
-        "/tmp/mfa_adapt_tmp",  # explicit temporary directory
-        "--output_directory",
-        "/tmp/mfa_adapt_output",  # explicit output directory,
+        "--num_iterations",
+        str(num_iterations),
+        "--clean",  # Add clean flag to avoid cache issues
     ]
-    logging.debug("Running MFA adapt command: %s", " ".join(cmd))
-    completed = subprocess.run(
-        cmd,
-        stdout=subprocess.PIPE if capture_output else None,
-        stderr=subprocess.STDOUT if capture_output else None,
-        text=True,
-        timeout=timeout,
-        check=True,
+
+    try:
+        print(f"[mfa.run_mfa_adapt] Running MFA adapt with command: {' '.join(cmd)}")
+        subprocess.run(cmd, check=True, capture_output=True, text=True)
+        print("[mfa.run_mfa_adapt] MFA adaptation completed successfully.")
+    except subprocess.CalledProcessError as e:
+        print(f"[mfa.run_mfa_adapt] MFA adaptation failed with error: {e}")
+        if e.stderr:
+            print(f"[mfa.run_mfa_adapt] Error output: {e.stderr}")
+        raise
+
+
+if __name__ == "__main__":
+    # Example usage
+    corpus_directory = "/Users/beckettfrey/Desktop/audio"
+    model_file_path = (
+        "/Users/beckettfrey/.voxkit/MFAENGINE/train/20260106_100909_114224/entrypoint.zip"
     )
+    output_directory = "."
+    evaluation_directory = None
 
-    if capture_output:
-        logging.debug("MFA adapt output:\n%s", completed.stdout)
-
-    return completed
-
-
-def run_mfa_evaluate(
-    corpus_dir: str,
-    dictionary_path: str,
-    acoustic_model_path: str,
-    output_model_path: str,
-    timeout: Optional[float] = None,
-    capture_output: bool = True,
-) -> subprocess.CompletedProcess:
-    """
-    Run the Montreal Forced Aligner 'evaluate' subcommand as a subprocess.
-    """
-    raise NotImplementedError("MFA evaluate is not yet implemented")
+    run_mfa_align(corpus_directory, model_file_path, output_directory, evaluation_directory)

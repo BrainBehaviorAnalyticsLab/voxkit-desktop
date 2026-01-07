@@ -3,7 +3,7 @@ import multiprocessing
 import os
 import sys
 
-# CRITICAL: Must be at the top for frozen apps using multiprocessing
+# Must be at the top for frozen apps using multiprocessing
 if __name__ == "__main__":
     multiprocessing.freeze_support()
 
@@ -14,9 +14,10 @@ faulthandler.enable()
 if getattr(sys, "frozen", False):
     # Define the minimal required environment
     minimal_env = {
-        "HOME": os.environ.get("HOME") or os.path.expanduser("~"),
-        "USER": os.environ.get("USER") or os.getlogin(),
-        "TMPDIR": os.environ.get("TMPDIR") or "/tmp",
+        'HOME': os.environ.get('HOME') or os.path.expanduser('~'),
+        'USER': os.environ.get('USER') or os.getlogin(),
+        'TMPDIR': os.environ.get('TMPDIR') or '/tmp',
+        'QT_ENABLE_EMOJI': '0'
     }
 
     # PyInstaller-specific: Add Qt plugin paths
