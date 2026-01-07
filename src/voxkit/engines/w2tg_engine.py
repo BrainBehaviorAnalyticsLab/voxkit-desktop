@@ -159,12 +159,12 @@ class W2TGEngine(AlignmentEngine):
     ) -> None:
         new_model_actual_id = None
         try:
-            successs, message = models.create_model(
+            success, message = models.create_model(
                 engine_id=self.id,
                 model_name=new_model_id,
             )
 
-            if not successs:
+            if not success:
                 raise ValueError(f"Failed to create model entry: {message}")
 
             model_meta = message
