@@ -23,6 +23,10 @@ jobs:
           curl -LsSf https://astral.sh/uv/install.sh | sh
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
 
+      - name: Configure Git for private repos
+        run: |
+          git config --global url."https://${{ secrets.PRIVATE_REPO_TOKEN }}@github.com/".insteadOf "https://github.com/"
+
       - name: Generate pdoc documentation
         run: |
           uv run --group docs pdoc -o ./docs_output src/voxkit
