@@ -1,1 +1,52 @@
-<TODO>
+name: Build and Deploy Documentation
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy-docs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout voxkit-desktop repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: Generate pdoc documentation
+        run: |
+          uv run --group docs pdoc -o ./docs_output src/voxkit
+
+      - name: Checkout voxkit-web repository
+        uses: actions/checkout@v4
+        with:
+          repository: BrainBehaviorAnalyticsLab/voxkit-web
+          token: ${{ secrets.PRIVATE_REPO_TOKEN }}
+          path: voxkit-web
+
+      - name: Copy documentation to voxkit-web
+        run: |
+          # Create the public/docs directory if it doesn't exist
+          mkdir -p voxkit-web/public/docs
+          # Remove old docs and copy new ones
+          rm -rf voxkit-web/public/docs/*
+          cp -r ./docs_output/voxkit/* voxkit-web/public/docs/
+
+      - name: Commit and push to voxkit-web
+        run: |
+          cd voxkit-web
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add public/docs
+          git commit -m "sync: update documentation from voxkit-desktop (commit: ${{ github.sha }})" || echo "No changes to commit"
+          git push origin main
