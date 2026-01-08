@@ -26,7 +26,7 @@ jobs:
 
       - name: Generate pdoc documentation
         run: |
-          pdoc -o ./docs_output voxkit
+          pdoc -o ./docs_output src/voxkit
 
       - name: Checkout voxkit-web repository
         uses: actions/checkout@v4
