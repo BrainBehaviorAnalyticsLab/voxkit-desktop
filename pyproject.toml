@@ -24,7 +24,7 @@ dependencies = [
     "pre-commit>=4.3.0",
     "pytest>=8.4.2",
     "pydantic>=2.12.3",
-    "pdoc>=16.0.0",
+    "numba>=0.59.0"
 ]
 
 [dependency-groups]
@@ -37,7 +37,6 @@ docs = [
     "pdoc>=16.0.0",
 ]
 installation = [
-    "py2app>=0.28.9",
     "pyinstaller>=5.10.1",
 ]
 
