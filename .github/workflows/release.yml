@@ -2,8 +2,6 @@ name: Release Build
 
 on:
   push:
-    branches:
-      - main
     tags:
       - 'v*'
 
@@ -41,14 +39,10 @@ jobs:
       - name: Build .app bundle
         run: make build
       
-      - name: Get version from tag or commit
+      - name: Get version from tag
         id: get_version
         run: |
-          if [[ $GITHUB_REF == refs/tags/* ]]; then
-            VERSION=${GITHUB_REF#refs/tags/}
-          else
-            VERSION="v$(date +'%Y.%m.%d')-$(git rev-parse --short HEAD)"
-          fi
+          VERSION=${GITHUB_REF#refs/tags/}
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Building version: $VERSION"
       
@@ -73,29 +67,36 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ steps.get_version.outputs.version }}
-          release_name: VoxKit ${{ steps.get_version.outputs.version }} (macOS)
+          release_name: VoxKit ${{ steps.get_version.outputs.version }}
           body: |
             **VoxKit Release ${{ steps.get_version.outputs.version }}**
             
-            🍎 **Platform:** macOS (Apple Silicon & Intel)
-            
-            Automated build from main branch.
-            
+            > Ready for Round of Testing
+
+            🍎 **Platform:** macOS (Apple Silicon)
+
+            Automated build from releases branch.
+
             ## Installation
-            1. Download VoxKit-macOS.app.zip
-            2. Unzip the file
+            1. Download VoxKit-macOS.dmg
+            2. Open the dmg file
             3. Move VoxKit.app to your Applications folder
-            4. Right-click and select "Open" the first time (macOS security)
+            4. Open Terminal (you can right-click the Applications folder and select "New Terminal at Folder")
+            5. Run  xattr -cr ../VoxKit.app
+            - Why this step? macOS marks apps downloaded from the internet as "quarantined" and won't let you open them. This command removes that quarantine flag so you can launch VoxKit.
+            - Without this, you'll get a security warning, and the app won't open.
+
+            ## Workflow Setup
+            <!-- Instructions for setting up VoxKit. -->
             
             ## System Requirements
-            - macOS 10.13 or later
-            - Works on both Intel and Apple Silicon Macs
+            - macOS 15 or later
+            - Apple Silicon Mac (M1, M2, M3, etc.)
+            - Install MFA - https://montreal-forced-aligner.readthedocs.io/en/latest/getting_started.html
             
-            ## Changes
-            - Built from commit: ${{ github.sha }}
-            
-          draft: false
+          draft: true
           prerelease: true
+          generate_release_notes: true
       
       - name: Upload .app.zip to Release
         uses: actions/upload-release-asset@v1
