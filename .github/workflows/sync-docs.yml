@@ -44,7 +44,7 @@ jobs:
           mkdir -p voxkit-web/public/docs
           # Remove old docs and copy new ones
           rm -rf voxkit-web/public/docs/*
-          cp -r ./docs_output/voxkit/* voxkit-web/public/docs/
+          cp -r ./docs_output/* voxkit-web/public/docs/
 
       - name: Commit and push to voxkit-web
         run: |
