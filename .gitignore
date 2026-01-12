@@ -59,6 +59,7 @@ computed_likelihoods/
 
 # Test files
 test_imports.py
+IMPLEMENTATION_SUMMARY.md
 
 # OS files
 .DS_Store
