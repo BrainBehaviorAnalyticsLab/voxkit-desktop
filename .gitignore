@@ -57,6 +57,9 @@ computed_likelihoods/
 .idea/
 *.iml
 
+# Test files
+test_imports.py
+
 # OS files
 .DS_Store
 Thumbs.db

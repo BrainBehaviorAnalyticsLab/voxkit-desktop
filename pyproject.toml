@@ -63,6 +63,7 @@ exclude = [
     "main.py",
     "build.py",
     "example_startup_script.py",
+    "test_imports.py",
 ]
 
 [tool.ruff.lint]
@@ -100,7 +101,8 @@ ignore_missing_imports = true
 exclude = [
     "main.py",
     "build.py",
-    "example_startup_script.py"
+    "example_startup_script.py",
+    "test_imports.py"
 ]
 
 [tool.setuptools.packages.find]
