@@ -145,6 +145,7 @@ class AlignmentEngine(ABC):
         """
         if isinstance(path, str):
             path = Path(path)
+        path.parent.mkdir(parents=True, exist_ok=True)
         with open(path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=4)
 
@@ -171,6 +172,18 @@ class AlignmentEngine(ABC):
         with open(path, "r", encoding="utf-8") as f:
             return json.load(f)
 
+    def _get_default_settings(self, cfg: SettingsConfig) -> dict:
+        """
+        Extract default values from SettingsConfig fields.
+
+        Args:
+            cfg: The SettingsConfig object containing field definitions.
+
+        Returns:
+            Dictionary mapping field names to their default values.
+        """
+        return {field.name: field.default_value for field in (cfg.fields or [])}
+
     def get_settings(self, tool_type: ToolType) -> dict:
         """
         Load and validate settings for a specific tool.
@@ -178,7 +191,9 @@ class AlignmentEngine(ABC):
         This method reads the JSON settings file defined by the engine's
         ``settings_configurations`` for the given ``tool_type``, validates the
         settings using the engine-provided validator, and returns the parsed
-        settings dictionary.
+        settings dictionary. If the settings file doesn't exist, it falls back
+        to default values extracted from the SettingsConfig fields and saves
+        them to disk for future use.
 
         Args:
             tool_type: The tool type to retrieve settings for ("train" or
@@ -197,24 +212,27 @@ class AlignmentEngine(ABC):
 
         cfg = self.settings_configurations[tool_type]
         if not cfg.store_file:
-            raise FileNotFoundError(
-                f"Settings path not given for tool type '{tool_type}' in this engine."
-            )
-        settings = self._load_json(Path(get_storage_root() / cfg.store_file))
+            raise ValueError(f"Settings path not configured for tool type '{tool_type}'.")
 
-        if tool_type == "train":
-            if settings is None:
-                # Get default settings if none exist
-                settings = cfg.default_settings or {}
-            if not self._validate_train_settings(settings):
-                raise ValueError(f"Invalid training settings: {settings}")
-            return settings
-        elif tool_type == "align":
-            if not self._validate_align_settings(settings):
-                raise ValueError(f"Invalid alignment settings: {settings}")
-            return settings
-        else:
-            raise ValueError(f"Invalid tool_type: {tool_type}.")
+        settings_path = Path(get_storage_root() / cfg.store_file)
+        settings = self._load_json(settings_path)
+
+        # Fallback to defaults if file doesn't exist or is empty
+        if not settings:
+            settings = self._get_default_settings(cfg)
+            self._save_json(settings, settings_path)
+
+        # Validate settings
+        is_valid = (
+            self._validate_train_settings(settings)
+            if tool_type == "train"
+            else self._validate_align_settings(settings)
+        )
+
+        if not is_valid:
+            raise ValueError(f"Invalid {tool_type} settings: {settings}")
+
+        return settings
 
     def get_settings_config(self, tool_type: ToolType) -> SettingsConfig:
         """
