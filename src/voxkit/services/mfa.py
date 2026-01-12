@@ -101,13 +101,28 @@ def run_mfa_adapt(
         raise
 
 
-if __name__ == "__main__":
-    # Example usage
-    corpus_directory = "/Users/beckettfrey/Desktop/audio"
-    model_file_path = (
-        "/Users/beckettfrey/.voxkit/MFAENGINE/train/20260106_100909_114224/entrypoint.zip"
-    )
-    output_directory = "."
-    evaluation_directory = None
+def download_acoustic_model(release_path, output_file):
+    """
+    Download an MFA acoustic model using the github releases ai  for example release_path = acoustic-spanish_mfa-v3.3.0/spanish_mfa.zip becomes url "https://github.com/MontrealCorpusTools/mfa-models/releases/download/acoustic-spanish_mfa-v3.3.0/spanish_mfa.zip"
+    """
+    url = f"https://github.com/MontrealCorpusTools/mfa-models/releases/download/{release_path}"
+    cmd = ["curl", "-L", "-o", output_file, url]
+    try:
+        print(f"[mfa.download_acoustic_model] Downloading model from {url} to {output_file}")
+        subprocess.run(cmd, check=True)
+        print("[mfa.download_acoustic_model] Model downloaded successfully.")
+    except subprocess.CalledProcessError as e:
+        print(f"[mfa.download_acoustic_model] Model download failed with error: {e}")
+        raise
 
-    run_mfa_align(corpus_directory, model_file_path, output_directory, evaluation_directory)
+if __name__ == "__main__":
+    # Example model download
+    download_acoustic_model(
+        "acoustic-spanish_mfa-v3.3.0/spanish_mfa.zip",
+        "spanish_mfa.zip",
+    )
+    download_acoustic_model(
+        "acoustic-english_us_arpa-v3.0.0/english_us_arpa.zip",
+        "english_us_arpa.zip",
+    )
+   
