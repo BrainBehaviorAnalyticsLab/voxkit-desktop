@@ -60,6 +60,8 @@ computed_likelihoods/
 # Test files
 test_imports.py
 IMPLEMENTATION_SUMMARY.md
+CODE_REVIEW_CHECKLIST.md
+QUICKSTART_STARTUP_SCRIPT.md
 
 # OS files
 .DS_Store
