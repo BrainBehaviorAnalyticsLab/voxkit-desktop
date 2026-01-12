@@ -8,12 +8,15 @@ API
 - **get_storage_root**: Get the root directory for storing VoxKit data
 - **generate_unique_id**: Generate a unique identifier with timestamp
 - **readable_from_unique_id**: Convert a unique ID to human-readable format
+- **is_first_launch**: Check if this is the first launch of the application
+- **mark_first_launch_complete**: Mark the first launch as complete
 
 Notes
 -----
 - The storage root uses tilde (~) notation to ensure it references the user's home directory
 - Unique IDs are based on timestamps with microsecond precision (YYYYMMDD_HHMMSS_ffffff)
 - The storage root path is cached for performance using lru_cache
+- First launch tracking uses a flag file (.first_launch_complete) in the storage root
 """
 
 from datetime import datetime
@@ -65,3 +68,22 @@ def readable_from_unique_id(date_str: str) -> str:
     """
     dt = datetime.strptime(date_str, "%Y%m%d_%H%M%S_%f")
     return dt.strftime("%B %d, %Y at %I:%M:%S %p")
+
+
+def is_first_launch() -> bool:
+    """Check if this is the first launch of the application.
+
+    Returns:
+        True if this is the first launch, False otherwise
+    """
+    storage_root = get_storage_root()
+    flag_file = storage_root / ".first_launch_complete"
+    return not flag_file.exists()
+
+
+def mark_first_launch_complete() -> None:
+    """Mark the first launch as complete by creating a flag file."""
+    storage_root = get_storage_root()
+    storage_root.mkdir(parents=True, exist_ok=True)
+    flag_file = storage_root / ".first_launch_complete"
+    flag_file.touch()

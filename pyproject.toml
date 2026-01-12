@@ -62,6 +62,8 @@ exclude = [
     "__pycache__",
     "main.py",
     "build.py",
+    "example_startup_script.py",
+    "test_imports.py",
 ]
 
 [tool.ruff.lint]
@@ -98,7 +100,9 @@ python_version = "3.11"
 ignore_missing_imports = true
 exclude = [
     "main.py",
-    "build.py"
+    "build.py",
+    "example_startup_script.py",
+    "test_imports.py"
 ]
 
 [tool.setuptools.packages.find]
