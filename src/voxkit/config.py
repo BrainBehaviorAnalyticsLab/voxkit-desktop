@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Callable, Literal
 
 AppName = "VoxKit"
 Dimensions = {"min_width": 200, "min_height": 800, "max_width": 500, "max_height": None}
@@ -12,3 +12,7 @@ Defaults = {
 
 Mode = Literal["MFAENGINE", "W2TGENGINE"]
 HELP_URL = "http://localhost:3000/help"
+
+# Startup script configuration
+# Set this to a callable function to run on first launch, or None to disable
+STARTUP_SCRIPT: Callable[[], None] | None = None

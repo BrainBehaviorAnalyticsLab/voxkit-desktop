@@ -48,6 +48,8 @@ if getattr(sys, 'frozen', False):
 
 from gui import AlignmentGUI
 from PyQt6.QtWidgets import QApplication
+from voxkit.config import STARTUP_SCRIPT
+from voxkit.startup import execute_startup_script
 from voxkit.storage.utils import get_storage_root
 
 
@@ -66,6 +68,10 @@ def main():
     
     app = QApplication(sys.argv)
     app.setStyle("Fusion")
+    
+    # Execute startup script on first launch (before GUI initialization)
+    execute_startup_script(STARTUP_SCRIPT, app)
+    
     window = AlignmentGUI()
     window.show()
     sys.exit(app.exec())
