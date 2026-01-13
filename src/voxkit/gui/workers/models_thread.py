@@ -86,9 +86,18 @@ class ModelRegistrationWorker(QThread):
                     return
 
             else:
-                raise NotImplementedError(
-                    "Only .zip and .model files are supported for model registration."
-                )
+                # Models where the model lives in a folder (W2TG)
+                try:
+                    # Recursively copy the model_path to the destination
+                    import shutil
+
+                    shutil.copytree(self.model_path, model_dest, dirs_exist_ok=True)
+                except Exception as e:
+                    self.finished.emit(
+                        False,
+                        f"Failed to copy model folder: {e}",
+                    )
+                    return
 
             self.progress.emit("Model metadata created successfully.")
             self.finished.emit(True, f"Model '{self.model_name}' registered successfully!")
