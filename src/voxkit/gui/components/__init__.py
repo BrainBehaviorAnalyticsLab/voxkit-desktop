@@ -5,6 +5,7 @@ from .dna_strand import DNAStrandWidget
 from .horizontal_button_selector import HorizontalButtonSelector
 from .huggingface_button import HuggingFaceButton, HuggingFaceIconButton
 from .loading_dialog import LoadingDialog
+from .model_selection_panel import ModelSelectionPanel
 from .overlay_effects import OverlayWidget
 from .toggle_switch import ToggleSwitch
 
@@ -15,6 +16,7 @@ __all__ = [
     "HuggingFaceButton",
     "HuggingFaceIconButton",
     "LoadingDialog",
+    "ModelSelectionPanel",
     "MultiColumnComboBox",
     "OverlayWidget",
     "ToggleSwitch",
