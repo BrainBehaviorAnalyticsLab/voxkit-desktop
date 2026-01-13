@@ -191,12 +191,29 @@ class TrainingStacker(QWidget):
         return "Model training completed successfully"
 
     def on_train_finished(self, success, message):
-        """Handle completion of training operation"""
+        """Handle completion of training operation.
+        
+        When training succeeds, this method refreshes the model lists in all
+        relevant components (training page, prediction page, etc.) so the newly
+        trained model is immediately available for selection.
+        
+        Args:
+            success: Boolean indicating if training succeeded
+            message: Status message to display to the user
+        """
         self.train_btn.setEnabled(True)
 
         if success:
             self.train_status.setText("✓ " + message)
             self.train_status.setStyleSheet("color: #27ae60; font-size: 12px; margin-top: 5px;")
+            
+            # Refresh models in all relevant components
+            self.reload_models()
+            
+            # Notify parent to refresh models in other stackers
+            if hasattr(self.parent, 'pipeline_container'):
+                self.parent.pipeline_container.reload()
+            
             QMessageBox.information(self, "Success", message)
         else:
             self.train_status.setText("✗ Error occurred")

@@ -79,6 +79,19 @@ class ManageAlignersWidget(CategoricalTableWidget):
         credit.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.layout().addWidget(credit)
 
+    def showEvent(self, event):
+        """Refresh models when the widget is shown.
+        
+        This ensures that the model list is always up-to-date when the user
+        navigates to the Model Management tab, including after training new models.
+        
+        Args:
+            event: The show event from Qt
+        """
+        super().showEvent(event)
+        self.refresh_data()
+        self.update_display()
+
     def _add_register_button(self):
         """Add the '+ Register New Model' button to the models group"""
         from PyQt6.QtWidgets import QHBoxLayout, QPushButton, QWidget
