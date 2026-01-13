@@ -110,7 +110,7 @@ class TestAlignments:
 
             # Verify field values
             assert result["engine_id"] == engine_id
-            assert result["status"] == "Pending"
+            assert result["status"] == "pending"
             assert "id" in result
             assert "alignment_date" in result
             assert "tg_path" in result
@@ -193,7 +193,7 @@ class TestAlignments:
 
         # Verify field values
         assert result["engine_id"] == engine_id
-        assert result["status"] == "Pending"
+        assert result["status"] == "pending"
         assert "id" in result
         assert "alignment_date" in result
         assert "tg_path" in result
@@ -386,3 +386,186 @@ class TestAlignments:
 
             assert delete_success is False
             assert "not found" in delete_msg
+
+    class TestUpdateAlignment:
+        def test_update_alignment_success(self, sample_dataset, sample_model):
+            from ..alignments import create_alignment, get_alignment_metadata, update_alignment
+
+            dataset_id = sample_dataset["id"]
+            engine_id = sample_model["engine_id"]
+            model_id = sample_model["id"]
+
+            success, alignment_metadata = create_alignment(
+                dataset_id=dataset_id,
+                engine_id=engine_id,
+                model_id=model_id,
+            )
+
+            assert success is True
+
+            alignment_id = alignment_metadata["id"]
+
+            # Update status to completed
+            update_success, update_msg = update_alignment(
+                dataset_id=dataset_id,
+                alignment_id=alignment_id,
+                updates={"status": "completed"},
+            )
+
+            assert update_success is True
+
+            # Verify status was updated
+            fetched_metadata = get_alignment_metadata(
+                dataset_id=dataset_id,
+                alignment_id=alignment_id,
+            )
+
+            assert fetched_metadata is not None
+            assert fetched_metadata["status"] == "completed"
+
+        def test_update_alignment_status_case_insensitive(self, sample_dataset, sample_model):
+            """Test that status values are normalized to lowercase."""
+            from ..alignments import create_alignment, get_alignment_metadata, update_alignment
+
+            dataset_id = sample_dataset["id"]
+            engine_id = sample_model["engine_id"]
+            model_id = sample_model["id"]
+
+            success, alignment_metadata = create_alignment(
+                dataset_id=dataset_id,
+                engine_id=engine_id,
+                model_id=model_id,
+            )
+
+            assert success is True
+
+            alignment_id = alignment_metadata["id"]
+
+            # Update status with capital letters
+            update_success, update_msg = update_alignment(
+                dataset_id=dataset_id,
+                alignment_id=alignment_id,
+                updates={"status": "Completed"},
+            )
+
+            assert update_success is True
+
+            # Verify status was normalized to lowercase
+            fetched_metadata = get_alignment_metadata(
+                dataset_id=dataset_id,
+                alignment_id=alignment_id,
+            )
+
+            assert fetched_metadata is not None
+            assert fetched_metadata["status"] == "completed"
+
+        def test_update_alignment_invalid_id(self, sample_dataset):
+            from ..alignments import update_alignment
+
+            dataset_id = sample_dataset["id"]
+            invalid_alignment_id = "NON_EXISTENT_ALIGNMENT"
+
+            update_success, update_msg = update_alignment(
+                dataset_id=dataset_id,
+                alignment_id=invalid_alignment_id,
+                updates={"status": "completed"},
+            )
+
+            assert update_success is False
+            assert "not found" in update_msg
+
+    class TestStatusNormalization:
+        def test_list_alignments_normalizes_status(self, monkeypatch, sample_dataset, sample_model):
+            """Test that list_alignments normalizes status values to lowercase."""
+            import json
+            from pathlib import Path
+
+            from .. import datasets
+            from ..alignments import create_alignment, list_alignments
+
+            monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
+
+            dataset_id = sample_dataset["id"]
+            engine_id = sample_model["engine_id"]
+            model_id = sample_model["id"]
+
+            # Create an alignment
+            success, alignment_metadata = create_alignment(
+                dataset_id=dataset_id,
+                engine_id=engine_id,
+                model_id=model_id,
+            )
+
+            assert success is True
+
+            alignment_id = alignment_metadata["id"]
+
+            # Manually update the JSON file with capital status
+            from ..datasets import _get_dataset_root
+
+            dataset_root = _get_dataset_root(dataset_id)
+            alignment_path = dataset_root / "alignments" / alignment_id / "voxkit_alignment.json"
+
+            with open(alignment_path, "r") as f:
+                metadata = json.load(f)
+
+            metadata["status"] = "Completed"  # Capital C
+
+            with open(alignment_path, "w") as f:
+                json.dump(metadata, f, indent=4)
+
+            # List alignments and check status is normalized
+            alignments_list = list_alignments(dataset_id=dataset_id)
+
+            assert len(alignments_list) == 1
+            assert alignments_list[0]["status"] == "completed"  # Should be lowercase
+
+        def test_get_alignment_metadata_normalizes_status(
+            self, monkeypatch, sample_dataset, sample_model
+        ):
+            """Test that get_alignment_metadata normalizes status values to lowercase."""
+            import json
+
+            from .. import datasets
+            from ..alignments import create_alignment, get_alignment_metadata
+
+            monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
+
+            dataset_id = sample_dataset["id"]
+            engine_id = sample_model["engine_id"]
+            model_id = sample_model["id"]
+
+            # Create an alignment
+            success, alignment_metadata = create_alignment(
+                dataset_id=dataset_id,
+                engine_id=engine_id,
+                model_id=model_id,
+            )
+
+            assert success is True
+
+            alignment_id = alignment_metadata["id"]
+
+            # Manually update the JSON file with capital status
+            from ..datasets import _get_dataset_root
+
+            dataset_root = _get_dataset_root(dataset_id)
+            alignment_path = dataset_root / "alignments" / alignment_id / "voxkit_alignment.json"
+
+            with open(alignment_path, "r") as f:
+                metadata = json.load(f)
+
+            metadata["status"] = "Failed"  # Capital F
+
+            with open(alignment_path, "w") as f:
+                json.dump(metadata, f, indent=4)
+
+            # Get alignment metadata and check status is normalized
+            fetched_metadata = get_alignment_metadata(
+                dataset_id=dataset_id,
+                alignment_id=alignment_id,
+            )
+
+            assert fetched_metadata is not None
+            assert fetched_metadata["status"] == "failed"  # Should be lowercase
+
