@@ -73,17 +73,17 @@ class ManageAlignersWidget(CategoricalTableWidget):
         self.layout().setSpacing(20)
         self.layout().setContentsMargins(0, 0, 0, 0)
 
-    def showEvent(self, event):
-        """Refresh models when the widget is shown."""
-        super().showEvent(event)
-        self.refresh_data()
-        self.update_display()
-
         # === Footer Credit ===
         credit = QLabel("VoxKit by BrainBehaviorAnalyticsLab")
         credit.setStyleSheet("color: #999; font-size: 10px; padding: 5px;")
         credit.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.layout().addWidget(credit)
+
+    def showEvent(self, event):
+        """Refresh models when the widget is shown."""
+        super().showEvent(event)
+        self.refresh_data()
+        self.update_display()
 
     def _add_register_button(self):
         """Add the '+ Register New Model' button to the models group"""
