@@ -1,23 +1,20 @@
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
-    QButtonGroup,
     QDialog,
-    QGroupBox,
     QHBoxLayout,
     QLabel,
     QMessageBox,
     QPushButton,
-    QRadioButton,
     QVBoxLayout,
     QWidget,
 )
 
 from voxkit.config import Defaults
 from voxkit.engines import engines
-from voxkit.gui.components import MultiColumnComboBox
+from voxkit.gui.components import ModelSelectionPanel, MultiColumnComboBox
 from voxkit.gui.frameworks.settings_modal import GenericDialog
 from voxkit.gui.workers.worker_thread import WorkerThread
-from voxkit.storage import datasets, models
+from voxkit.storage import datasets
 
 
 class PredictionStacker(QWidget):
@@ -25,52 +22,13 @@ class PredictionStacker(QWidget):
         super().__init__()
         self.parent = parent
         self.predict_dataset_dropdown = None
-        self.selected_engine = Defaults["mode"]
-        self.engine_dropdowns = {}  # Store dropdowns by engine ID
-        self.engine_radios = {}  # Store radio buttons by engine ID
+        self.model_panel = None
         self.init_ui()
-
-    def on_mode_changed(self):
-        """Handle engine selection change"""
-        # Find which radio button is checked
-        for engine_id, radio in self.engine_radios.items():
-            if radio.isChecked():
-                self.selected_engine = engine_id
-                break
-
-        # Show/hide appropriate dropdowns
-        for engine_id, dropdown in self.engine_dropdowns.items():
-            dropdown.setVisible(engine_id == self.selected_engine)
-
-        print(f"Engine changed to: {self.selected_engine}")
 
     def reload_models(self):
         """Reload models in all engine dropdowns"""
-        for engine_id, dropdown in self.engine_dropdowns.items():
-            dropdown.clear()
-            model_list = models.list_models(engine_id)
-
-            if model_list:
-                # Handle different model list formats
-                data = []
-                for m in model_list:
-                    if isinstance(m, dict):
-                        data.append(
-                            {"id": m["id"], "data": (m["name"], m["download_date"], m["id"])}
-                        )
-                    else:
-                        raise ValueError("Model list item is not a dict")
-                dropdown.set_data(
-                    data, ["Name", "Download Date", "ID"], placeholder="➁ Click to select a model"
-                )
-                dropdown.setEnabled(True)
-            else:
-                dropdown.set_data(
-                    [{"id": None, "data": ("No models registered", "", "")}],
-                    ["Name", "Download Date", "ID"],
-                    placeholder="No models registered",
-                )
-                dropdown.setEnabled(False)
+        if self.model_panel:
+            self.model_panel.reload_models()
 
     def reload_datasets(self):
         """Reload datasets in the dropdown"""
@@ -135,124 +93,12 @@ class PredictionStacker(QWidget):
         layout.addLayout(header_layout)
         layout.addSpacing(20)
 
-        # Dynamic engine selection group
-        model_group = QGroupBox()
-        model_layout = QVBoxLayout()
-        model_layout.setSpacing(8)
-
-        info_label = QLabel("① Choose an alignment method")
-        info_label.setStyleSheet("font-size: 12px; color: #7f8c8d;")
-        model_layout.addWidget(info_label)
-
-        # Create button group for radio buttons
-        self.mode_button_group = QButtonGroup(self)
-
-        # Dynamically create engine options
+        # Model Selection Panel
         available_engines = engines.list_engines()
-
-        for idx, engine_id in enumerate(available_engines):
-            engine_obj = engines.get_engine(engine_id)
-            engine_name = engine_obj.name()
-            engine_description = engine_obj.description
-
-            # Create engine layout
-            engine_layout = QHBoxLayout()
-            engine_layout.setSpacing(0)
-
-            # Set right side spacing
-            engine_layout.setContentsMargins(0, 0, 0, 0)
-
-            # Radio button
-            radio = QRadioButton(engine_name)
-            radio.setChecked(idx == 0)  # Check first one by default
-            radio.toggled.connect(self.on_mode_changed)
-
-            self.engine_radios[engine_id] = radio
-            self.mode_button_group.addButton(radio)
-
-            # Radio container with fixed width
-            radio_container = QHBoxLayout()
-            radio_container.addWidget(radio)
-            radio_container.addStretch()
-            radio_container.setContentsMargins(0, 0, 0, 0)
-
-            radio_widget = QWidget()
-            radio_widget.setLayout(radio_container)
-            radio_widget.setFixedWidth(160)
-            radio_widget.setStyleSheet("background-color: white;")
-            engine_layout.addWidget(radio_widget)
-
-            # Add spacing to align dropdown with description box
-            engine_layout.addSpacing(25)
-
-            # Model dropdown
-            dropdown = MultiColumnComboBox()
-            dropdown.setStyleSheet("color: #95a5a6;")
-
-            # Populate models
-            model_list = models.list_models(engine_id)
-            if model_list:
-                data = []
-                for m in model_list:
-                    print(m)
-                    if isinstance(m, dict):
-                        data.append(
-                            {"id": m["id"], "data": (m["name"], m["download_date"], m["id"])}
-                        )
-                    else:
-                        raise ValueError("Model list item is not a dict")
-                dropdown.set_data(
-                    data, ["Name", "Download Date", "ID"], placeholder="➁ Click to select a model"
-                )
-                dropdown.setEnabled(True)
-            else:
-                dropdown.set_data(
-                    [{"id": None, "data": ("No models registered", "", "")}],
-                    ["Name", "Download Date", "ID"],
-                    placeholder="No models registered",
-                )
-                dropdown.setEnabled(False)
-
-            dropdown.setFixedWidth(300)
-
-            self.engine_dropdowns[engine_id] = dropdown
-            engine_layout.addWidget(dropdown)
-            engine_layout.addStretch()
-
-            model_layout.addLayout(engine_layout)
-
-            # Description in a styled box
-            if engine_description:
-                desc_container = QWidget()
-                desc_container.setStyleSheet("""
-                    QWidget {
-                        background-color: #f8f9fa;
-                        border: 1px solid #e0e0e0;
-                        border-radius: 4px;
-                        padding: 8px;
-                        margin-left: 25px;
-                    }
-                """)
-                desc_layout = QHBoxLayout(desc_container)
-                desc_layout.setContentsMargins(8, 6, 8, 6)
-
-                info = QLabel(engine_description)
-                info.setStyleSheet(
-                    "color: #7f8c8d; font-size: 11px; background: transparent; border: none;"
-                )
-                info.setWordWrap(True)
-                desc_layout.addWidget(info)
-
-                model_layout.addWidget(desc_container)
-
-            model_layout.addSpacing(5)
-
-        # Set initial selected engine
-        if available_engines:
-            self.selected_engine = available_engines[0]
-
-        model_group.setLayout(model_layout)
-        layout.addWidget(model_group)
+        engines_dict = {engine_id: engines.get_engine(engine_id) for engine_id in available_engines}
+        
+        self.model_panel = ModelSelectionPanel(engines_dict)
+        layout.addWidget(self.model_panel)
         layout.addSpacing(10)
 
         # Dataset selection dropdown
@@ -333,14 +179,11 @@ class PredictionStacker(QWidget):
 
         layout.addStretch()
 
-        # Set initial visibility of dropdowns based on selected engine
-        self.on_mode_changed()
-
         return self
 
     def on_predict_settings(self):
         """Open settings dialog for selected engine"""
-        engine = engines.get_engine(self.selected_engine)
+        engine = engines.get_engine(self.model_panel.get_selected_engine())
         if engine:
             settings_dialog = GenericDialog(self, config=engine.get_settings_config("align"))
             settings_dialog.exec()
@@ -361,7 +204,7 @@ class PredictionStacker(QWidget):
             return
 
         print("Predict Alignments clicked!")
-        print(f"Engine: {self.selected_engine}")
+        print(f"Engine: {self.model_panel.get_selected_engine()}")
 
         self.predict_status.setText("Processing...")
         self.predict_status.setStyleSheet("color: #f39c12; font-size: 12px; margin-top: 5px;")
@@ -374,12 +217,14 @@ class PredictionStacker(QWidget):
     def predict_alignments_logic(self, dataset_id: str) -> str:
         """Actual alignment prediction logic"""
         # Get the selected model from the current engine's dropdown
-        selected_model_id = self.engine_dropdowns[self.selected_engine].current_id()
+        selected_model_id = self.model_panel.get_selected_model_id()
+        selected_engine = self.model_panel.get_selected_engine()
 
+        print(f"Selected engine: {selected_engine}")
         print(f"Selected model ID: {selected_model_id}")
 
         # Get engine and call align method
-        engine = engines.get_engine(self.selected_engine)
+        engine = engines.get_engine(selected_engine)
         engine.align(
             dataset_id=dataset_id,
             model_id=selected_model_id,

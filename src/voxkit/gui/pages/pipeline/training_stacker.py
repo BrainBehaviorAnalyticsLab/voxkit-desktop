@@ -4,23 +4,20 @@ from PyQt6.QtCore import Qt
 
 # Add these imports at the top of your file
 from PyQt6.QtWidgets import (
-    QButtonGroup,
     QDialog,
     QFileDialog,
-    QGroupBox,
     QHBoxLayout,
     QLabel,
     QLineEdit,
     QMessageBox,
     QPushButton,
-    QRadioButton,
     QVBoxLayout,
     QWidget,
 )
 
 from voxkit.config import Defaults
 from voxkit.engines import engines
-from voxkit.gui.components import MultiColumnComboBox
+from voxkit.gui.components import ModelSelectionPanel, MultiColumnComboBox
 from voxkit.gui.frameworks.settings_modal import GenericDialog
 from voxkit.gui.utils import validate_path, validate_paths
 from voxkit.gui.workers.worker_thread import WorkerThread
@@ -36,24 +33,10 @@ class TrainingStacker(QWidget):
         self.train_alignment_dropdown = None
         self.train_textgrid_path = Defaults["textgrid_path"]
         self.train_model_name = "default_model"
-        self.selected_engine = Defaults["mode"]
+        self.model_panel = None
         self.w2tg_train_settings = None
         self.parent = parent
         self.init_ui()
-
-    def on_mode_changed(self):
-        """Handle engine selection change"""
-        # Find which radio button is checked
-        for engine_id, radio in self.engine_panel_radios.items():
-            if radio.isChecked():
-                self.selected_engine = engine_id
-                break
-
-        # Show/hide appropriate dropdowns
-        for engine_id, dropdown in self.engine_panel_dropdowns.items():
-            dropdown.setVisible(engine_id == self.selected_engine)
-
-        print(f"Engine changed to: {self.selected_engine}")
 
     def on_dataset_selected(self):
         """Handle dataset selection change and load corresponding alignments"""
@@ -154,7 +137,7 @@ class TrainingStacker(QWidget):
         # Get current settings
         textgrid_path = alignment_meta["tg_path"]
         model_name = self.train_model_name.text()
-        mode = self.selected_engine
+        mode = self.model_panel.get_selected_engine()
 
         # Check that model name isn't used
         if not model_name:
@@ -195,12 +178,10 @@ class TrainingStacker(QWidget):
         """Actual model training logic"""
         print("Training logic would be implemented here.")
 
-        selected_model_index = self.engine_panel_dropdowns[self.selected_engine].currentIndex()
-        base_model_id = self.engine_panel_dropdowns[self.selected_engine].itemData(
-            selected_model_index
-        )
+        selected_engine = self.model_panel.get_selected_engine()
+        base_model_id = self.model_panel.get_selected_model_id()
 
-        TrainingTools[self.selected_engine].train_aligner(
+        TrainingTools[selected_engine].train_aligner(
             audio_root=Path(audio_path),
             textgrid_root=Path(textgrid_path),
             base_model_id=base_model_id,
@@ -226,7 +207,7 @@ class TrainingStacker(QWidget):
         """Handle settings button click on training page"""
 
         self.settings_dialog = GenericDialog(
-            parent=self, config=TrainingTools[self.selected_engine].get_settings_config("train")
+            parent=self, config=TrainingTools[self.model_panel.get_selected_engine()].get_settings_config("train")
         )
         result = self.settings_dialog.exec()
 
@@ -240,23 +221,8 @@ class TrainingStacker(QWidget):
 
     def reload_models(self):
         """Reload models in the dropdown"""
-        for engine, combo in self.engine_panel_dropdowns.items():
-            try:
-                models_meta = models.list_models(engine)
-                if models_meta:
-                    data = []
-                    for m in models_meta:
-                        data.append(
-                            {"id": m["id"], "data": (m["name"], m["download_date"], m["id"])}
-                        )
-                    combo.set_data(data, ["Name", "Download Date", "ID"])
-                else:
-                    combo.set_data(
-                        [{"id": None, "data": ("No models registered", "", "")}],
-                        ["Name", "Download Date", "ID"],
-                    )
-            except Exception as e:
-                print("Error reloading models:", e)
+        if self.model_panel:
+            self.model_panel.reload_models()
 
     def reload_datasets(self):
         """Reload datasets in the dropdown"""
@@ -321,116 +287,11 @@ class TrainingStacker(QWidget):
         layout.addLayout(header)
         layout.addSpacing(20)
 
-        # ───── Engine selection panel ─────
-        engine_group = QGroupBox()
-        engine_vbox = QVBoxLayout()
-        engine_vbox.setSpacing(8)
-
-        info = QLabel("① Choose an alignment method")
-        info.setStyleSheet("font-size: 12px; color: #7f8c8d;")
-        engine_vbox.addWidget(info)
-
-        # *** NEW: button group for exclusive selection ***
-        self.mode_group = QButtonGroup(self)
-        self.mode_group.setExclusive(True)
-
-        # Maps
-        self.engine_panel_radios = {}
-        self.engine_panel_dropdowns = {}
-
-        # ------------------------------------------------------------------
-        #  LOOP – one block per engine
-        # ------------------------------------------------------------------
-        for idx, (engine_id, engine) in enumerate(TrainingTools.items()):
-            # ---------- radio ----------
-            print(engine.id)
-            print("ABOVE________")
-            radio = QRadioButton(f"{engine.name()}")
-            radio.setToolTip(engine.description)
-            radio.toggled.connect(self.on_mode_changed)
-            self.engine_panel_radios[engine_id] = radio
-            self.mode_group.addButton(radio)
-
-            # default: first engine checked
-            if idx == 0:
-                radio.setChecked(True)
-                self.selected_engine = engine_id
-
-            # ---------- dropdown ----------
-            combo = MultiColumnComboBox()
-            combo.setStyleSheet("color: #95a5a6;")
-            combo.setFixedWidth(300)
-
-            models_meta = models.list_models(engine_id)
-
-            if models_meta:
-                data = []
-                for m in models_meta:
-                    data.append({"id": m["id"], "data": (m["name"], m["download_date"], m["id"])})
-                combo.set_data(
-                    data, ["Name", "Download Date", "ID"], placeholder="➁ Click to select a model"
-                )
-            else:
-                combo.set_data(
-                    [{"id": None, "data": ("No models registered", "", "")}],
-                    ["Name", "Download Date", "ID"],
-                    placeholder="No models registered",
-                )
-
-            self.engine_panel_dropdowns[engine_id] = combo
-
-            # ---------- layout ----------
-            hbox = QHBoxLayout()
-            hbox.setSpacing(0)
-            hbox.setContentsMargins(0, 0, 0, 0)
-
-            # radio container (fixed width → perfect column)
-            rc = QHBoxLayout()
-            rc.addWidget(radio)
-            rc.addStretch()
-            rc.setContentsMargins(0, 0, 0, 0)
-
-            rw = QWidget()
-            rw.setLayout(rc)
-            rw.setFixedWidth(160)
-            rw.setStyleSheet("background-color: white;")
-            hbox.addWidget(rw)
-
-            # Add spacing to align dropdown with description box
-            hbox.addSpacing(25)
-
-            hbox.addWidget(combo)
-            hbox.addStretch()
-
-            engine_vbox.addLayout(hbox)
-
-            # Description in a styled box
-            desc_container = QWidget()
-            desc_container.setStyleSheet("""
-                QWidget {
-                    background-color: #f8f9fa;
-                    border: 1px solid #e0e0e0;
-                    border-radius: 4px;
-                    padding: 8px;
-                    margin-left: 25px;
-                }
-            """)
-            desc_layout = QHBoxLayout(desc_container)
-            desc_layout.setContentsMargins(8, 6, 8, 6)
-
-            desc = QLabel(engine.description or "No description")
-            desc.setStyleSheet(
-                "color: #7f8c8d; font-size: 11px; background: transparent; border: none;"
-            )
-            desc.setWordWrap(True)
-            desc_layout.addWidget(desc)
-
-            engine_vbox.addWidget(desc_container)
-            engine_vbox.addSpacing(5)
-
-        # *** IMPORTANT: attach the vertical layout only once ***
-        engine_group.setLayout(engine_vbox)
-        layout.addWidget(engine_group)
+        # Model Selection Panel
+        engines_dict = {engine_id: engine for engine_id, engine in TrainingTools.items()}
+        
+        self.model_panel = ModelSelectionPanel(engines_dict)
+        layout.addWidget(self.model_panel)
 
         # Dataset selection dropdown
         dataset_label = QLabel("③ Choose a Training Dataset")
@@ -565,8 +426,5 @@ class TrainingStacker(QWidget):
         layout.addWidget(self.train_status)
 
         layout.addStretch()
-
-        # Set initial visibility of dropdowns based on selected engine
-        self.on_mode_changed()
 
         return self
