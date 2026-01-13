@@ -97,6 +97,11 @@ class DatasetsPage(QWidget):
         self.dataset_table.clearSelection()
         self.refresh_datasets()
 
+    def refresh_selected_dataset(self):
+        """Refresh alignments for the currently selected dataset"""
+        if self.selected_dataset:
+            self._load_alignments(self.selected_dataset)
+
     def _create_register_section(self):
         """Create the dataset registration section"""
         group = QGroupBox()

@@ -134,6 +134,8 @@ class AlignmentGUI(QMainWindow):
         self.last_pipeline_page = self.pipeline_container.get_current_page_index()
         self.pipeline_container.menu_list.setVisible(False)
         self.content_stack.setCurrentIndex(1)  # Show datasets page
+        # Refresh the selected dataset to show any new alignments
+        self.datasets_page.refresh_selected_dataset()
         # Update active tab styling
         self.update_active_tab_style("datasets")
 
