@@ -45,13 +45,16 @@ from .models import ModelMetadata, get_model_metadata
 from .utils import generate_unique_id, readable_from_unique_id
 
 
+AlignmentStatus = Literal["pending", "completed", "failed"]
+
+
 class AlignmentMetadata(TypedDict):
     id: str
     engine_id: str
     model_metadata: ModelMetadata
     local: bool
     alignment_date: str
-    status: str
+    status: AlignmentStatus
     tg_path: str
 
 
@@ -144,7 +147,7 @@ def create_alignment(
             local=local,
             tg_path=str(tg_path),
             alignment_date=alignment_date,
-            status="Pending",
+            status="pending",
         )
 
         # Fetch model metadata
@@ -184,6 +187,9 @@ def get_alignment_metadata(dataset_id: str, alignment_id: str) -> AlignmentMetad
     try:
         with open(metadata_path, "r") as f:
             metadata = json.load(f)
+            # Normalize status to lowercase for consistency
+            if "status" in metadata:
+                metadata["status"] = metadata["status"].lower()
             return metadata
     except Exception as e:
         print(f"Failed to load alignment metadata from '{metadata_path}': {str(e)}")
@@ -214,6 +220,9 @@ def update_alignment(dataset_id: str, alignment_id: str, updates: dict) -> Tuple
         # Update fields
         for key, value in updates.items():
             if key in metadata:
+                # Normalize status values to lowercase
+                if key == "status" and isinstance(value, str):
+                    value = value.lower()
                 metadata[key] = value
 
         with open(metadata_path, "w") as f:
@@ -246,6 +255,9 @@ def list_alignments(dataset_id: str) -> List[AlignmentMetadata]:
                 try:
                     with open(metadata_path, "r") as f:
                         metadata = json.load(f)
+                        # Normalize status to lowercase for consistency
+                        if "status" in metadata:
+                            metadata["status"] = metadata["status"].lower()
                         alignments_found.append(metadata)
                 except Exception as e:
                     print(f"Failed to load alignment metadata from '{metadata_path}': {str(e)}")

@@ -580,7 +580,7 @@ class DatasetsPage(QWidget):
             # Status
             status_item = QTableWidgetItem(alignment.get("status", "Unknown"))
             status_item.setFlags(status_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
-            status = alignment.get("status", "")
+            status = alignment.get("status", "").lower()
             if status == "completed":
                 status_item.setForeground(Qt.GlobalColor.darkGreen)
             elif status == "pending":

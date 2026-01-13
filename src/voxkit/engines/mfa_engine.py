@@ -115,13 +115,13 @@ class MFAEngine(AlignmentEngine):
             alignments.update_alignment(
                 dataset_id=dataset_id,
                 alignment_id=msg["id"],
-                updates={"status": "Completed"},
+                updates={"status": "completed"},
             )
         except Exception:
             alignments.update_alignment(
                 dataset_id=dataset_id,
                 alignment_id=msg["id"],
-                updates={"status": "Failed"},
+                updates={"status": "failed"},
             )
 
     def train_aligner(

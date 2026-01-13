@@ -25,6 +25,7 @@ __version__ = "0.0.1"
 
 # Import utils but don't call get_storage_root() at module import time
 from . import alignments, datasets, models, utils
+from .alignments import AlignmentStatus
 
 
 def _ensure_storage_root():
@@ -48,4 +49,5 @@ __all__ = [
     "datasets",
     "models",
     "utils",
+    "AlignmentStatus",
 ]
