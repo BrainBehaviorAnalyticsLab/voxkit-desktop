@@ -36,8 +36,8 @@ if getattr(sys, 'frozen', False):
         if os.path.exists(platform_plugins):
             minimal_env['QT_QPA_PLATFORM_PLUGIN_PATH'] = platform_plugins
 
-    # Clear all environment variables
-    os.environ.clear()
+    # # Clear all environment variables
+    # os.environ.clear()
 
     # Set the minimal required ones
     for key, value in minimal_env.items():
