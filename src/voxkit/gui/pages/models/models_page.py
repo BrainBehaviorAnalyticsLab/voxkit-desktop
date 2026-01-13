@@ -73,6 +73,12 @@ class ManageAlignersWidget(CategoricalTableWidget):
         self.layout().setSpacing(20)
         self.layout().setContentsMargins(0, 0, 0, 0)
 
+    def showEvent(self, event):
+        """Refresh models when the widget is shown."""
+        super().showEvent(event)
+        self.refresh_data()
+        self.update_display()
+
         # === Footer Credit ===
         credit = QLabel("VoxKit by BrainBehaviorAnalyticsLab")
         credit.setStyleSheet("color: #999; font-size: 10px; padding: 5px;")

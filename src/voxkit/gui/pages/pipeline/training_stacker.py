@@ -197,6 +197,14 @@ class TrainingStacker(QWidget):
         if success:
             self.train_status.setText("✓ " + message)
             self.train_status.setStyleSheet("color: #27ae60; font-size: 12px; margin-top: 5px;")
+            
+            # Refresh models in all relevant components
+            self.reload_models()
+            
+            # Notify parent to refresh models in other stackers
+            if hasattr(self.parent, 'pipeline_container'):
+                self.parent.pipeline_container.reload()
+            
             QMessageBox.information(self, "Success", message)
         else:
             self.train_status.setText("✗ Error occurred")
