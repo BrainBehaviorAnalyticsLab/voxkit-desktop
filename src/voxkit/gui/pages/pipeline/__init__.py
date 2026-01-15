@@ -1,24 +1,63 @@
-# TODO : Add module docstring
+"""Pipeline page management with configurable stackers.
 
-from PyQt6.QtWidgets import QHBoxLayout, QListWidget, QVBoxLayout, QWidget
+This module provides the PipelineFormStack widget that dynamically creates
+pipeline navigation and pages based on configuration.
+"""
 
-from voxkit.config import Dimensions
+from typing import TYPE_CHECKING, Optional
+
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QHBoxLayout, QLabel, QListWidget, QPushButton, QVBoxLayout, QWidget
+
 from voxkit.gui.components import AnimatedStackedWidget
+
+if TYPE_CHECKING:
+    from voxkit.config.pipeline_config import PipelineConfig
 
 from .pllr_stacker import PLLRStacker
 from .prediction_stacker import PredictionStacker
 from .training_stacker import TrainingStacker
+from .markdown_stacker import MarkdownStacker
+
+
+# Mapping of stacker class names to actual classes
+STACKER_REGISTRY = {
+    "TrainingStacker": TrainingStacker,
+    "PredictionStacker": PredictionStacker,
+    "PLLRStacker": PLLRStacker,
+    "MarkdownStacker": MarkdownStacker,
+    # Add future stackers here
+    # "EvaluationStacker": EvaluationStacker,
+}
 
 
 class PipelineFormStack(QWidget):
-    """Container widget that manages the pipeline navigation menu and pages"""
+    """Container widget that manages the pipeline navigation menu and pages.
+    
+    This widget dynamically creates menu items and stacker widgets based on
+    the provided pipeline configuration.
+    """
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, config: Optional["PipelineConfig"] = None):
+        """Initialize the pipeline form stack.
+        
+        Args:
+            parent: Parent widget
+            config: Pipeline configuration. If None, uses default configuration.
+        """
         super().__init__(parent)
         self.parent_window = parent
+        self.config = config
+        
+        # If no config provided, load default
+        if self.config is None:
+            from voxkit.config.pipeline_config import get_pipeline_config
+            self.config = get_pipeline_config()
+            
         self.init_ui()
 
     def init_ui(self):
+        """Initialize the UI based on the pipeline configuration."""
         # Main vertical layout: top content + footer at the bottom
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
@@ -26,24 +65,126 @@ class PipelineFormStack(QWidget):
 
         # Top area: horizontal layout with navigation and pages
         content_layout = QHBoxLayout()
-        content_layout.setSpacing(20)
+        content_layout.setSpacing(self.config.ui_config.content_spacing)
         content_layout.setContentsMargins(0, 0, 0, 0)
 
-        # Left side - Navigation menu
+        # Left side - Navigation menu (dynamically populated from config)
         self.menu_list = QListWidget()
-        self.menu_list.setMaximumWidth(Dimensions["max_width"])
-        self.menu_list.addItem("Ⓐ  Train Aligners")
-        # self.menu_list.addItem("Ⓑ  Evaluate Aligner")
-        self.menu_list.addItem("Ⓑ  Predict Alignments")
-        self.menu_list.addItem("Ⓒ  Extract GOP Scoring")
-        content_layout.addWidget(self.menu_list)
-
+        self.menu_list.setMaximumWidth(self.config.ui_config.menu_max_width)
+        
+        # Store mapping of menu index to stacker for reload
+        self.stacker_instances = []
+        
         # Right side - Stacked widget for different pipeline pages
         self.stacked_widget = AnimatedStackedWidget()
-        self.stacked_widget.addWidget(TrainingStacker(self.parent_window))
-        # self.stacked_widget.addWidget(EvaluationStacker(self.parent_window))
-        self.stacked_widget.addWidget(PredictionStacker(self.parent_window))
-        self.stacked_widget.addWidget(PLLRStacker(self.parent_window))
+        
+        # Dynamically create menu items and stackers from configuration
+        for step in self.config.enabled_steps:
+            # Add menu item
+            self.menu_list.addItem(step.label)
+            
+            # Get the stacker class from registry
+            stacker_class = STACKER_REGISTRY.get(step.stacker_class)
+            
+            if stacker_class is None:
+                raise ValueError(
+                    f"Unknown stacker class '{step.stacker_class}' for step '{step.id}'. "
+                    f"Available stackers: {list(STACKER_REGISTRY.keys())}"
+                )
+            
+            # Create the stacker widget
+            # Pass markdown_content if this is a MarkdownStacker
+            if step.stacker_class == "MarkdownStacker" and step.markdown_content:
+                stacker_widget = stacker_class(self.parent_window, markdown_content=step.markdown_content)
+            else:
+                stacker_widget = stacker_class(self.parent_window)
+            
+            # Wrap stacker in a container with collapsible sections at the top
+            stacker_container = QWidget()
+            container_layout = QVBoxLayout(stacker_container)
+            container_layout.setContentsMargins(0, 0, 0, 0)
+            container_layout.setSpacing(0)
+            
+            # Create collapsible sections from the dictionary
+            if step.collapsible_sections:
+                for header, content in step.collapsible_sections.items():
+                    # Create widget for this section
+                    section_widget = QWidget()
+                    section_layout = QVBoxLayout(section_widget)
+                    section_layout.setContentsMargins(0, 0, 0, 0)
+                    section_layout.setSpacing(0)
+                    
+                    # Toggle button for collapsing/expanding
+                    toggle_button = QPushButton(f"▶  {header}")
+                    toggle_button.setObjectName(f"sectionToggle_{header}")
+                    toggle_button.setCheckable(True)
+                    toggle_button.setChecked(False)  # Collapsed by default
+                    toggle_button.setCursor(Qt.CursorShape.PointingHandCursor)
+                    toggle_button.setStyleSheet("""
+                        QPushButton {
+                            background-color: #F5F7FA;
+                            border: 1px solid #E0E0E0;
+                            border-radius: 6px;
+                            text-align: left;
+                            padding: 10px 16px;
+                            font-size: 13px;
+                            font-weight: 600;
+                            color: #37474F;
+                        }
+                        QPushButton:hover {
+                            background-color: #ECEFF1;
+                            border-color: #BDBDBD;
+                        }
+                        QPushButton:checked {
+                            border-bottom-left-radius: 0;
+                            border-bottom-right-radius: 0;
+                            border-bottom: none;
+                        }
+                    """)
+                    
+                    # Content label
+                    content_label = QLabel(content)
+                    content_label.setObjectName(f"sectionContent_{header}")
+                    content_label.setWordWrap(True)
+                    content_label.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+                    content_label.setVisible(False)  # Hidden by default
+                    content_label.setStyleSheet("""
+                        QLabel {
+                            background-color: #FAFBFC;
+                            border: 1px solid #E0E0E0;
+                            border-top: none;
+                            padding: 16px;
+                            font-size: 13px;
+                            color: #546E7A;
+                            border-bottom-left-radius: 6px;
+                            border-bottom-right-radius: 6px;
+                        }
+                    """)
+                    
+                    # Connect toggle functionality
+                    def make_toggle_func(btn, lbl, hdr):
+                        def toggle():
+                            is_expanded = btn.isChecked()
+                            lbl.setVisible(is_expanded)
+                            btn.setText(f"▼  {hdr}" if is_expanded else f"▶  {hdr}")
+                        return toggle
+                    
+                    toggle_button.toggled.connect(make_toggle_func(toggle_button, content_label, header))
+                    
+                    section_layout.addWidget(toggle_button)
+                    section_layout.addWidget(content_label)
+                    
+                    container_layout.addWidget(section_widget)
+            
+            container_layout.addSpacing(16)
+            
+            # Add the actual stacker widget
+            container_layout.addWidget(stacker_widget, stretch=1)
+            
+            self.stacker_instances.append((step.id, step.stacker_class, stacker_widget))
+            self.stacked_widget.addWidget(stacker_container)
+        
+        content_layout.addWidget(self.menu_list)
         content_layout.addWidget(self.stacked_widget, stretch=1)
 
         # Make top content expand to take available space
@@ -54,20 +195,27 @@ class PipelineFormStack(QWidget):
         self.menu_list.setCurrentRow(0)
 
     def reload(self):
-        """Reload models in the training page and predicting page"""
-        training_page = self.stacked_widget.widget(0)
-        if isinstance(training_page, TrainingStacker):
-            training_page.reload_models()
-            training_page.reload_datasets()
-
-        predicting_page = self.stacked_widget.widget(1)
-        if isinstance(predicting_page, PredictionStacker):
-            predicting_page.reload_models()
-            predicting_page.reload_datasets()
-
-        pllr_page = self.stacked_widget.widget(2)
-        if isinstance(pllr_page, PLLRStacker):
-            pllr_page.reload_datasets()
+        """Reload models and datasets in the pipeline pages.
+        
+        This method dynamically reloads data based on the stacker type.
+        """
+        for step_id, stacker_class, stacker_widget in self.stacker_instances:
+            # Reload based on stacker type
+            if stacker_class == "TrainingStacker":
+                if hasattr(stacker_widget, 'reload_models'):
+                    stacker_widget.reload_models()
+                if hasattr(stacker_widget, 'reload_datasets'):
+                    stacker_widget.reload_datasets()
+                    
+            elif stacker_class == "PredictionStacker":
+                if hasattr(stacker_widget, 'reload_models'):
+                    stacker_widget.reload_models()
+                if hasattr(stacker_widget, 'reload_datasets'):
+                    stacker_widget.reload_datasets()
+                    
+            elif stacker_class == "PLLRStacker":
+                if hasattr(stacker_widget, 'reload_datasets'):
+                    stacker_widget.reload_datasets()
 
     def change_page(self, index):
         """Change the displayed page based on menu selection with animation"""

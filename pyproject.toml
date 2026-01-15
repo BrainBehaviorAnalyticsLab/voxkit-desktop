@@ -24,7 +24,9 @@ dependencies = [
     "pre-commit>=4.3.0",
     "pytest>=8.4.2",
     "pydantic>=2.12.3",
-    "numba>=0.59.0"
+    "numba>=0.59.0",
+    "pyyaml>=6.0.0",
+    "rich>=14.2.0",
 ]
 
 [dependency-groups]

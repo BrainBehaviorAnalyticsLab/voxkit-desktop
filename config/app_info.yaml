@@ -1,0 +1,27 @@
+# Application Information Configuration
+# This file contains metadata about the application version and purpose
+
+app_name: "VoxKit"
+version: "0.1.0"
+description: "AI/ML Research -> Clinical Applications (Speech Pathology)"
+help_url: "http://localhost:3000/help"
+
+# Introduction text displayed to users
+introduction: |
+  VoxKit is a comprehensive speech alignment and analysis toolkit designed for 
+  clinical speech pathology applications. This version provides tools for training 
+  acoustic models, generating forced alignments, and computing Goodness of 
+  Pronunciation (GOP) scores for speech assessment.
+  
+  Key Features:
+  - Train custom alignment models on your datasets
+  - Generate accurate forced alignments using state-of-the-art engines
+  - Extract GOP scores for pronunciation assessment
+  - Manage datasets and models through an intuitive interface
+
+# Optional: Add release information
+release_date: "2026-01-14"
+release_notes: |
+  - Initial configurable release
+  - Support for custom pipeline configurations
+  - Enhanced model management interface

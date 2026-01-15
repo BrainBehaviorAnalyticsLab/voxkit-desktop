@@ -1,19 +1,43 @@
 import webbrowser
+from typing import Optional
 
 from PyQt6.QtGui import QAction, QIcon
 from PyQt6.QtWidgets import QHBoxLayout, QMainWindow, QStackedWidget, QToolBar, QWidget
 from styles import GlobalStyleSheet, ToolBarStyle
 
-from voxkit.config import HELP_URL, AppName, Dimensions
+from voxkit.config.app_config import AppConfig, get_app_config
+from voxkit.config.pipeline_config import PipelineConfig, get_pipeline_config
 from voxkit.gui.components import DNAStrandWidget
 from voxkit.gui.pages.datasets import DatasetsPage
 from voxkit.gui.pages.models import ManageAlignersWidget
 from voxkit.gui.pages.pipeline import PipelineFormStack as PipelineContainer
 
-
+from rich import print as rprint
 class AlignmentGUI(QMainWindow):
-    def __init__(self):
+    def __init__(
+        self,
+        app_config: Optional[AppConfig] = None,
+        pipeline_config: Optional[PipelineConfig] = None
+    ):
+        """Initialize the AlignmentGUI.
+        
+        Args:
+            app_config: Application configuration. If None, loads default from config files.
+            pipeline_config: Pipeline configuration. If None, loads default from config files.
+        """
         super().__init__()
+        
+        # Load configurations (use provided or load defaults)
+        self.app_config = app_config or get_app_config()
+        self.pipeline_config = pipeline_config or get_pipeline_config()
+        
+        
+        # DEBUG
+        rprint("[bold green]App Configuration:[/bold green]")
+        rprint(self.app_config)
+        rprint("\n[bold green]Pipeline Configuration:[/bold green]")
+        rprint(self.pipeline_config)
+
         # Create the toolbar
         toolbar = QToolBar("Global Toolbar")
         toolbar.setMovable(False)
@@ -162,12 +186,12 @@ class AlignmentGUI(QMainWindow):
         self.update_active_tab_style("manage")
 
     def open_help(self):
-        webbrowser.open(HELP_URL)
+        webbrowser.open(self.app_config.help_url)
         print("Open Help...")
 
     def init_ui(self):
-        self.setWindowTitle(AppName)
-        self.setMinimumSize(Dimensions["min_width"], Dimensions["min_height"])
+        self.setWindowTitle(self.app_config.app_name)
+        self.setMinimumSize(1200, 800)
 
         # Set application-wide stylesheet
         self.setStyleSheet(GlobalStyleSheet)
@@ -188,7 +212,7 @@ class AlignmentGUI(QMainWindow):
         main_layout.addWidget(self.content_stack, stretch=1)
 
         # Pipeline view: container with menu and animated stacked widget
-        self.pipeline_container = PipelineContainer(self)
+        self.pipeline_container = PipelineContainer(self, config=self.pipeline_config)
         self.content_stack.addWidget(self.pipeline_container)
 
         # Datasets view: dataset management page

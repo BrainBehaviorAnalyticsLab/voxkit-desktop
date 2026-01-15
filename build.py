@@ -155,6 +155,12 @@ def build(args):
 
         # Add data
         sep = ';' if os.name == 'nt' else ':'
+        # Add config folder if it exists
+        config_dir = Path(__file__).parent / "config"
+        if config_dir.exists() and config_dir.is_dir():
+                print(f"[INFO] Adding config folder to build assets")
+                opts.append(f'--add-data={config_dir}{sep}config')
+                
         for ad in args.add_data:
                 if sep in ad:
                         opts.append(f'--add-data={ad}')
