@@ -103,7 +103,10 @@ def run_mfa_adapt(
 
 def download_acoustic_model(release_path, output_file):
     """
-    Download an MFA acoustic model using the github releases ai  for example release_path = acoustic-spanish_mfa-v3.3.0/spanish_mfa.zip becomes url "https://github.com/MontrealCorpusTools/mfa-models/releases/download/acoustic-spanish_mfa-v3.3.0/spanish_mfa.zip"
+    Download an MFA acoustic model using the github releases api.
+
+    For example, release_path = acoustic-spanish_mfa-v3.3.0/spanish_mfa.zip becomes url
+    "https://github.com/MontrealCorpusTools/mfa-models/releases/download/acoustic-spanish_mfa-v3.3.0/spanish_mfa.zip"
     """
     url = f"https://github.com/MontrealCorpusTools/mfa-models/releases/download/{release_path}"
     cmd = ["curl", "-L", "-o", output_file, url]
@@ -115,6 +118,7 @@ def download_acoustic_model(release_path, output_file):
         print(f"[mfa.download_acoustic_model] Model download failed with error: {e}")
         raise
 
+
 if __name__ == "__main__":
     # Example model download
     download_acoustic_model(
@@ -125,4 +129,3 @@ if __name__ == "__main__":
         "acoustic-english_us_arpa-v3.0.0/english_us_arpa.zip",
         "english_us_arpa.zip",
     )
-   

@@ -192,11 +192,11 @@ class TrainingStacker(QWidget):
 
     def on_train_finished(self, success, message):
         """Handle completion of training operation.
-        
+
         When training succeeds, this method refreshes the model lists in all
         relevant components (training page, prediction page, etc.) so the newly
         trained model is immediately available for selection.
-        
+
         Args:
             success: Boolean indicating if training succeeded
             message: Status message to display to the user
@@ -206,14 +206,14 @@ class TrainingStacker(QWidget):
         if success:
             self.train_status.setText("✓ " + message)
             self.train_status.setStyleSheet("color: #27ae60; font-size: 12px; margin-top: 5px;")
-            
+
             # Refresh models in all relevant components
             self.reload_models()
-            
+
             # Notify parent to refresh models in other stackers
-            if hasattr(self.parent, 'pipeline_container'):
+            if hasattr(self.parent, "pipeline_container"):
                 self.parent.pipeline_container.reload()
-            
+
             QMessageBox.information(self, "Success", message)
         else:
             self.train_status.setText("✗ Error occurred")
@@ -224,7 +224,10 @@ class TrainingStacker(QWidget):
         """Handle settings button click on training page"""
 
         self.settings_dialog = GenericDialog(
-            parent=self, config=TrainingTools[self.model_panel.get_selected_engine()].get_settings_config("train")
+            parent=self,
+            config=TrainingTools[self.model_panel.get_selected_engine()].get_settings_config(
+                "train"
+            ),
         )
         result = self.settings_dialog.exec()
 
@@ -306,7 +309,7 @@ class TrainingStacker(QWidget):
 
         # Model Selection Panel
         engines_dict = {engine_id: engine for engine_id, engine in TrainingTools.items()}
-        
+
         self.model_panel = ModelSelectionPanel(engines_dict)
         layout.addWidget(self.model_panel)
 

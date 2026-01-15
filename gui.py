@@ -3,6 +3,7 @@ from typing import Optional
 
 from PyQt6.QtGui import QAction, QIcon
 from PyQt6.QtWidgets import QHBoxLayout, QMainWindow, QStackedWidget, QToolBar, QWidget
+from rich import print as rprint
 from styles import GlobalStyleSheet, ToolBarStyle
 
 from voxkit.config.app_config import AppConfig, get_app_config
@@ -12,26 +13,25 @@ from voxkit.gui.pages.datasets import DatasetsPage
 from voxkit.gui.pages.models import ManageAlignersWidget
 from voxkit.gui.pages.pipeline import PipelineFormStack as PipelineContainer
 
-from rich import print as rprint
+
 class AlignmentGUI(QMainWindow):
     def __init__(
         self,
         app_config: Optional[AppConfig] = None,
-        pipeline_config: Optional[PipelineConfig] = None
+        pipeline_config: Optional[PipelineConfig] = None,
     ):
         """Initialize the AlignmentGUI.
-        
+
         Args:
             app_config: Application configuration. If None, loads default from config files.
             pipeline_config: Pipeline configuration. If None, loads default from config files.
         """
         super().__init__()
-        
+
         # Load configurations (use provided or load defaults)
         self.app_config = app_config or get_app_config()
         self.pipeline_config = pipeline_config or get_pipeline_config()
-        
-        
+
         # DEBUG
         rprint("[bold green]App Configuration:[/bold green]")
         rprint(self.app_config)
