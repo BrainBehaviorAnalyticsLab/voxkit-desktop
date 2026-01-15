@@ -478,7 +478,6 @@ class TestAlignments:
         def test_list_alignments_normalizes_status(self, monkeypatch, sample_dataset, sample_model):
             """Test that list_alignments normalizes status values to lowercase."""
             import json
-            from pathlib import Path
 
             from .. import datasets
             from ..alignments import create_alignment, list_alignments
@@ -568,4 +567,3 @@ class TestAlignments:
 
             assert fetched_metadata is not None
             assert fetched_metadata["status"] == "failed"  # Should be lowercase
-

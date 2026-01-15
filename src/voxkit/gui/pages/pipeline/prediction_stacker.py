@@ -9,7 +9,6 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from voxkit.config import Defaults
 from voxkit.engines import engines
 from voxkit.gui.components import ModelSelectionPanel, MultiColumnComboBox
 from voxkit.gui.frameworks.settings_modal import GenericDialog
@@ -96,7 +95,7 @@ class PredictionStacker(QWidget):
         # Model Selection Panel
         available_engines = engines.list_engines()
         engines_dict = {engine_id: engines.get_engine(engine_id) for engine_id in available_engines}
-        
+
         self.model_panel = ModelSelectionPanel(engines_dict)
         layout.addWidget(self.model_panel)
         layout.addSpacing(10)

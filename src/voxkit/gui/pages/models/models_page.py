@@ -81,10 +81,10 @@ class ManageAlignersWidget(CategoricalTableWidget):
 
     def showEvent(self, event):
         """Refresh models when the widget is shown.
-        
+
         This ensures that the model list is always up-to-date when the user
         navigates to the Model Management tab, including after training new models.
-        
+
         Args:
             event: The show event from Qt
         """

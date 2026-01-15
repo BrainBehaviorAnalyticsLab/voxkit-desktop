@@ -14,17 +14,17 @@ from voxkit.storage import models
 
 class ModelSelectionPanel(QGroupBox):
     """Reusable panel for selecting alignment engines and models.
-    
+
     This component displays a list of available engines with radio buttons,
     their associated model dropdowns, and description boxes. It adapts to
     window size changes and maintains proper visibility toggling.
-    
+
     Args:
         engines_dict: Dictionary of engine instances keyed by engine ID
         title: Optional title for the group box
         info_text: Optional info text displayed above the engines
         placeholder: Placeholder text for model dropdowns
-        
+
     Attributes:
         selected_engine: Currently selected engine ID
         engine_radios: Dictionary mapping engine IDs to radio buttons
@@ -43,13 +43,13 @@ class ModelSelectionPanel(QGroupBox):
         self.info_text = info_text
         self.placeholder = placeholder
         self.selected_engine = None
-        self.engine_dropdowns = {}
-        self.engine_radios = {}
+        self.engine_dropdowns: dict[str, MultiColumnComboBox] = {}
+        self.engine_radios: dict[str, QRadioButton] = {}
         self.mode_button_group = None
-        
+
         if title:
             self.setTitle(title)
-        
+
         self._init_ui()
 
     def _init_ui(self):
@@ -184,21 +184,21 @@ class ModelSelectionPanel(QGroupBox):
         for engine_id, dropdown in self.engine_dropdowns.items():
             dropdown.setVisible(engine_id == self.selected_engine)
 
-    def get_selected_engine(self) -> str:
+    def get_selected_engine(self) -> str | None:
         """Get the currently selected engine ID.
-        
+
         Returns:
-            The ID of the currently selected engine
+            The ID of the currently selected engine, or None if no engine is selected
         """
         return self.selected_engine
 
     def get_selected_model_id(self) -> str | None:
         """Get the ID of the selected model for the current engine.
-        
+
         Returns:
             The ID of the selected model, or None if no model is selected
         """
-        if self.selected_engine in self.engine_dropdowns:
+        if self.selected_engine and self.selected_engine in self.engine_dropdowns:
             return self.engine_dropdowns[self.selected_engine].current_id()
         return None
 
@@ -231,10 +231,10 @@ class ModelSelectionPanel(QGroupBox):
 
     def get_dropdown_for_engine(self, engine_id: str) -> MultiColumnComboBox | None:
         """Get the dropdown widget for a specific engine.
-        
+
         Args:
             engine_id: The engine ID
-            
+
         Returns:
             The MultiColumnComboBox for the engine, or None if not found
         """

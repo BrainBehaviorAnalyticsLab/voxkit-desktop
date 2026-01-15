@@ -1,13 +1,12 @@
 """Test suite for AlignmentEngine base functionality."""
 
 import json
-import tempfile
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
-from voxkit.engines.base import AlignmentEngine, ToolType
+from voxkit.engines.base import AlignmentEngine
 from voxkit.gui.frameworks.settings_modal import FieldConfig, FieldType, SettingsConfig
 
 

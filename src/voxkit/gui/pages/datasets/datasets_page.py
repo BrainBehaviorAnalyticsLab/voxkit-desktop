@@ -24,6 +24,7 @@ from PyQt6.QtWidgets import (
 from voxkit.analyzers import ManageAnalyzers
 from voxkit.engines import engines
 from voxkit.gui.components import HuggingFaceButton
+from voxkit.gui.components.csv_viewer_dialog import CSVViewerDialog
 from voxkit.gui.frameworks.settings_modal import (
     FieldConfig,
     FieldType,
@@ -328,19 +329,27 @@ class DatasetsPage(QWidget):
 
         # Dataset table
         self.dataset_table = QTableWidget()
-        self.dataset_table.setColumnCount(6)
+        self.dataset_table.setColumnCount(7)
         self.dataset_table.setHorizontalHeaderLabels(
-            ["Name", "Description", "Cached", "De-identified", "Transcribed", "Registration Date"]
+            [
+                "Name",
+                "Description",
+                "Cached",
+                "De-identified",
+                "Transcribed",
+                "Registration Date",
+                "Actions",
+            ]
         )
 
         # Configure table
         header = self.dataset_table.horizontalHeader()
         header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
         header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
-        for i in range(2, 7):
+        for i in range(2, 6):
             header.setSectionResizeMode(i, QHeaderView.ResizeMode.ResizeToContents)
-        header.setSectionResizeMode(7, QHeaderView.ResizeMode.Fixed)
-        self.dataset_table.setColumnWidth(7, 150)
+        header.setSectionResizeMode(6, QHeaderView.ResizeMode.Fixed)
+        self.dataset_table.setColumnWidth(6, 100)
 
         self.dataset_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.dataset_table.setSelectionMode(QTableWidget.SelectionMode.SingleSelection)
@@ -895,145 +904,83 @@ class DatasetsPage(QWidget):
                 reg_date = reg_date.split("T")[0]  # Show only date part
             self.dataset_table.setItem(index, 5, QTableWidgetItem(reg_date))
 
-            # # Actions
-            # actions_widget = self._create_action_buttons(dataset)
-            # self.dataset_table.setCellWidget(row, 6, actions_widget)
+            # Actions - Details button
+            actions_widget = self._create_dataset_action_buttons(meta)
+            self.dataset_table.setCellWidget(index, 6, actions_widget)
 
-    def _create_action_buttons(self, dataset):
-        """Create action buttons for a dataset row"""
+    def _create_dataset_action_buttons(self, dataset_meta: dict):
+        """Create action buttons for a dataset row.
+
+        Args:
+            dataset_meta: Dataset metadata dictionary
+
+        Returns:
+            QWidget containing action buttons
+        """
         widget = QWidget()
         layout = QHBoxLayout(widget)
-        layout.setContentsMargins(5, 2, 5, 2)
-        layout.setSpacing(5)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        button_style = """
-            QPushButton {
-                background-color: white;
-                border: 1px solid #d0d0d0;
-                border-radius: 5px;
-                padding: 5px 10px;
-                color: #333;
-            }
-            QPushButton:hover {
-                background-color: #f0f0f0;
-                border-color: #b0b0b0;
-            }
-            QPushButton:pressed {
-                background-color: #e0e0e0;
-            }
+        button_style = f"""
+            QPushButton {{
+                background-color: {Colors.BG_SECONDARY};
+                border: 1px solid {Colors.GRAY};
+                border-radius: 6px;
+                font-size: 12px;
+                font-weight: bold;
+                color: {Colors.TEXT_SECONDARY};
+            }}
+            QPushButton:hover {{
+                background-color: {Colors.LIGHT_GRAY};
+                color: {Colors.PRIMARY};
+                border-color: {Colors.PRIMARY};
+            }}
         """
 
-        # Export button
-        export_btn = QPushButton("Export")
-        export_btn.setMaximumWidth(60)
-        export_btn.setStyleSheet(button_style)
-        export_btn.clicked.connect(lambda: self._export_dataset(dataset))
-        layout.addWidget(export_btn)
-
-        # Delete button
-        delete_btn = QPushButton("Delete")
-        delete_btn.setMaximumWidth(60)
-        delete_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #e74c3c;
-                color: white;
-                border: none;
-                border-radius: 5px;
-                padding: 5px 10px;
-            }
-            QPushButton:hover {
-                background-color: #c0392b;
-            }
-            QPushButton:pressed {
-                background-color: #a93226;
-            }
-        """)
-        delete_btn.clicked.connect(lambda: self.delete_dataset(dataset))
-        layout.addWidget(delete_btn)
+        # Details button
+        details_btn = QPushButton("Details")
+        details_btn.setFixedSize(80, 24)
+        details_btn.setStyleSheet(button_style)
+        details_btn.clicked.connect(lambda: self._view_dataset_details(dataset_meta))
+        layout.addWidget(details_btn)
 
         return widget
 
-    def view_dataset(self, dataset):
-        """Show detailed dataset information"""
-        info_text = (
-            f"Dataset: {dataset['name']}\n\n"
-            f"Description: {dataset['description']}\n\n"
-            f"Original Path: {dataset['original_path']}\n"
-            f"Cached: {'Yes' if dataset['cached'] else 'No'}\n"
-            f"Anonymized: {'Yes' if dataset['anonymize'] else 'No'}\n"
-            f"Transcribed: {'Yes' if dataset.get('transcribed', False) else 'No'}\n\n"
-            f"Registration Date: {dataset.get('registration_date', 'Unknown')}"
-        )
+    def _view_dataset_details(self, dataset_meta: dict):
+        """View dataset analysis CSV details.
 
-        QMessageBox.information(self, "Dataset Information", info_text)
+        Args:
+            dataset_meta: Dataset metadata dictionary
+        """
 
-    def transcribe_dataset(self, dataset):
-        """Transcribe a dataset using available transcription engines"""
-        # Check if already transcribed
-        if dataset.get("transcribed", False):
-            reply = QMessageBox.question(
+        # Get dataset directory
+        dataset_id = dataset_meta["id"]
+        dataset_dir = datasets._get_dataset_root(dataset_id)
+
+        if not dataset_dir or not dataset_dir.exists():
+            QMessageBox.warning(
                 self,
-                "Already Transcribed",
-                f"Dataset '{dataset['name']}' is marked as transcribed.\n\n"
-                "Do you want to transcribe it again?",
-                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                "Dataset Not Found",
+                f"Dataset directory not found for '{dataset_meta['name']}'.",
             )
-            if reply != QMessageBox.StandardButton.Yes:
-                return
+            return
 
-        # Placeholder for transcription functionality
-        QMessageBox.information(
-            self,
-            "Transcription",
-            f"Transcription feature for dataset '{dataset['name']}' will be implemented.\n\n"
-            "This will use WhisperX or similar transcription engines to generate "
-            "transcriptions for all audio files in the dataset.",
-        )
+        # Search for CSV files matching the pattern *_summary.csv
+        csv_files = list(dataset_dir.glob("*_summary.csv"))
 
-        # TODO: Implement actual transcription logic here
-        # - Check for available transcription engines (WhisperX, etc.)
-        # - Show transcription settings dialog
-        # - Run transcription in a worker thread
-        # - Update dataset metadata with transcribed=True on success
+        if not csv_files:
+            QMessageBox.information(
+                self,
+                "No Analysis Data",
+                f"No analysis CSV file found for dataset '{dataset_meta['name']}'.\n\n"
+                "Analysis data is generated during dataset registration.",
+            )
+            return
 
-    def _export_dataset(self, dataset):
-        """Export dataset configuration"""
-        # Prompt for directory path to save exported dataset
+        # Use the first CSV file found
+        csv_path = str(csv_files[0])
 
-        dir_path = QFileDialog.getExistingDirectory(
-            self,
-            "Select Directory to Save Exported Dataset",
-            "",
-            QFileDialog.Option.ShowDirsOnly,
-        )
-
-        if dir_path:
-            success, message = datasets.export_dataset(dataset, Path(dir_path))
-            if success:
-                QMessageBox.information(self, "Success", message)
-            else:
-                QMessageBox.critical(self, "Export Failed", message)
-
-    def delete_dataset(self, dataset):
-        """Delete a dataset"""
-        reply = QMessageBox.question(
-            self,
-            "Confirm Delete",
-            f"Are you sure you want to delete dataset '{dataset['name']}'?\n\n"
-            f"This will delete the metadata"
-            + (
-                " and all cached files."
-                if dataset["cached"]
-                else " (original files will not be affected)."
-            ),
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-        )
-
-        if reply == QMessageBox.StandardButton.Yes:
-            success, message = datasets.delete_dataset(dataset)
-
-            if success:
-                QMessageBox.information(self, "Success", message)
-                self.refresh_datasets()
-            else:
-                QMessageBox.critical(self, "Delete Failed", message)
+        # Open CSV viewer dialog
+        dialog = CSVViewerDialog(csv_path, parent=self)
+        dialog.exec()
