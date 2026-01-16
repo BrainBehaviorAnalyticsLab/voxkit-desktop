@@ -198,7 +198,9 @@ class ModelSelectionPanel(QGroupBox):
         Returns:
             The ID of the selected model, or None if no model is selected
         """
-        if self.selected_engine and self.selected_engine in self.engine_dropdowns:
+
+        if self.selected_engine is not None and self.selected_engine in self.engine_dropdowns:
+
             return self.engine_dropdowns[self.selected_engine].current_id()
         return None
 

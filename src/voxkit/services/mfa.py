@@ -105,9 +105,8 @@ def download_acoustic_model(release_path, output_file):
     """
     Download an MFA acoustic model using the github releases api.
 
-    For example, release_path = acoustic-spanish_mfa-v3.3.0/spanish_mfa.zip
-    becomes url "https://github.com/MontrealCorpusTools/mfa-models/releases/
-    download/acoustic-spanish_mfa-v3.3.0/spanish_mfa.zip"
+    For example, release_path = acoustic-spanish_mfa-v3.3.0/spanish_mfa.zip becomes url
+    "https://github.com/MontrealCorpusTools/mfa-models/releases/download/acoustic-spanish_mfa-v3.3.0/spanish_mfa.zip"
     """
     url = f"https://github.com/MontrealCorpusTools/mfa-models/releases/download/{release_path}"
     cmd = ["curl", "-L", "-o", output_file, url]

@@ -7,7 +7,15 @@ pipeline navigation and pages based on configuration.
 from typing import TYPE_CHECKING, Optional
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QHBoxLayout, QLabel, QListWidget, QPushButton, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import (
+    QHBoxLayout,
+    QLabel,
+    QListWidget,
+    QPushButton,
+    QScrollArea,
+    QVBoxLayout,
+    QWidget,
+)
 
 from voxkit.gui.components import AnimatedStackedWidget
 
@@ -188,8 +196,15 @@ class PipelineFormStack(QWidget):
             # Add the actual stacker widget
             container_layout.addWidget(stacker_widget, stretch=1)
 
+            # Wrap stacker_container in a scroll area for proper overflow handling
+            scroll_area = QScrollArea()
+            scroll_area.setWidgetResizable(True)
+            scroll_area.setFrameShape(QScrollArea.Shape.NoFrame)
+            scroll_area.setStyleSheet("QScrollArea { background: transparent; border: none; }")
+            scroll_area.setWidget(stacker_container)
+
             self.stacker_instances.append((step.id, step.stacker_class, stacker_widget))
-            self.stacked_widget.addWidget(stacker_container)
+            self.stacked_widget.addWidget(scroll_area)
 
         content_layout.addWidget(self.menu_list)
         content_layout.addWidget(self.stacked_widget, stretch=1)
