@@ -24,7 +24,8 @@ def get_config_path() -> Path:
     # Check if running as PyInstaller bundle
     if getattr(sys, "_MEIPASS", None):
         # Running as bundled executable
-        return Path(sys._MEIPASS) / "config"  # type: ignore[attr-defined]
+        # mypy: ignore attr-defined on _MEIPASS - it's dynamically added by PyInstaller
+        return Path(getattr(sys, "_MEIPASS")) / "config"
     else:
         # Running from source - get project root (3 levels up from this file)
         return Path(__file__).parent.parent.parent.parent / "config"
