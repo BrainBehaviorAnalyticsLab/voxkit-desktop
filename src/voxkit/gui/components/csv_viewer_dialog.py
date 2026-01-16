@@ -43,6 +43,7 @@ class CSVViewerDialog(QDialog):
             self.blur_effect.setBlurRadius(10)
             parent.setGraphicsEffect(self.blur_effect)
 
+        self.parent = parent
         self._init_ui()
         self._load_csv()
 
@@ -134,7 +135,7 @@ class CSVViewerDialog(QDialog):
                 background-color: #21618c;
             }
         """)
-        close_btn.clicked.connect(self.accept)
+        close_btn.clicked.connect(self.reject)
         layout.addWidget(close_btn, alignment=Qt.AlignmentFlag.AlignCenter)
 
     def _load_csv(self):
@@ -184,12 +185,15 @@ class CSVViewerDialog(QDialog):
 
     def closeEvent(self, event):
         """Handle dialog close event to remove blur effect."""
-        if self.parent():
-            self.parent().setGraphicsEffect(None)
+        print("Dialog closed, removing blur effect from parent")
+        if self.parent:
+            print("Removing blur effect from parent")
+            self.parent.setGraphicsEffect(None)
         event.accept()
 
     def reject(self):
         """Handle dialog rejection to remove blur effect."""
-        if self.parent():
-            self.parent().setGraphicsEffect(None)
+        if self.parent:
+            print("Removing blur effect from parent")
+            self.parent.setGraphicsEffect(None)
         super().reject()
