@@ -153,6 +153,7 @@ class W2TGEngine(AlignmentEngine):
                 alignment_id=alignment_meta["id"],
                 updates={"status": "failed"},
             )
+            raise e
 
     def train_aligner(
         self, audio_root: Path, textgrid_root: Path, base_model_id: str | None, new_model_id: str
