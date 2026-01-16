@@ -982,5 +982,5 @@ class DatasetsPage(QWidget):
         csv_path = str(csv_files[0])
 
         # Open CSV viewer dialog
-        dialog = CSVViewerDialog(csv_path, parent=self)
+        dialog = CSVViewerDialog(csv_path, parent=self.parent_window)
         dialog.exec()
