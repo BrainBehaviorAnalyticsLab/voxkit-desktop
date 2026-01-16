@@ -78,47 +78,6 @@ class HuggingFaceButton(QPushButton):
         self.setCursor(Qt.CursorShape.PointingHandCursor)
 
 
-class HuggingFaceIconButton(QPushButton):
-    """A compact icon-only HuggingFace button"""
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self._setup_ui()
-
-    def _setup_ui(self):
-        """Set up the icon button UI"""
-        self.setText("🤗")
-        self.setFixedSize(38, 38)
-
-        self.setStyleSheet("""
-            QPushButton {
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 #ffffff, stop:1 #f8f9fa);
-                color: #2c3e50;
-                border: 2px solid #e0e0e0;
-                border-radius: 19px;
-                font-size: 18px;
-                padding: 0px;
-            }
-            QPushButton:hover {
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 #fff8e1, stop:1 #fff3d0);
-                border: 2px solid #ffd54f;
-            }
-            QPushButton:pressed {
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 #ffecb3, stop:1 #ffe082);
-                border: 2px solid #ffb300;
-            }
-            QPushButton:disabled {
-                background: #f5f5f5;
-                color: #9e9e9e;
-                border: 2px solid #e0e0e0;
-            }
-        """)
-
-        self.setCursor(Qt.CursorShape.PointingHandCursor)
-
 
 # Example usage
 if __name__ == "__main__":
@@ -141,11 +100,6 @@ if __name__ == "__main__":
     hf_button2 = HuggingFaceButton("Import from HuggingFace")
     hf_button2.clicked.connect(lambda: print("Import button clicked!"))
     layout.addWidget(hf_button2)
-
-    # Icon only button
-    hf_icon_button = HuggingFaceIconButton()
-    hf_icon_button.clicked.connect(lambda: print("Icon button clicked!"))
-    layout.addWidget(hf_icon_button)
 
     window.setWindowTitle("HuggingFace Button Demo")
     window.resize(300, 200)
