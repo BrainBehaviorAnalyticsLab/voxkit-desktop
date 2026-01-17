@@ -33,8 +33,7 @@ from voxkit.gui.frameworks.settings_modal import (
 )
 from voxkit.gui.workers import DatasetRegistrationWorker
 from voxkit.storage import alignments, datasets
-
-from .styles import Colors
+from voxkit.gui.styles import Colors
 
 ENGINE_IDS = engines.list_engines()
 

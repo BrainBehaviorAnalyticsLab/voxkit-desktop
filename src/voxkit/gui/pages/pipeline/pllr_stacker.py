@@ -26,8 +26,7 @@ from voxkit.gui.utils import validate_path, validate_paths
 from voxkit.gui.workers.worker_thread import WorkerThread
 from voxkit.storage import alignments, datasets
 from voxkit.storage.utils import get_storage_root
-
-from .styles import BrowseButtonStyle
+from voxkit.gui.styles import BrowseButtonStyle
 
 FIELDS: list[FieldConfig] = [
     FieldConfig(

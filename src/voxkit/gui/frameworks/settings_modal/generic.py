@@ -25,7 +25,7 @@ from voxkit.gui.components import OverlayWidget, ToggleSwitch
 from voxkit.storage.utils import get_storage_root
 
 from .api import FieldConfig, FieldType, SettingsConfig
-from .styles import (
+from voxkit.gui.styles import (
     CheckBoxStyle,
     CloseButtonStyle,
     ComboBoxStyle,

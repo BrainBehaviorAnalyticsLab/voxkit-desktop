@@ -96,7 +96,7 @@ class ManageAlignersWidget(CategoricalTableWidget):
         """Add the '+ Register New Model' button to the models group"""
         from PyQt6.QtWidgets import QHBoxLayout, QPushButton, QWidget
 
-        from voxkit.gui.pages.datasets.styles import Colors
+        from voxkit.gui.styles import Colors
 
         # Find the models group box (it's the widget containing the table)
         models_group = None

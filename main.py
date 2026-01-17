@@ -65,6 +65,7 @@ def main():
 
     app_config = None
     pipeline_config = None
+    
     # Handle special '_MEIPASS' argument for frozen builds
     if getattr(sys, '_MEIPASS', None):
         app_config = AppConfig.from_yaml(
