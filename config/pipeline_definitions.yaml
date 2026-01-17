@@ -15,6 +15,27 @@ pipeline:
       - Generate accurate forced alignments using state-of-the-art engines
       - Extract Goodness of Pronunciation (GOP) scores for pronunciation assessment
       - Manage datasets and models through an intuitive interface
+      # Welcome ASU/WISCLab Team!
+      Welcome to VoxKit, your comprehensive speech alignment and analysis toolkit designed for clinical speech pathology applications. This introduction provides an overview of the application's features and how to get started.
+      # Key Features:
+      - Train custom alignment models on your datasets
+      - Generate accurate forced alignments using state-of-the-art engines
+      - Extract Goodness of Pronunciation (GOP) scores for pronunciation assessment
+      - Manage datasets and models through an intuitive interface
+      # Welcome ASU/WISCLab Team!
+      Welcome to VoxKit, your comprehensive speech alignment and analysis toolkit designed for clinical speech pathology applications. This introduction provides an overview of the application's features and how to get started.
+      # Key Features:
+      - Train custom alignment models on your datasets
+      - Generate accurate forced alignments using state-of-the-art engines
+      - Extract Goodness of Pronunciation (GOP) scores for pronunciation assessment
+      - Manage datasets and models through an intuitive interface
+      # Welcome ASU/WISCLab Team!
+      Welcome to VoxKit, your comprehensive speech alignment and analysis toolkit designed for clinical speech pathology applications. This introduction provides an overview of the application's features and how to get started.
+      # Key Features:
+      - Train custom alignment models on your datasets
+      - Generate accurate forced alignments using state-of-the-art engines
+      - Extract Goodness of Pronunciation (GOP) scores for pronunciation assessment
+      - Manage datasets and models through an intuitive interface
 
     collapsible_sections:
       "References": "For more information, visit the [VoxKit Help Page](http://localhost:3000/help)."

@@ -10,7 +10,7 @@ from PyQt6.QtWidgets import (
 
 from voxkit.gui.components import MultiColumnComboBox
 from voxkit.storage import models
-
+from voxkit.gui.styles import Labels, Containers
 
 class ModelSelectionPanel(QGroupBox):
     """Reusable panel for selecting alignment engines and models.
@@ -59,7 +59,7 @@ class ModelSelectionPanel(QGroupBox):
 
         # Info label
         info_label = QLabel(self.info_text)
-        info_label.setStyleSheet("font-size: 12px; color: #7f8c8d;")
+        info_label.setStyleSheet(Labels.INFO_SMALL)
         layout.addWidget(info_label)
 
         # Create button group for radio buttons
@@ -96,7 +96,7 @@ class ModelSelectionPanel(QGroupBox):
             radio_widget = QWidget()
             radio_widget.setLayout(radio_container)
             radio_widget.setFixedWidth(160)
-            radio_widget.setStyleSheet("background-color: white;")
+            radio_widget.setStyleSheet(Containers.TRANSPARENT_CONTAINER)
             engine_layout.addWidget(radio_widget)
 
             # Add spacing to align dropdown with description box
@@ -104,7 +104,7 @@ class ModelSelectionPanel(QGroupBox):
 
             # Model dropdown
             dropdown = MultiColumnComboBox()
-            dropdown.setStyleSheet("color: #95a5a6;")
+            dropdown.setStyleSheet(Labels.INFO_SMALL)
 
             # Populate models
             model_list = models.list_models(engine_id)
@@ -140,22 +140,12 @@ class ModelSelectionPanel(QGroupBox):
             # Description in a styled box
             if engine_description:
                 desc_container = QWidget()
-                desc_container.setStyleSheet("""
-                    QWidget {
-                        background-color: #f8f9fa;
-                        border: 1px solid #e0e0e0;
-                        border-radius: 4px;
-                        padding: 8px;
-                        margin-left: 25px;
-                    }
-                """)
+                desc_container.setStyleSheet(Containers.HELPER_TEXT)
                 desc_layout = QHBoxLayout(desc_container)
                 desc_layout.setContentsMargins(8, 6, 8, 6)
 
                 info = QLabel(engine_description)
-                info.setStyleSheet(
-                    "color: #7f8c8d; font-size: 11px; background: transparent; border: none;"
-                )
+                info.setStyleSheet(Labels.INFO_SMALL)
                 info.setWordWrap(True)
                 desc_layout.addWidget(info)
 

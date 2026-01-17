@@ -4,6 +4,7 @@ HuggingFace branded button component with logo
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QWidget
+from voxkit.gui.styles import Labels, Buttons
 
 
 class HuggingFaceButton(QPushButton):
@@ -24,56 +25,15 @@ class HuggingFaceButton(QPushButton):
 
         # Add HuggingFace emoji/icon
         icon_label = QLabel("🤗")
-        icon_label.setStyleSheet("""
-            QLabel {
-                font-size: 16px;
-                background: transparent;
-            }
-        """)
+        icon_label.setStyleSheet(Labels.HEADER_SIMPLE)
         layout.addWidget(icon_label)
 
         # Add text
         text_label = QLabel(title)
-        text_label.setStyleSheet("""
-            QLabel {
-                font-size: 13px;
-                font-weight: 600;
-                color: inherit;
-                background: transparent;
-            }
-        """)
         layout.addWidget(text_label)
 
         # Style the button with a modern, subtle design
-        self.setStyleSheet("""
-            QPushButton {
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 #ffffff, stop:1 #f8f9fa);
-                color: #2c3e50;
-                border: 2px solid #e0e0e0;
-                border-radius: 6px;
-                padding: 6px 16px;
-                font-weight: 600;
-                min-height: 32px;
-                min-width: 180px;
-            }
-            QPushButton:hover {
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 #fff8e1, stop:1 #fff3d0);
-                border: 2px solid #ffd54f;
-                color: #2c3e50;
-            }
-            QPushButton:pressed {
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 #ffecb3, stop:1 #ffe082);
-                border: 2px solid #ffb300;
-            }
-            QPushButton:disabled {
-                background: #f5f5f5;
-                color: #9e9e9e;
-                border: 2px solid #e0e0e0;
-            }
-        """)
+        self.setStyleSheet(Buttons.HUGGINGFACE)
 
         self.setCursor(Qt.CursorShape.PointingHandCursor)
 

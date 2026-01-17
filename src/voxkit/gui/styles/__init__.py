@@ -286,6 +286,59 @@ class Buttons:
         }}
     """
 
+    TOGGLE = """
+        QPushButton {
+            background-color: #F5F7FA;
+            border: 1px solid #E0E0E0;
+            border-radius: 6px;
+            text-align: left;
+            padding: 10px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #37474F;
+        }
+        QPushButton:hover {
+            background-color: #ECEFF1;
+            border-color: #BDBDBD;
+        }
+        QPushButton:checked {
+            border-bottom-left-radius: 0;
+            border-bottom-right-radius: 0;
+            border-bottom: none;
+        }
+    """
+
+    HUGGINGFACE = """
+        QPushButton {
+            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                stop:0 #ffffff, stop:1 #f8f9fa);
+            color: #2c3e50;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 6px 16px;
+            font-weight: 600;
+            min-height: 32px;
+            min-width: 180px;
+        }
+        QPushButton:hover {
+            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                stop:0 #fff8e1, stop:1 #fff3d0);
+            border: 2px solid #ffd54f;
+            color: #2c3e50;
+        }
+        QPushButton:pressed {
+            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                stop:0 #ffecb3, stop:1 #ffe082);
+            border: 2px solid #ffb300;
+        }
+        QPushButton:disabled {
+            background: #f5f5f5;
+            color: #9e9e9e;
+            border: 2px solid #e0e0e0;
+        }
+    """
+    
+
 
 class Inputs:
     """Input field styles"""
@@ -509,6 +562,48 @@ class Labels:
         }}
     """
 
+    SECTION_LABEL = """
+        font-weight: bold; color: #2c3e50;
+    """
+
+    PAGE_TITLE = """
+        font-size: 24px; font-weight: bold; color: #2c3e50;
+    """
+
+    STATS = """
+        QLabel {
+            color: #7f8c8d;
+            font-size: 12px;
+            font-style: italic;
+            padding: 5px;
+        }
+    """
+
+    CREDIT = """
+        color: #999; font-size: 10px; padding: 5px;
+    """
+
+    INFO_SMALL = """
+        font-size: 12px; color: #7f8c8d;
+    """
+
+    FILTER_LABEL = """
+        color: #2c3e50; font-weight: 500;
+    """
+
+    CONTENT_SECTION = """
+        QLabel {
+            background-color: #FAFBFC;
+            border: 1px solid #E0E0E0;
+            border-top: none;
+            padding: 16px;
+            font-size: 13px;
+            color: #546E7A;
+            border-bottom-left-radius: 6px;
+            border-bottom-right-radius: 6px;
+        }
+    """
+
 
 class Containers:
     """Container and dialog styles"""
@@ -589,6 +684,58 @@ class Containers:
             background-color: #ebf5fb;
             border-left: 3px solid #3498db;
             border-radius: 3px;
+        }
+    """
+
+    EMPTY_STATE = """
+        QLabel {
+            font-size: 14px;
+            color: #95a5a6;
+            font-style: italic;
+            padding: 40px;
+            text-align: center;
+        }
+    """
+
+    COMBOBOX_STANDARD = """
+        QComboBox {
+            padding: 0px 8px;
+            border: 1px solid #bdc3c7;
+            border-radius: 4px;
+            background-color: white;
+            min-height: 25px;
+        }
+        QComboBox:disabled {
+            background-color: #f5f5f5;
+            color: #999;
+        }
+    """
+
+    COMBOBOX_FILTER = """
+        QComboBox {
+            min-height: 28px;
+            padding: 4px 8px;
+            border: 2px solid #d0d0d0;
+            border-radius: 4px;
+            background-color: white;
+        }
+        QComboBox:focus {
+            border-color: #3498db;
+        }
+    """
+
+    TRANSPARENT_CONTAINER = """
+        background-color: transparent;
+    """
+
+    MARKDOWN_DISPLAY = """
+        QTextBrowser#markdownDisplay {
+            background-color: white;
+            border: 1px solid #E0E0E0;
+            border-radius: 6px;
+            padding: 20px;
+            font-size: 14px;
+            line-height: 1.6;
         }
     """
 

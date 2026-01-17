@@ -297,14 +297,7 @@ class DatasetsPage(QWidget):
             "No datasets registered yet.\nUse the form above to register your first dataset."
         )
         self.empty_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.empty_label.setStyleSheet("""
-            QLabel {
-                color: #7f8c8d;
-                font-style: italic;
-                font-size: 14px;
-                padding: 40px;
-            }
-        """)
+        self.empty_label.setStyleSheet(Containers.EMPTY_STATE)
         self.empty_label.hide()  # Hidden by default
         list_container_layout.addWidget(self.empty_label)
 
@@ -316,46 +309,20 @@ class DatasetsPage(QWidget):
     def _create_alignments_panel(self):
         """Create the alignments panel for selected dataset"""
         group = QGroupBox("↓ Alignments for Selected Dataset")
-        group.setStyleSheet("""
-            QGroupBox {
-                font-weight: bold;
-                border: 2px solid #3498db;
-                border-radius: 8px;
-                margin-top: 12px;
-                padding: 15px;
-                background-color: #ebf5fb;
-            }
-            QGroupBox::title {
-                subcontrol-origin: margin;
-                left: 15px;
-                padding: 0 5px;
-                color: #2c3e50;
-            }
-        """)
+        group.setStyleSheet(Containers.GROUP_BOX)
 
         layout = QVBoxLayout()
 
         # Engine filter
         filter_layout = QHBoxLayout()
         filter_label = QLabel("Filter by Engine:")
-        filter_label.setStyleSheet("color: #2c3e50; font-weight: 500;")
+        filter_label.setStyleSheet(Labels.FILTER_LABEL)
         filter_layout.addWidget(filter_label)
 
         self.engine_filter_combo = QComboBox()
         self.engine_filter_combo.addItem("All Engines")
 
-        self.engine_filter_combo.setStyleSheet("""
-            QComboBox {
-                padding: 0px 8px;
-                border: 2px solid #d0d0d0;
-                border-radius: 4px;
-                background-color: white;
-                min-width: 150px;
-            }
-            QComboBox:hover {
-                border: 2px solid #3498db;
-            }
-        """)
+        self.engine_filter_combo.setStyleSheet(Containers.COMBOBOX_FILTER)
         self.engine_filter_combo.currentTextChanged.connect(self._filter_alignments)
         filter_layout.addWidget(self.engine_filter_combo)
         filter_layout.addStretch()
@@ -384,24 +351,7 @@ class DatasetsPage(QWidget):
 
         self.alignments_table.setAlternatingRowColors(True)
         self.alignments_table.setMaximumHeight(300)
-        self.alignments_table.setStyleSheet("""
-            QTableWidget {
-                gridline-color: #ecf0f1;
-                background-color: white;
-                border: 1px solid #bdc3c7;
-                border-radius: 4px;
-            }
-            QTableWidget::item {
-                padding: 0px;
-            }
-            QHeaderView::section {
-                background-color: #34495e;
-                color: white;
-                padding: 8px;
-                font-weight: bold;
-                border: none;
-            }
-        """)
+        self.alignments_table.setStyleSheet(Containers.TABLE_WIDGET)
 
         layout.addWidget(self.alignments_table)
 
