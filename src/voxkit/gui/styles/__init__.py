@@ -713,14 +713,42 @@ class Containers:
 
     COMBOBOX_FILTER = """
         QComboBox {
-            min-height: 28px;
-            padding: 4px 8px;
-            border: 2px solid #d0d0d0;
+            background-color: #F5F5F5;
+            border: 1px solid #BDBDBD;
             border-radius: 4px;
+            padding: 6px 10px;
+            font-size: 13px;
+            min-height: 25px;
+        }
+        QComboBox:hover {
+            border-color: #2196F3;
             background-color: white;
         }
         QComboBox:focus {
-            border-color: #3498db;
+            border-color: #1565C0;
+            background-color: white;
+        }
+        QComboBox::drop-down {
+            border: none;
+            width: 25px;
+        }
+        QComboBox::down-arrow {
+            image: none;
+            border-left: 4px solid transparent;
+            border-right: 4px solid transparent;
+            border-top: 5px solid #757575;
+            margin-right: 6px;
+        }
+        QComboBox:hover::down-arrow {
+            border-top-color: #2196F3;
+        }
+        QComboBox QAbstractItemView {
+            background-color: white;
+            border: 1px solid #BDBDBD;
+            selection-background-color: #E3F2FD;
+            selection-color: #1976D2;
+            outline: none;
+            padding: 4px;
         }
     """
 

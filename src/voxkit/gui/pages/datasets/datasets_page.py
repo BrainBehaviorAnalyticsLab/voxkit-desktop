@@ -9,6 +9,7 @@ from PyQt6.QtWidgets import (
     QComboBox,
     QDialog,
     QFileDialog,
+    QGraphicsBlurEffect,
     QGroupBox,
     QHBoxLayout,
     QHeaderView,
@@ -78,7 +79,11 @@ class DatasetsPage(QWidget):
         main_layout.addWidget(self._create_list_section())
 
         # Add alignments panel
-        main_layout.addWidget(self._create_alignments_panel())
+        self.alignments_panel = self._create_alignments_panel()
+        main_layout.addWidget(self.alignments_panel)
+        
+        # Apply initial blur to alignments panel
+        self._set_alignments_blur(True)
 
         # Add register section at bottom
         main_layout.addWidget(self._create_register_section())
@@ -311,22 +316,25 @@ class DatasetsPage(QWidget):
         group = QGroupBox("↓ Alignments for Selected Dataset")
         group.setStyleSheet(Containers.GROUP_BOX)
 
-        layout = QVBoxLayout()
+        # Create container widget for blurrable content
+        self.alignments_content = QWidget()
+        content_layout = QVBoxLayout(self.alignments_content)
+        content_layout.setContentsMargins(0, 0, 0, 0)
 
         # Engine filter
         filter_layout = QHBoxLayout()
         filter_label = QLabel("Filter by Engine:")
-        filter_label.setStyleSheet(Labels.FILTER_LABEL)
+        filter_label.setStyleSheet(Labels.SECTION_LABEL)
         filter_layout.addWidget(filter_label)
 
         self.engine_filter_combo = QComboBox()
         self.engine_filter_combo.addItem("All Engines")
 
-        self.engine_filter_combo.setStyleSheet(Containers.COMBOBOX_FILTER)
+        self.engine_filter_combo.setStyleSheet(Containers.COMBOBOX_STANDARD)
         self.engine_filter_combo.currentTextChanged.connect(self._filter_alignments)
         filter_layout.addWidget(self.engine_filter_combo)
         filter_layout.addStretch()
-        layout.addLayout(filter_layout)
+        content_layout.addLayout(filter_layout)
 
         # Alignments table
         self.alignments_table = QTableWidget()
@@ -353,9 +361,12 @@ class DatasetsPage(QWidget):
         self.alignments_table.setMaximumHeight(300)
         self.alignments_table.setStyleSheet(Containers.TABLE_WIDGET)
 
-        layout.addWidget(self.alignments_table)
-
-        group.setLayout(layout)
+        content_layout.addWidget(self.alignments_table)
+        
+        # Add content container to group box
+        group_layout = QVBoxLayout()
+        group_layout.addWidget(self.alignments_content)
+        group.setLayout(group_layout)
         return group
 
     def _on_dataset_selected(self):
@@ -365,6 +376,7 @@ class DatasetsPage(QWidget):
         if not selected_items:
             self.selected_dataset = None
             self.alignments_table.setRowCount(0)
+            self._set_alignments_blur(True)  # Blur when no selection
             return
 
         # Get dataset name from first column of selected row
@@ -379,8 +391,24 @@ class DatasetsPage(QWidget):
             dataset_id = item.data(Qt.ItemDataRole.UserRole)
             print(f"Selected dataset ID: {dataset_id}")
             self.selected_dataset = dataset_id
+            self._set_alignments_blur(False)  # Unblur when dataset selected
 
         self._load_alignments(dataset_id)
+
+    def _set_alignments_blur(self, blurred: bool):
+        """Set the blur state of the alignments panel contents.
+        
+        Args:
+            blurred: True to blur, False to unblur
+        """
+        if blurred:
+            blur_effect = QGraphicsBlurEffect()
+            blur_effect.setBlurRadius(10)
+            self.alignments_content.setGraphicsEffect(blur_effect)
+            self.alignments_content.setEnabled(False)
+        else:
+            self.alignments_content.setGraphicsEffect(None)
+            self.alignments_content.setEnabled(True)
 
     def _load_alignments(self, dataset_id: datasets.DatasetMetadata["id"]):
         """Load alignments for the selected dataset"""
