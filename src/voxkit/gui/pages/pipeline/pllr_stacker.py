@@ -26,7 +26,7 @@ from voxkit.gui.utils import validate_path, validate_paths
 from voxkit.gui.workers.worker_thread import WorkerThread
 from voxkit.storage import alignments, datasets
 from voxkit.storage.utils import get_storage_root
-from voxkit.gui.styles import BrowseButtonStyle
+from voxkit.gui.styles import Buttons
 
 FIELDS: list[FieldConfig] = [
     FieldConfig(
@@ -292,7 +292,7 @@ class PLLRStacker(QWidget):
         self.extract_output_path = QLineEdit(Defaults["output_path"])
         self.extract_browse = QPushButton("Browse")
         self.extract_browse.setFixedWidth(100)
-        self.extract_browse.setStyleSheet(BrowseButtonStyle)
+        self.extract_browse.setStyleSheet(Buttons.BROWSE)
         self.extract_browse.clicked.connect(lambda: self.browse_directory(self.extract_output_path))
         extract_output_layout.addWidget(self.extract_output_path, stretch=1)
         extract_output_layout.addWidget(self.extract_browse)

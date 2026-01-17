@@ -145,6 +145,147 @@ class Buttons:
         }}
     """
 
+    SUCCESS = f"""
+        QPushButton {{
+            background-color: {Colors.SUCCESS};
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: bold;
+            min-height: 35px;
+        }}
+        QPushButton:hover {{
+            background-color: #229954;
+        }}
+        QPushButton:pressed {{
+            background-color: #1e8449;
+        }}
+    """
+
+    DANGER = f"""
+        QPushButton {{
+            background-color: {Colors.ERROR};
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: bold;
+            min-height: 35px;
+        }}
+        QPushButton:hover {{
+            background-color: #c0392b;
+        }}
+        QPushButton:pressed {{
+            background-color: #a93226;
+        }}
+    """
+
+    INFO_ACTION = f"""
+        QPushButton {{
+            background-color: white;
+            color: {Colors.TEXT_PRIMARY};
+            border: 1px solid {Colors.GRAY};
+            border-radius: 5px;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: bold;
+            min-height: 35px;
+        }}
+        QPushButton:hover {{
+            background-color: {Colors.LIGHT_GRAY};
+            border-color: {Colors.INFO};
+            color: {Colors.INFO};
+        }}
+        QPushButton:pressed {{
+            background-color: {Colors.DARK_GRAY};
+        }}
+    """
+
+    INFO_LARGE = f"""
+        QPushButton {{
+            background-color: {Colors.INFO};
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: bold;
+        }}
+        QPushButton:hover {{
+            background-color: #2980b9;
+        }}
+        QPushButton:pressed {{
+            background-color: #21618c;
+        }}
+    """
+
+    SELECTION = f"""
+        QPushButton {{
+            background-color: white;
+            color: {Colors.TEXT_SECONDARY};
+            border: 1px solid {Colors.GRAY};
+            border-radius: 5px;
+            padding: 6px 12px;
+            font-size: 13px;
+        }}
+        QPushButton:hover {{
+            background-color: {Colors.LIGHT_GRAY};
+            border-color: {Colors.PRIMARY};
+            color: {Colors.PRIMARY};
+        }}
+    """
+
+    TABLE_VIEW = f"""
+        QPushButton {{
+            background-color: {Colors.BG_SECONDARY};
+            border: 1px solid {Colors.GRAY};
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: bold;
+            color: {Colors.TEXT_SECONDARY};
+        }}
+        QPushButton:hover {{
+            background-color: {Colors.LIGHT_GRAY};
+            color: {Colors.PRIMARY};
+            border-color: {Colors.PRIMARY};
+        }}
+    """
+
+    DELETE_SMALL = """
+        QPushButton {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 5px 10px;
+        }
+        QPushButton:hover {
+            background-color: #c0392b;
+        }
+        QPushButton:pressed {
+            background-color: #a93226;
+        }
+    """
+
+    SUCCESS_SMALL = f"""
+        QPushButton {{
+            background-color: {Colors.SUCCESS};
+            border: 1px solid #d0d0d0;
+            border-radius: 5px;
+            padding: 5px 10px;
+            color: white;
+        }}
+        QPushButton:hover {{
+            background-color: #229954;
+        }}
+        QPushButton:pressed {{
+            background-color: #1e8449;
+        }}
+    """
+
 
 class Inputs:
     """Input field styles"""
@@ -327,6 +468,47 @@ class Labels:
         }}
     """
 
+    CATEGORY = f"""
+        QLabel {{
+            font-size: 16px;
+            font-weight: bold;
+            color: {Colors.TEXT_PRIMARY};
+            background-color: white;
+            padding: 8px 16px;
+            border: 1px solid {Colors.BORDER};
+            border-radius: 5px;
+        }}
+    """
+
+    DIALOG_TITLE = f"""
+        QLabel {{
+            font-size: 14px;
+            font-weight: bold;
+            color: {Colors.TEXT_PRIMARY};
+            padding: 10px;
+            background-color: {Colors.BG_SECONDARY};
+            border-radius: 5px;
+        }}
+    """
+
+    FIELD_KEY = f"""
+        QLabel {{
+            font-weight: bold;
+            color: {Colors.TEXT_SECONDARY};
+            min-width: 120px;
+        }}
+    """
+
+    FIELD_VALUE = f"""
+        QLabel {{
+            color: {Colors.TEXT_PRIMARY};
+            background-color: {Colors.BG_SECONDARY};
+            padding: 8px;
+            border-radius: 3px;
+            border: 1px solid {Colors.BORDER};
+        }}
+    """
+
 
 class Containers:
     """Container and dialog styles"""
@@ -348,18 +530,67 @@ class Containers:
         }
     """
 
+    GROUP_BOX = """
+        QGroupBox {
+            font-weight: bold;
+            border: 2px solid #3498db;
+            border-radius: 8px;
+            margin-top: 12px;
+            padding: 15px;
+        }
+        QGroupBox::title {
+            subcontrol-origin: margin;
+            left: 15px;
+            padding: 0 5px;
+            color: #2c3e50;
+        }
+    """
 
-# Legacy aliases for backward compatibility
-BrowseButtonStyle = Buttons.BROWSE
-CloseButtonStyle = Buttons.CLOSE
-SpinBoxStyle = Inputs.SPINBOX_WITH_ARROWS
-HeaderLabelStyle = Labels.HEADER_SIMPLE
-CheckBoxStyle = Inputs.CHECKBOX
-OkCancelButtonStyle = Containers.DIALOG_BUTTON_BOX
-ContainerStyle = Containers.CONTAINER
-LineEditStyle = Inputs.LINE_EDIT_SIMPLE
-ComboBoxStyle = Inputs.COMBOBOX_SIMPLE
+    SCROLL_AREA = f"""
+        QScrollArea {{
+            border: 1px solid {Colors.BORDER};
+            border-radius: 5px;
+            background-color: white;
+        }}
+    """
 
+    TABLE_WIDGET = """
+        QTableWidget {
+            gridline-color: #ecf0f1;
+            background-color: white;
+            border: 1px solid #bdc3c7;
+            border-radius: 4px;
+        }
+        QTableWidget::item {
+            padding: 0px;
+        }
+        QTableWidget::item:hover {
+            background-color: #e8f4f8;
+        }
+        QTableWidget::item:selected {
+            background-color: #3498db;
+            color: white;
+        }
+        QHeaderView::section {
+            background-color: #34495e;
+            color: white;
+            padding: 8px;
+            font-weight: bold;
+            border: none;
+        }
+    """
+
+    HELPER_TEXT = """
+        QLabel {
+            color: #3498db;
+            font-size: 12px;
+            font-weight: 500;
+            padding: 5px;
+            background-color: #ebf5fb;
+            border-left: 3px solid #3498db;
+            border-radius: 3px;
+        }
+    """
 
 __all__ = [
     "Colors",
@@ -367,14 +598,4 @@ __all__ = [
     "Inputs",
     "Labels",
     "Containers",
-    # Legacy aliases
-    "BrowseButtonStyle",
-    "CloseButtonStyle",
-    "SpinBoxStyle",
-    "HeaderLabelStyle",
-    "CheckBoxStyle",
-    "OkCancelButtonStyle",
-    "ContainerStyle",
-    "LineEditStyle",
-    "ComboBoxStyle",
 ]

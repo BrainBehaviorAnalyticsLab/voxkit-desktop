@@ -26,14 +26,10 @@ from voxkit.storage.utils import get_storage_root
 
 from .api import FieldConfig, FieldType, SettingsConfig
 from voxkit.gui.styles import (
-    CheckBoxStyle,
-    CloseButtonStyle,
-    ComboBoxStyle,
-    ContainerStyle,
-    HeaderLabelStyle,
-    LineEditStyle,
-    OkCancelButtonStyle,
-    SpinBoxStyle,
+    Buttons,
+    Containers,
+    Labels,
+    Inputs
 )
 
 
@@ -214,7 +210,7 @@ class GenericDialog(QDialog):
         # Container widget
         container = QWidget()
         container.setObjectName("container")
-        container.setStyleSheet(ContainerStyle)
+        container.setStyleSheet(Containers.CONTAINER)
 
         container_layout = QVBoxLayout(container)
         container_layout.setContentsMargins(20, 20, 20, 20)
@@ -251,14 +247,14 @@ class GenericDialog(QDialog):
         header_layout = QHBoxLayout()
 
         title_label = QLabel(title)
-        title_label.setStyleSheet(HeaderLabelStyle)
+        title_label.setStyleSheet(Labels.HEADER_SIMPLE)
         header_layout.addWidget(title_label)
         header_layout.addStretch()
 
         # Close button
         close_btn = QPushButton("✕")
         close_btn.setFixedSize(30, 30)
-        close_btn.setStyleSheet(CloseButtonStyle)
+        close_btn.setStyleSheet(Buttons.CLOSE)
         close_btn.clicked.connect(self.reject)
         header_layout.addWidget(close_btn)
 
@@ -331,7 +327,7 @@ class GenericDialog(QDialog):
         if config.default_value is not None:
             spinbox.setValue(config.default_value)
 
-        spinbox.setStyleSheet(SpinBoxStyle)
+        spinbox.setStyleSheet(Inputs.SPINBOX_WITH_ARROWS)
         return spinbox
 
     def _create_double_spinbox(self, config: FieldConfig) -> QDoubleSpinBox:
@@ -355,7 +351,7 @@ class GenericDialog(QDialog):
         if config.default_value is not None:
             spinbox.setValue(config.default_value)
 
-        spinbox.setStyleSheet(SpinBoxStyle)
+        spinbox.setStyleSheet(Inputs.SPINBOX_WITH_ARROWS)
         return spinbox
 
     def _create_checkbox(self, config: FieldConfig) -> QCheckBox:
@@ -372,7 +368,7 @@ class GenericDialog(QDialog):
         if config.default_value is not None:
             checkbox.setChecked(config.default_value)
 
-        checkbox.setStyleSheet(CheckBoxStyle)
+        checkbox.setStyleSheet(Inputs.CHECKBOX)
         return checkbox
 
     def _create_lineedit(self, config: FieldConfig) -> QLineEdit:
@@ -391,7 +387,7 @@ class GenericDialog(QDialog):
         if config.placeholder:
             lineedit.setPlaceholderText(config.placeholder)
 
-        lineedit.setStyleSheet(LineEditStyle)
+        lineedit.setStyleSheet(Inputs.LINE_EDIT_SIMPLE)
         return lineedit
 
     def _create_combobox(self, config: FieldConfig) -> QComboBox:
@@ -412,7 +408,7 @@ class GenericDialog(QDialog):
             if index >= 0:
                 combobox.setCurrentIndex(index)
 
-        combobox.setStyleSheet(ComboBoxStyle)
+        combobox.setStyleSheet(Inputs.COMBOBOX_SIMPLE)
         return combobox
 
     def _create_buttons(self) -> QDialogButtonBox:
@@ -420,7 +416,7 @@ class GenericDialog(QDialog):
         button_box = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
         )
-        button_box.setStyleSheet(OkCancelButtonStyle)
+        button_box.setStyleSheet(Containers.DIALOG_BUTTON_BOX)
         button_box.accepted.connect(self.accept)
         button_box.rejected.connect(self.reject)
         return button_box
