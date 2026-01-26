@@ -9,6 +9,7 @@ from PyQt6.QtWidgets import (
     QComboBox,
     QDialog,
     QFileDialog,
+    QGraphicsBlurEffect,
     QGroupBox,
     QHBoxLayout,
     QHeaderView,
@@ -33,8 +34,7 @@ from voxkit.gui.frameworks.settings_modal import (
 )
 from voxkit.gui.workers import DatasetRegistrationWorker
 from voxkit.storage import alignments, datasets
-
-from .styles import Colors
+from voxkit.gui.styles import Buttons, Colors, Containers, Labels
 
 ENGINE_IDS = engines.list_engines()
 
@@ -79,7 +79,11 @@ class DatasetsPage(QWidget):
         main_layout.addWidget(self._create_list_section())
 
         # Add alignments panel
-        main_layout.addWidget(self._create_alignments_panel())
+        self.alignments_panel = self._create_alignments_panel()
+        main_layout.addWidget(self.alignments_panel)
+        
+        # Apply initial blur to alignments panel
+        self._set_alignments_blur(True)
 
         # Add register section at bottom
         main_layout.addWidget(self._create_register_section())
@@ -113,70 +117,17 @@ class DatasetsPage(QWidget):
         action_layout.setSpacing(10)
 
         self.import_btn = QPushButton("Import")
-        self.import_btn.setStyleSheet(f"""
-            QPushButton {{
-                background-color: white;
-                color: {Colors.TEXT_PRIMARY};
-                border: 1px solid {Colors.GRAY};
-                border-radius: 5px;
-                padding: 10px 20px;
-                font-size: 14px;
-                font-weight: bold;
-                min-height: 35px;
-            }}
-            QPushButton:hover {{
-                background-color: {Colors.LIGHT_GRAY};
-                border-color: {Colors.INFO};
-                color: {Colors.INFO};
-            }}
-            QPushButton:pressed {{
-                background-color: {Colors.DARK_GRAY};
-            }}
-        """)
+        self.import_btn.setStyleSheet(Buttons.INFO_ACTION)
         self.import_btn.clicked.connect(self.on_import)
         action_layout.addWidget(self.import_btn)
 
         self.export_btn = QPushButton("Export Selected")
-        self.export_btn.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {Colors.SUCCESS};
-                color: white;
-                border: none;
-                border-radius: 5px;
-                padding: 10px 20px;
-                font-size: 14px;
-                font-weight: bold;
-                min-height: 35px;
-            }}
-            QPushButton:hover {{
-                background-color: #229954;
-            }}
-            QPushButton:pressed {{
-                background-color: #1e8449;
-            }}
-        """)
+        self.export_btn.setStyleSheet(Buttons.SUCCESS)
         self.export_btn.clicked.connect(self.on_export)
         action_layout.addWidget(self.export_btn)
 
         self.delete_btn = QPushButton("Delete Selected")
-        self.delete_btn.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {Colors.ERROR};
-                color: white;
-                border: none;
-                border-radius: 5px;
-                padding: 10px 20px;
-                font-size: 14px;
-                font-weight: bold;
-                min-height: 35px;
-            }}
-            QPushButton:hover {{
-                background-color: #c0392b;
-            }}
-            QPushButton:pressed {{
-                background-color: #a93226;
-            }}
-        """)
+        self.delete_btn.setStyleSheet(Buttons.DANGER)
         self.delete_btn.clicked.connect(self.on_delete)
         action_layout.addWidget(self.delete_btn)
 
@@ -259,21 +210,7 @@ class DatasetsPage(QWidget):
         """Create the dataset list section"""
 
         group = QGroupBox("Datasets")
-        group.setStyleSheet("""
-            QGroupBox {
-                font-weight: bold;
-                border: 2px solid #3498db;
-                border-radius: 8px;
-                margin-top: 12px;
-                padding: 15px;
-            }
-            QGroupBox::title {
-                subcontrol-origin: margin;
-                left: 15px;
-                padding: 0 5px;
-                color: #2c3e50;
-            }
-        """)
+        group.setStyleSheet(Containers.GROUP_BOX)
         layout = QVBoxLayout()
 
         # Add plus button at the top
@@ -283,23 +220,7 @@ class DatasetsPage(QWidget):
         button_layout.setContentsMargins(0, 0, 0, 10)
 
         plus_btn = QPushButton("+ Register New Dataset")
-        plus_btn.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {Colors.INFO};
-                color: white;
-                border: none;
-                border-radius: 5px;
-                padding: 8px 16px;
-                font-size: 13px;
-                font-weight: bold;
-            }}
-            QPushButton:hover {{
-                background-color: #2980b9;
-            }}
-            QPushButton:pressed {{
-                background-color: #21618c;
-            }}
-        """)
+        plus_btn.setStyleSheet(Buttons.INFO_LARGE)
         plus_btn.clicked.connect(self.open_registration_dialog)
         button_layout.addWidget(plus_btn)
         button_layout.addStretch()
@@ -309,17 +230,7 @@ class DatasetsPage(QWidget):
         # Helper text
         helper_label = QLabel("💡 Select a dataset to view its alignments below")
 
-        helper_label.setStyleSheet("""
-            QLabel {
-                color: #3498db;
-                font-size: 12px;
-                font-weight: 500;
-                padding: 5px;
-                background-color: #ebf5fb;
-                border-left: 3px solid #3498db;
-                border-radius: 3px;
-            }
-        """)
+        helper_label.setStyleSheet(Containers.HELPER_TEXT)
         layout.addWidget(helper_label)
 
         # Container for table and empty label
@@ -391,14 +302,7 @@ class DatasetsPage(QWidget):
             "No datasets registered yet.\nUse the form above to register your first dataset."
         )
         self.empty_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.empty_label.setStyleSheet("""
-            QLabel {
-                color: #7f8c8d;
-                font-style: italic;
-                font-size: 14px;
-                padding: 40px;
-            }
-        """)
+        self.empty_label.setStyleSheet(Containers.EMPTY_STATE)
         self.empty_label.hide()  # Hidden by default
         list_container_layout.addWidget(self.empty_label)
 
@@ -410,50 +314,27 @@ class DatasetsPage(QWidget):
     def _create_alignments_panel(self):
         """Create the alignments panel for selected dataset"""
         group = QGroupBox("↓ Alignments for Selected Dataset")
-        group.setStyleSheet("""
-            QGroupBox {
-                font-weight: bold;
-                border: 2px solid #3498db;
-                border-radius: 8px;
-                margin-top: 12px;
-                padding: 15px;
-                background-color: #ebf5fb;
-            }
-            QGroupBox::title {
-                subcontrol-origin: margin;
-                left: 15px;
-                padding: 0 5px;
-                color: #2c3e50;
-            }
-        """)
+        group.setStyleSheet(Containers.GROUP_BOX)
 
-        layout = QVBoxLayout()
+        # Create container widget for blurrable content
+        self.alignments_content = QWidget()
+        content_layout = QVBoxLayout(self.alignments_content)
+        content_layout.setContentsMargins(0, 0, 0, 0)
 
         # Engine filter
         filter_layout = QHBoxLayout()
         filter_label = QLabel("Filter by Engine:")
-        filter_label.setStyleSheet("color: #2c3e50; font-weight: 500;")
+        filter_label.setStyleSheet(Labels.SECTION_LABEL)
         filter_layout.addWidget(filter_label)
 
         self.engine_filter_combo = QComboBox()
         self.engine_filter_combo.addItem("All Engines")
 
-        self.engine_filter_combo.setStyleSheet("""
-            QComboBox {
-                padding: 0px 8px;
-                border: 2px solid #d0d0d0;
-                border-radius: 4px;
-                background-color: white;
-                min-width: 150px;
-            }
-            QComboBox:hover {
-                border: 2px solid #3498db;
-            }
-        """)
+        self.engine_filter_combo.setStyleSheet(Containers.COMBOBOX_STANDARD)
         self.engine_filter_combo.currentTextChanged.connect(self._filter_alignments)
         filter_layout.addWidget(self.engine_filter_combo)
         filter_layout.addStretch()
-        layout.addLayout(filter_layout)
+        content_layout.addLayout(filter_layout)
 
         # Alignments table
         self.alignments_table = QTableWidget()
@@ -478,28 +359,14 @@ class DatasetsPage(QWidget):
 
         self.alignments_table.setAlternatingRowColors(True)
         self.alignments_table.setMaximumHeight(300)
-        self.alignments_table.setStyleSheet("""
-            QTableWidget {
-                gridline-color: #ecf0f1;
-                background-color: white;
-                border: 1px solid #bdc3c7;
-                border-radius: 4px;
-            }
-            QTableWidget::item {
-                padding: 0px;
-            }
-            QHeaderView::section {
-                background-color: #34495e;
-                color: white;
-                padding: 8px;
-                font-weight: bold;
-                border: none;
-            }
-        """)
+        self.alignments_table.setStyleSheet(Containers.TABLE_WIDGET)
 
-        layout.addWidget(self.alignments_table)
-
-        group.setLayout(layout)
+        content_layout.addWidget(self.alignments_table)
+        
+        # Add content container to group box
+        group_layout = QVBoxLayout()
+        group_layout.addWidget(self.alignments_content)
+        group.setLayout(group_layout)
         return group
 
     def _on_dataset_selected(self):
@@ -509,6 +376,7 @@ class DatasetsPage(QWidget):
         if not selected_items:
             self.selected_dataset = None
             self.alignments_table.setRowCount(0)
+            self._set_alignments_blur(True)  # Blur when no selection
             return
 
         # Get dataset name from first column of selected row
@@ -523,8 +391,24 @@ class DatasetsPage(QWidget):
             dataset_id = item.data(Qt.ItemDataRole.UserRole)
             print(f"Selected dataset ID: {dataset_id}")
             self.selected_dataset = dataset_id
+            self._set_alignments_blur(False)  # Unblur when dataset selected
 
         self._load_alignments(dataset_id)
+
+    def _set_alignments_blur(self, blurred: bool):
+        """Set the blur state of the alignments panel contents.
+        
+        Args:
+            blurred: True to blur, False to unblur
+        """
+        if blurred:
+            blur_effect = QGraphicsBlurEffect()
+            blur_effect.setBlurRadius(10)
+            self.alignments_content.setGraphicsEffect(blur_effect)
+            self.alignments_content.setEnabled(False)
+        else:
+            self.alignments_content.setGraphicsEffect(None)
+            self.alignments_content.setEnabled(True)
 
     def _load_alignments(self, dataset_id: datasets.DatasetMetadata["id"]):
         """Load alignments for the selected dataset"""
@@ -629,40 +513,12 @@ class DatasetsPage(QWidget):
         layout.setContentsMargins(5, 2, 5, 2)
         layout.setSpacing(5)
 
-        button_style = f"""
-            QPushButton {{
-                background-color: {Colors.SUCCESS};
-                border: 1px solid #d0d0d0;
-                border-radius: 5px;
-                padding: 5px 10px;
-                color: white;
-            }}
-            QPushButton:hover {{
-                background-color: #229954;
-            }}
-            QPushButton:pressed {{
-                background-color: #1e8449;
-            }}
-        """
+        button_style = Buttons.SUCCESS_SMALL
 
         # Delete button
         delete_btn = QPushButton("Delete")
         delete_btn.setMaximumWidth(60)
-        delete_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #e74c3c;
-                color: white;
-                border: none;
-                border-radius: 5px;
-                padding: 5px 10px;
-            }
-            QPushButton:hover {
-                background-color: #c0392b;
-            }
-            QPushButton:pressed {
-                background-color: #a93226;
-            }
-        """)
+        delete_btn.setStyleSheet(Buttons.DELETE_SMALL)
         delete_btn.clicked.connect(lambda: self._delete_alignment(alignment))
         layout.addWidget(delete_btn)
 
@@ -922,21 +778,7 @@ class DatasetsPage(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        button_style = f"""
-            QPushButton {{
-                background-color: {Colors.BG_SECONDARY};
-                border: 1px solid {Colors.GRAY};
-                border-radius: 6px;
-                font-size: 12px;
-                font-weight: bold;
-                color: {Colors.TEXT_SECONDARY};
-            }}
-            QPushButton:hover {{
-                background-color: {Colors.LIGHT_GRAY};
-                color: {Colors.PRIMARY};
-                border-color: {Colors.PRIMARY};
-            }}
-        """
+        button_style = Buttons.TABLE_VIEW
 
         # Details button
         details_btn = QPushButton("Details")

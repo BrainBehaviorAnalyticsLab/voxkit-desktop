@@ -16,7 +16,7 @@ from PyQt6.QtWidgets import (
 )
 
 from voxkit.gui.components import HuggingFaceButton
-from voxkit.gui.frameworks._______.styles import Buttons, Colors, Labels
+from voxkit.gui.styles import Buttons, Colors, Containers, Labels
 
 
 class CategoricalTableWidget(QWidget):
@@ -101,17 +101,7 @@ class CategoricalTableWidget(QWidget):
 
         self.category_label = QLabel("Category")
         self.category_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.category_label.setStyleSheet(f"""
-            QLabel {{
-                font-size: 16px;
-                font-weight: bold;
-                color: {Colors.TEXT_PRIMARY};
-                background-color: white;
-                padding: 8px 16px;
-                border: 1px solid {Colors.BORDER};
-                border-radius: 5px;
-            }}
-        """)
+        self.category_label.setStyleSheet(Labels.CATEGORY)
         nav_layout.addWidget(self.category_label, stretch=1)
 
         self.next_btn = QPushButton("Next →")
@@ -126,40 +116,12 @@ class CategoricalTableWidget(QWidget):
         selection_layout.setSpacing(10)
 
         self.select_all_btn = QPushButton("Select All")
-        self.select_all_btn.setStyleSheet(f"""
-            QPushButton {{
-                background-color: white;
-                color: {Colors.TEXT_SECONDARY};
-                border: 1px solid {Colors.GRAY};
-                border-radius: 5px;
-                padding: 6px 12px;
-                font-size: 13px;
-            }}
-            QPushButton:hover {{
-                background-color: {Colors.LIGHT_GRAY};
-                border-color: {Colors.PRIMARY};
-                color: {Colors.PRIMARY};
-            }}
-        """)
+        self.select_all_btn.setStyleSheet(Buttons.SELECTION)
         self.select_all_btn.clicked.connect(self.select_all)
         selection_layout.addWidget(self.select_all_btn)
 
         self.deselect_all_btn = QPushButton("Deselect All")
-        self.deselect_all_btn.setStyleSheet(f"""
-            QPushButton {{
-                background-color: white;
-                color: {Colors.TEXT_SECONDARY};
-                border: 1px solid {Colors.GRAY};
-                border-radius: 5px;
-                padding: 6px 12px;
-                font-size: 13px;
-            }}
-            QPushButton:hover {{
-                background-color: {Colors.LIGHT_GRAY};
-                border-color: {Colors.PRIMARY};
-                color: {Colors.PRIMARY};
-            }}
-        """)
+        self.deselect_all_btn.setStyleSheet(Buttons.SELECTION)
         self.deselect_all_btn.clicked.connect(self.deselect_all)
         selection_layout.addWidget(self.deselect_all_btn)
 
@@ -174,54 +136,14 @@ class CategoricalTableWidget(QWidget):
 
         # Models group box (similar to datasets alignments panel)
         models_group = QGroupBox("Models")
-        models_group.setStyleSheet("""
-            QGroupBox {
-                font-weight: bold;
-                border: 2px solid #3498db;
-                border-radius: 8px;
-                margin-top: 12px;
-                padding: 15px;
-            }
-            QGroupBox::title {
-                subcontrol-origin: margin;
-                left: 15px;
-                padding: 0 5px;
-                color: #2c3e50;
-            }
-        """)
+        models_group.setStyleSheet(Containers.GROUP_BOX)
         table_container_layout = QVBoxLayout(models_group)
         table_container_layout.setContentsMargins(10, 10, 10, 10)
 
         # Table widget
         self.table_widget = QTableWidget()
         self.table_widget.setAlternatingRowColors(True)
-        self.table_widget.setStyleSheet(
-            """
-            QTableWidget {
-                gridline-color: #ecf0f1;
-                background-color: white;
-                border: 1px solid #bdc3c7;
-                border-radius: 4px;
-            }
-            QTableWidget::item {
-                padding: 0px;
-            }
-            QTableWidget::item:hover {
-                background-color: #e8f4f8;
-            }
-            QTableWidget::item:selected {
-                background-color: #3498db;
-                color: white;
-            }
-            QHeaderView::section {
-                background-color: #34495e;
-                color: white;
-                padding: 8px;
-                font-weight: bold;
-                border: none;
-            }
-        """
-        )
+        self.table_widget.setStyleSheet(Containers.TABLE_WIDGET)
 
         # Configure table
         self.table_widget.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
@@ -245,70 +167,17 @@ class CategoricalTableWidget(QWidget):
         action_layout.setSpacing(10)
 
         self.import_btn = QPushButton("Import")
-        self.import_btn.setStyleSheet(f"""
-            QPushButton {{
-                background-color: white;
-                color: {Colors.TEXT_PRIMARY};
-                border: 1px solid {Colors.GRAY};
-                border-radius: 5px;
-                padding: 10px 20px;
-                font-size: 14px;
-                font-weight: bold;
-                min-height: 35px;
-            }}
-            QPushButton:hover {{
-                background-color: {Colors.LIGHT_GRAY};
-                border-color: {Colors.INFO};
-                color: {Colors.INFO};
-            }}
-            QPushButton:pressed {{
-                background-color: {Colors.DARK_GRAY};
-            }}
-        """)
+        self.import_btn.setStyleSheet(Buttons.INFO_ACTION)
         self.import_btn.clicked.connect(self.on_import)
         action_layout.addWidget(self.import_btn)
 
         self.export_btn = QPushButton("Export Selected")
-        self.export_btn.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {Colors.SUCCESS};
-                color: white;
-                border: none;
-                border-radius: 5px;
-                padding: 10px 20px;
-                font-size: 14px;
-                font-weight: bold;
-                min-height: 35px;
-            }}
-            QPushButton:hover {{
-                background-color: #229954;
-            }}
-            QPushButton:pressed {{
-                background-color: #1e8449;
-            }}
-        """)
+        self.export_btn.setStyleSheet(Buttons.SUCCESS)
         self.export_btn.clicked.connect(self.on_export)
         action_layout.addWidget(self.export_btn)
 
         self.delete_btn = QPushButton("Delete Selected")
-        self.delete_btn.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {Colors.ERROR};
-                color: white;
-                border: none;
-                border-radius: 5px;
-                padding: 10px 20px;
-                font-size: 14px;
-                font-weight: bold;
-                min-height: 35px;
-            }}
-            QPushButton:hover {{
-                background-color: #c0392b;
-            }}
-            QPushButton:pressed {{
-                background-color: #a93226;
-            }}
-        """)
+        self.delete_btn.setStyleSheet(Buttons.DANGER)
         self.delete_btn.clicked.connect(self.on_delete)
         action_layout.addWidget(self.delete_btn)
 
@@ -410,21 +279,7 @@ class CategoricalTableWidget(QWidget):
 
             view_btn = QPushButton("View")
             view_btn.setFixedSize(60, 24)
-            view_btn.setStyleSheet(f"""
-                QPushButton {{
-                    background-color: {Colors.BG_SECONDARY};
-                    border: 1px solid {Colors.GRAY};
-                    border-radius: 6px;
-                    font-size: 12px;
-                    font-weight: bold;
-                    color: {Colors.TEXT_SECONDARY};
-                }}
-                QPushButton:hover {{
-                    background-color: {Colors.LIGHT_GRAY};
-                    color: {Colors.PRIMARY};
-                    border-color: {Colors.PRIMARY};
-                }}
-            """)
+            view_btn.setStyleSheet(Buttons.TABLE_VIEW)
             view_btn.clicked.connect(lambda checked, idx=row_idx: self.view_item_details(idx))
             button_layout.addWidget(view_btn)
             self.table_widget.setCellWidget(row_idx, len(self.columns_shown), button_container)
@@ -466,28 +321,13 @@ class CategoricalTableWidget(QWidget):
 
         # Title
         title = QLabel(f"All Fields for Row {row_index + 1}")
-        title.setStyleSheet(f"""
-            QLabel {{
-                font-size: 14px;
-                font-weight: bold;
-                color: {Colors.TEXT_PRIMARY};
-                padding: 10px;
-                background-color: {Colors.BG_SECONDARY};
-                border-radius: 5px;
-            }}
-        """)
+        title.setStyleSheet(Labels.DIALOG_TITLE)
         layout.addWidget(title)
 
         # Create scrollable area for fields
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
-        scroll.setStyleSheet(f"""
-            QScrollArea {{
-                border: 1px solid {Colors.BORDER};
-                border-radius: 5px;
-                background-color: white;
-            }}
-        """)
+        scroll.setStyleSheet(Containers.SCROLL_AREA)
 
         # Container for form layout
         container = QWidget()
@@ -504,26 +344,12 @@ class CategoricalTableWidget(QWidget):
 
                 # Key label
                 key_label = QLabel(f"{key}:")
-                key_label.setStyleSheet(f"""
-                    QLabel {{
-                        font-weight: bold;
-                        color: {Colors.TEXT_SECONDARY};
-                        min-width: 120px;
-                    }}
-                """)
+                key_label.setStyleSheet(Labels.FIELD_KEY)
 
                 # Value label
                 value_label = QLabel(str(value))
                 value_label.setWordWrap(True)
-                value_label.setStyleSheet(f"""
-                    QLabel {{
-                        color: {Colors.TEXT_PRIMARY};
-                        background-color: {Colors.BG_SECONDARY};
-                        padding: 8px;
-                        border-radius: 3px;
-                        border: 1px solid {Colors.BORDER};
-                    }}
-                """)
+                value_label.setStyleSheet(Labels.FIELD_VALUE)
 
                 form_layout.addRow(key_label, value_label)
 

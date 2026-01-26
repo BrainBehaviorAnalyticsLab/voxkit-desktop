@@ -96,7 +96,7 @@ class ManageAlignersWidget(CategoricalTableWidget):
         """Add the '+ Register New Model' button to the models group"""
         from PyQt6.QtWidgets import QHBoxLayout, QPushButton, QWidget
 
-        from voxkit.gui.frameworks._______.styles import Colors
+        from voxkit.gui.styles import Buttons
 
         # Find the models group box (it's the widget containing the table)
         models_group = None
@@ -122,23 +122,7 @@ class ManageAlignersWidget(CategoricalTableWidget):
         button_layout.setContentsMargins(0, 0, 0, 10)
 
         plus_btn = QPushButton("+ Register New Model")
-        plus_btn.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {Colors.INFO};
-                color: white;
-                border: none;
-                border-radius: 5px;
-                padding: 8px 16px;
-                font-size: 13px;
-                font-weight: bold;
-            }}
-            QPushButton:hover {{
-                background-color: #2980b9;
-            }}
-            QPushButton:pressed {{
-                background-color: #21618c;
-            }}
-        """)
+        plus_btn.setStyleSheet(Buttons.INFO_LARGE)
         plus_btn.clicked.connect(self.open_registration_dialog)
         button_layout.addWidget(plus_btn)
         button_layout.addStretch()

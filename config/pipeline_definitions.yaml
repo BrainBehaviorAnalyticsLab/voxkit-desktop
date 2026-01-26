@@ -15,6 +15,27 @@ pipeline:
       - Generate accurate forced alignments using state-of-the-art engines
       - Extract Goodness of Pronunciation (GOP) scores for pronunciation assessment
       - Manage datasets and models through an intuitive interface
+      # Welcome ASU/WISCLab Team!
+      Welcome to VoxKit, your comprehensive speech alignment and analysis toolkit designed for clinical speech pathology applications. This introduction provides an overview of the application's features and how to get started.
+      # Key Features:
+      - Train custom alignment models on your datasets
+      - Generate accurate forced alignments using state-of-the-art engines
+      - Extract Goodness of Pronunciation (GOP) scores for pronunciation assessment
+      - Manage datasets and models through an intuitive interface
+      # Welcome ASU/WISCLab Team!
+      Welcome to VoxKit, your comprehensive speech alignment and analysis toolkit designed for clinical speech pathology applications. This introduction provides an overview of the application's features and how to get started.
+      # Key Features:
+      - Train custom alignment models on your datasets
+      - Generate accurate forced alignments using state-of-the-art engines
+      - Extract Goodness of Pronunciation (GOP) scores for pronunciation assessment
+      - Manage datasets and models through an intuitive interface
+      # Welcome ASU/WISCLab Team!
+      Welcome to VoxKit, your comprehensive speech alignment and analysis toolkit designed for clinical speech pathology applications. This introduction provides an overview of the application's features and how to get started.
+      # Key Features:
+      - Train custom alignment models on your datasets
+      - Generate accurate forced alignments using state-of-the-art engines
+      - Extract Goodness of Pronunciation (GOP) scores for pronunciation assessment
+      - Manage datasets and models through an intuitive interface
 
     collapsible_sections:
       "References": "For more information, visit the [VoxKit Help Page](http://localhost:3000/help)."
@@ -22,7 +43,7 @@ pipeline:
       "Abut GOP": "Goodness of Pronunciation (GOP) is a metric used to assess the quality of pronunciation in speech. It compares the acoustic features of spoken phonemes against expected realizations, providing a score that reflects pronunciation accuracy. Higher GOP scores indicate better pronunciation."
 
   - id: "training"
-    label: "A. Train Aligners"
+    label: "Ⓐ Train Aligners"
     stacker_class: "TrainingStacker"
     enabled: true
     collapsible_sections:
@@ -32,7 +53,7 @@ pipeline:
       "Misc": "This is an example of an additional collapsible section."
     
   - id: "prediction"
-    label: "B. Predict Alignments"
+    label: "Ⓑ Predict Alignments"
     stacker_class: "PredictionStacker"
     enabled: true
     collapsible_sections:
@@ -40,7 +61,7 @@ pipeline:
       "Additional Info": "Forced alignment automatically determines the precise timing of phonemes in your audio recordings. Select a trained model and dataset to begin alignment."
     
   - id: "pllr"
-    label: "C. Extract GOP Scoring"
+    label: "Ⓒ Extract GOP Scoring"
     stacker_class: "PLLRStacker"
     enabled: true
     collapsible_sections:

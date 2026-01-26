@@ -4,10 +4,13 @@ This stacker displays markdown-formatted text, useful for instructions,
 documentation, or any text-heavy content in the pipeline.
 """
 
-from PyQt6.QtWidgets import QTextBrowser, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QSizePolicy, QTextBrowser
+
+from .base_stacker import BaseStacker
+from voxkit.gui.styles import Containers
 
 
-class MarkdownStacker(QWidget):
+class MarkdownStacker(BaseStacker):
     """A stacker widget that displays markdown content."""
 
     def __init__(self, parent=None, markdown_content: str = ""):
@@ -17,36 +20,40 @@ class MarkdownStacker(QWidget):
             parent: Parent widget
             markdown_content: Markdown text to display
         """
-        super().__init__(parent)
-        self.parent = parent
         self.markdown_content = markdown_content
-        self.init_ui()
+        self.text_browser = None
+        super().__init__(parent)
+        
+        # Remove the stretch at the end added by BaseStacker to allow
+        # the text browser to expand and fill all available vertical space
+        if self.main_layout.count() > 0:
+            last_item = self.main_layout.itemAt(self.main_layout.count() - 1)
+            if last_item and last_item.spacerItem():
+                self.main_layout.removeItem(last_item)
 
-    def init_ui(self):
-        """Initialize the UI with a text browser for markdown display."""
-        layout = QVBoxLayout(self)
-        # Match the application window margins (20px all around)
-        layout.setContentsMargins(0, 0, 0, 0)
-
+    def build_ui(self):
+        """Build the markdown display UI."""
         # Create text browser for markdown rendering
         self.text_browser = QTextBrowser()
         self.text_browser.setObjectName("markdownDisplay")
         self.text_browser.setOpenExternalLinks(True)  # Allow clickable links
-        self.text_browser.setStyleSheet("""
-            QTextBrowser#markdownDisplay {
-                background-color: white;
-                border: 1px solid #E0E0E0;
-                border-radius: 6px;
-                padding: 20px;
-                font-size: 14px;
-                line-height: 1.6;
-            }
-        """)
+        self.text_browser.setStyleSheet(Containers.MARKDOWN_DISPLAY)
+        
+        # Set size policy to expand and fill available space
+        self.text_browser.setSizePolicy(
+            QSizePolicy.Policy.Expanding,
+            QSizePolicy.Policy.Expanding
+        )
 
         # Set markdown content
         self.set_markdown(self.markdown_content)
 
-        layout.addWidget(self.text_browser)
+        # Add with stretch factor to fill available vertical space
+        self.content_layout.addWidget(self.text_browser, stretch=1)
+
+    def has_status_label(self) -> bool:
+        """Markdown display doesn't need a status label."""
+        return False
 
     def set_markdown(self, markdown_text: str):
         """Set the markdown content to display.
@@ -55,7 +62,8 @@ class MarkdownStacker(QWidget):
             markdown_text: Markdown formatted text
         """
         self.markdown_content = markdown_text
-        self.text_browser.setMarkdown(markdown_text)
+        if self.text_browser:
+            self.text_browser.setMarkdown(markdown_text)
 
     def get_markdown(self) -> str:
         """Get the current markdown content.

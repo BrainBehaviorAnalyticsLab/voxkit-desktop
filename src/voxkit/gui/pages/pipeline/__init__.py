@@ -2,6 +2,41 @@
 
 This module provides the PipelineFormStack widget that dynamically creates
 pipeline navigation and pages based on configuration.
+
+## Adding New Stackers
+
+To add a new stacker to the pipeline:
+
+1. Create a new file in this directory (e.g., `my_stacker.py`)
+2. Inherit from `BaseStacker` and implement required methods:
+   ```python
+   from .base_stacker import BaseStacker
+   
+   class MyStacker(BaseStacker):
+       def build_ui(self):
+           # Build your UI using self.content_layout
+           pass
+       
+       def get_title(self) -> str:
+           return "My Stacker Title"
+       
+       def has_settings(self) -> bool:
+           return True  # if you have settings
+       
+       def on_settings(self):
+           # Handle settings button click
+           pass
+   ```
+
+3. Register it in STACKER_REGISTRY below
+4. Add it to your pipeline config YAML file
+5. The stacker will automatically get:
+   - Standard layout and margins
+   - Header with title and settings button (if has_settings() returns True)
+   - Status label at bottom (if has_status_label() returns True)
+   - reload_models() and reload_datasets() hooks
+
+See `base_stacker.py` for all available methods to override.
 """
 
 from typing import TYPE_CHECKING, Optional
@@ -18,10 +53,12 @@ from PyQt6.QtWidgets import (
 )
 
 from voxkit.gui.components import AnimatedStackedWidget
+from voxkit.gui.styles import Buttons, Containers, Labels
 
 if TYPE_CHECKING:
     from voxkit.config.pipeline_config import PipelineConfig
 
+from .base_stacker import BaseStacker
 from .markdown_stacker import MarkdownStacker
 from .pllr_stacker import PLLRStacker
 from .prediction_stacker import PredictionStacker
@@ -130,27 +167,7 @@ class PipelineFormStack(QWidget):
                     toggle_button.setCheckable(True)
                     toggle_button.setChecked(False)  # Collapsed by default
                     toggle_button.setCursor(Qt.CursorShape.PointingHandCursor)
-                    toggle_button.setStyleSheet("""
-                        QPushButton {
-                            background-color: #F5F7FA;
-                            border: 1px solid #E0E0E0;
-                            border-radius: 6px;
-                            text-align: left;
-                            padding: 10px 16px;
-                            font-size: 13px;
-                            font-weight: 600;
-                            color: #37474F;
-                        }
-                        QPushButton:hover {
-                            background-color: #ECEFF1;
-                            border-color: #BDBDBD;
-                        }
-                        QPushButton:checked {
-                            border-bottom-left-radius: 0;
-                            border-bottom-right-radius: 0;
-                            border-bottom: none;
-                        }
-                    """)
+                    toggle_button.setStyleSheet(Buttons.TOGGLE)
 
                     # Content label
                     content_label = QLabel(content)
@@ -160,18 +177,7 @@ class PipelineFormStack(QWidget):
                         Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop
                     )
                     content_label.setVisible(False)  # Hidden by default
-                    content_label.setStyleSheet("""
-                        QLabel {
-                            background-color: #FAFBFC;
-                            border: 1px solid #E0E0E0;
-                            border-top: none;
-                            padding: 16px;
-                            font-size: 13px;
-                            color: #546E7A;
-                            border-bottom-left-radius: 6px;
-                            border-bottom-right-radius: 6px;
-                        }
-                    """)
+                    content_label.setStyleSheet(Labels.CONTENT_SECTION)
 
                     # Connect toggle functionality
                     def make_toggle_func(btn, lbl, hdr):
@@ -191,8 +197,6 @@ class PipelineFormStack(QWidget):
 
                     container_layout.addWidget(section_widget)
 
-            container_layout.addSpacing(16)
-
             # Add the actual stacker widget
             container_layout.addWidget(stacker_widget, stretch=1)
 
@@ -200,7 +204,7 @@ class PipelineFormStack(QWidget):
             scroll_area = QScrollArea()
             scroll_area.setWidgetResizable(True)
             scroll_area.setFrameShape(QScrollArea.Shape.NoFrame)
-            scroll_area.setStyleSheet("QScrollArea { background: transparent; border: none; }")
+            scroll_area.setStyleSheet(Containers.SCROLL_AREA)
             scroll_area.setWidget(stacker_container)
 
             self.stacker_instances.append((step.id, step.stacker_class, stacker_widget))
@@ -254,4 +258,4 @@ class PipelineFormStack(QWidget):
         self.menu_list.setCurrentRow(index)
 
 
-__all__ = ["PipelineFormStack"]
+__all__ = ["PipelineFormStack", "BaseStacker"]

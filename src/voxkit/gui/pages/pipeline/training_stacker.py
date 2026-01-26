@@ -1,18 +1,13 @@
 from pathlib import Path
 
 from PyQt6.QtCore import Qt
-
-# Add these imports at the top of your file
 from PyQt6.QtWidgets import (
     QDialog,
     QFileDialog,
-    QHBoxLayout,
     QLabel,
     QLineEdit,
     QMessageBox,
     QPushButton,
-    QVBoxLayout,
-    QWidget,
 )
 
 from voxkit.config import Defaults
@@ -22,21 +17,50 @@ from voxkit.gui.frameworks.settings_modal import GenericDialog
 from voxkit.gui.utils import validate_path, validate_paths
 from voxkit.gui.workers.worker_thread import WorkerThread
 from voxkit.storage import alignments, datasets, models
+from voxkit.gui.styles import Buttons, Containers, Labels
+
+from .base_stacker import BaseStacker
 
 TrainingTools = engines.get_tool_providers("train")
 
 
-class TrainingStacker(QWidget):
+class TrainingStacker(BaseStacker):
     def __init__(self, parent):
-        super().__init__()
         self.train_dataset_dropdown = None
         self.train_alignment_dropdown = None
         self.train_textgrid_path = Defaults["textgrid_path"]
         self.train_model_name = "default_model"
         self.model_panel = None
         self.w2tg_train_settings = None
-        self.parent = parent
-        self.init_ui()
+        self.train_btn = None
+        super().__init__(parent)
+
+    def get_title(self) -> str:
+        """Return the stacker's title."""
+        return "Ⓐ Train Aligners"
+    
+    def has_settings(self) -> bool:
+        """This stacker has settings."""
+        return True
+    
+    def on_settings(self):
+        """Handle settings button click on training page."""
+        self.settings_dialog = GenericDialog(
+            parent=self,
+            config=TrainingTools[self.model_panel.get_selected_engine()].get_settings_config(
+                "train"
+            ),
+        )
+        result = self.settings_dialog.exec()
+
+        if result == QDialog.DialogCode.Accepted:
+            try:
+                self.settings_dialog.save()
+            except Exception as e:
+                print("Error syncing training settings:", e)
+        # Clean up
+        if self.parent:
+            self.parent.setGraphicsEffect(None)
 
     def on_dataset_selected(self):
         """Handle dataset selection change and load corresponding alignments"""
@@ -163,8 +187,7 @@ class TrainingStacker(QWidget):
         print(f"Model Name: {model_name}")
 
         # Update UI
-        self.train_status.setText("Training...")
-        self.train_status.setStyleSheet("color: #f39c12; font-size: 12px; margin-top: 5px;")
+        self.set_status("Training...", "working")
         self.train_btn.setEnabled(False)
 
         # Start worker thread
@@ -204,8 +227,7 @@ class TrainingStacker(QWidget):
         self.train_btn.setEnabled(True)
 
         if success:
-            self.train_status.setText("✓ " + message)
-            self.train_status.setStyleSheet("color: #27ae60; font-size: 12px; margin-top: 5px;")
+            self.set_status("✓ " + message, "success")
 
             # Refresh models in all relevant components
             self.reload_models()
@@ -216,28 +238,8 @@ class TrainingStacker(QWidget):
 
             QMessageBox.information(self, "Success", message)
         else:
-            self.train_status.setText("✗ Error occurred")
-            self.train_status.setStyleSheet("color: #e74c3c; font-size: 12px; margin-top: 5px;")
+            self.set_status("✗ Error occurred", "error")
             QMessageBox.critical(self, "Error", f"An error occurred:\n{message}")
-
-    def on_training_settings(self):
-        """Handle settings button click on training page"""
-
-        self.settings_dialog = GenericDialog(
-            parent=self,
-            config=TrainingTools[self.model_panel.get_selected_engine()].get_settings_config(
-                "train"
-            ),
-        )
-        result = self.settings_dialog.exec()
-
-        if result == QDialog.DialogCode.Accepted:
-            try:
-                self.settings_dialog.save()
-            except Exception as e:
-                print("Error syncing training settings:", e)
-        # Clean up
-        self.parent.setGraphicsEffect(None)
 
     def reload_models(self):
         """Reload models in the dropdown"""
@@ -270,68 +272,21 @@ class TrainingStacker(QWidget):
         )
         self.train_alignment_dropdown.setEnabled(False)
 
-    def init_ui(self):
-        self.setMinimumWidth(600)
-        layout = QVBoxLayout(self)
-        layout.setSpacing(15)
-        layout.setContentsMargins(30, 30, 30, 30)
-
-        # ───── Header ─────
-        header = QHBoxLayout()
-        title = QLabel("Ⓐ Train Aligners")
-        title.setStyleSheet("font-size: 24px; font-weight: bold; color: #2c3e50;")
-        header.addWidget(title)
-        header.addStretch()
-
-        settings_btn = QPushButton("⚙️")
-        settings_btn.setFixedSize(65, 40)
-        settings_btn.setStyleSheet("""
-            QPushButton {
-                background-color: white;
-                border: 1px solid #d0d0d0;
-                border-radius: 5px;
-                font-size: 18px;
-                color: #7f8c8d;
-            }
-            QPushButton:hover {
-                background-color: #f0f0f0;
-                color: #4a90e2;
-            }
-            QPushButton:pressed {
-                background-color: #e0e0e0;
-            }
-        """)
-        settings_btn.clicked.connect(self.on_training_settings)
-        header.addWidget(settings_btn)
-
-        layout.addLayout(header)
-        layout.addSpacing(20)
-
+    def build_ui(self):
+        """Build the training UI."""
         # Model Selection Panel
         engines_dict = {engine_id: engine for engine_id, engine in TrainingTools.items()}
 
         self.model_panel = ModelSelectionPanel(engines_dict)
-        layout.addWidget(self.model_panel)
+        self.content_layout.addWidget(self.model_panel)
 
         # Dataset selection dropdown
         dataset_label = QLabel("③ Choose a Training Dataset")
-        dataset_label.setStyleSheet("font-weight: bold; color: #2c3e50;")
-        layout.addWidget(dataset_label)
+        dataset_label.setStyleSheet(Labels.SECTION_LABEL)
+        self.content_layout.addWidget(dataset_label)
 
         self.train_dataset_dropdown = MultiColumnComboBox()
-        self.train_dataset_dropdown.setStyleSheet("""
-            QComboBox {
-                padding: 0px 8px;
-                border: 1px solid #bdc3c7;
-                border-radius: 4px;
-                background-color: white;
-                min-height: 25px;
-            }
-            QComboBox:disabled {
-                background-color: #f5f5f5;
-                color: #999;
-            }
-        """)
+        self.train_dataset_dropdown.setStyleSheet(Containers.COMBOBOX_STANDARD)
 
         # Populate with registered datasets
         datasets_meta = datasets.list_datasets_metadata()
@@ -356,27 +311,15 @@ class TrainingStacker(QWidget):
         # Connect to selection handler
         self.train_dataset_dropdown.currentIndexChanged.connect(self.on_dataset_selected)
 
-        layout.addWidget(self.train_dataset_dropdown)
+        self.content_layout.addWidget(self.train_dataset_dropdown)
 
         # Alignment selection dropdown (initially disabled)
         alignment_label = QLabel("④ Choose an Alignment")
-        alignment_label.setStyleSheet("font-weight: bold; color: #2c3e50;")
-        layout.addWidget(alignment_label)
+        alignment_label.setStyleSheet(Labels.SECTION_LABEL)
+        self.content_layout.addWidget(alignment_label)
 
         self.train_alignment_dropdown = MultiColumnComboBox()
-        self.train_alignment_dropdown.setStyleSheet("""
-            QComboBox {
-                padding: 0px 8px;
-                border: 1px solid #bdc3c7;
-                border-radius: 4px;
-                background-color: white;
-                min-height: 25px;
-            }
-            QComboBox:disabled {
-                background-color: #f5f5f5;
-                color: #999;
-            }
-        """)
+        self.train_alignment_dropdown.setStyleSheet(Containers.COMBOBOX_STANDARD)
 
         self.train_alignment_dropdown.set_data(
             [{"id": None, "data": ("Select a dataset first", "", "")}],
@@ -384,67 +327,21 @@ class TrainingStacker(QWidget):
             placeholder="Select a dataset first",
         )
         self.train_alignment_dropdown.setEnabled(False)
-        layout.addWidget(self.train_alignment_dropdown)
-
-        # # Training Text Grid Directory
-        # textgrid_label = QLabel("Training TextGrid Corpus")
-        # textgrid_label.setStyleSheet("font-weight: bold; color: #2c3e50;")
-        # layout.addWidget(textgrid_label)
-
-        # train_textgrid_layout = QHBoxLayout()
-        # train_textgrid_layout.setSpacing(8)
-        # self.train_textgrid_path = QLineEdit(Defaults["textgrid_path"])
-        # self.train_textgrid_browse = QPushButton("Browse")
-        # self.train_textgrid_browse.setFixedWidth(100)
-        # self.train_textgrid_browse.setStyleSheet(BrowseButtonStyle)
-        # self.train_textgrid_browse.clicked.connect(
-        #     lambda: self.browse_directory(self.train_textgrid_path)
-        # )
-        # train_textgrid_layout.addWidget(self.train_textgrid_path, stretch=1)
-        # train_textgrid_layout.addWidget(self.train_textgrid_browse)
-        # layout.addLayout(train_textgrid_layout)
+        self.content_layout.addWidget(self.train_alignment_dropdown)
 
         # Model Name
         model_name_label = QLabel("⑤ Name Your Model")
-        model_name_label.setStyleSheet("font-weight: bold; color: #2c3e50;")
-        layout.addWidget(model_name_label)
+        model_name_label.setStyleSheet(Labels.SECTION_LABEL)
+        self.content_layout.addWidget(model_name_label)
 
         self.train_model_name = QLineEdit("my_custom_model")
-        layout.addWidget(self.train_model_name)
+        self.content_layout.addWidget(self.train_model_name)
 
-        layout.addSpacing(10)
+        self.content_layout.addSpacing(10)
 
         # Train Button
         self.train_btn = QPushButton("⑥ Start Training")
         self.train_btn.setMinimumHeight(45)
-        self.train_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #4a90e2;
-                color: white;
-                border: none;
-                border-radius: 6px;
-                font-size: 14px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #357abd;
-            }
-            QPushButton:pressed {
-                background-color: #2d6ba3;
-            }
-            QPushButton:disabled {
-                background-color: #b0c4de;
-            }
-        """)
+        self.train_btn.setStyleSheet(Buttons.PRIMARY)
         self.train_btn.clicked.connect(self.on_train_model)
-        layout.addWidget(self.train_btn)
-
-        # Status label
-        self.train_status = QLabel("Ready")
-        self.train_status.setStyleSheet("color: #7f8c8d; font-size: 12px; margin-top: 5px;")
-        self.train_status.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(self.train_status)
-
-        layout.addStretch()
-
-        return self
+        self.content_layout.addWidget(self.train_btn)

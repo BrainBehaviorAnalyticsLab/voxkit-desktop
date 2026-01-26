@@ -20,6 +20,8 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
 )
 
+from voxkit.gui.styles import Buttons, Containers, Labels
+
 
 class CSVViewerDialog(QDialog):
     """
@@ -56,85 +58,24 @@ class CSVViewerDialog(QDialog):
         # Header with file name
         filename = Path(self.csv_path).name
         header_label = QLabel(f"📊 {filename}")
-        header_label.setStyleSheet("""
-            QLabel {
-                font-size: 18px;
-                font-weight: bold;
-                color: #2c3e50;
-                padding: 10px;
-            }
-        """)
+        header_label.setStyleSheet(Labels.HEADER)
         layout.addWidget(header_label)
 
         # Table widget
         self.table = QTableWidget()
         self.table.setAlternatingRowColors(True)
-        self.table.setStyleSheet("""
-            QTableWidget {
-                gridline-color: #ecf0f1;
-                background-color: white;
-                border: 1px solid #bdc3c7;
-                border-radius: 4px;
-                selection-background-color: #3498db;
-                selection-color: white;
-            }
-            QTableWidget::item {
-                padding: 8px;
-                border-bottom: 1px solid #ecf0f1;
-            }
-            QTableWidget::item:selected {
-                background-color: #3498db;
-                color: white;
-            }
-            QHeaderView::section {
-                background-color: #34495e;
-                color: white;
-                padding: 10px;
-                font-weight: bold;
-                border: none;
-                border-right: 1px solid #2c3e50;
-            }
-            QHeaderView::section:last {
-                border-right: none;
-            }
-            QTableWidget::item:alternate {
-                background-color: #f8f9fa;
-            }
-        """)
+        self.table.setStyleSheet(Containers.TABLE_WIDGET)
         layout.addWidget(self.table)
 
         # Stats label
         self.stats_label = QLabel()
-        self.stats_label.setStyleSheet("""
-            QLabel {
-                color: #7f8c8d;
-                font-size: 12px;
-                font-style: italic;
-                padding: 5px;
-            }
-        """)
+        self.stats_label.setStyleSheet(Labels.STATS)
         layout.addWidget(self.stats_label)
 
         # Close button
         close_btn = QPushButton("Close")
         close_btn.setFixedWidth(100)
-        close_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #3498db;
-                color: white;
-                border: none;
-                border-radius: 5px;
-                padding: 8px 16px;
-                font-size: 13px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #2980b9;
-            }
-            QPushButton:pressed {
-                background-color: #21618c;
-            }
-        """)
+        close_btn.setStyleSheet(Buttons.PRIMARY)
         close_btn.clicked.connect(self.reject)
         layout.addWidget(close_btn, alignment=Qt.AlignmentFlag.AlignCenter)
 

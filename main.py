@@ -3,7 +3,7 @@ import faulthandler
 import os
 import multiprocessing
 
-from voxkit.config.pipeline_config import PipelineConfig, PipelineStep, UIConfig, get_pipeline_config
+from voxkit.config.pipeline_config import PipelineConfig
 from voxkit.config.app_config import AppConfig
 
 # Disable Qt emoji support to prevent crashes in frozen builds
@@ -49,9 +49,9 @@ if getattr(sys, 'frozen', False):
 
 
 
-from gui import AlignmentGUI
 from PyQt6.QtWidgets import QApplication
 from voxkit.config import STARTUP_SCRIPT
+from voxkit.gui import AlignmentGUI
 from voxkit.gui.workers.startup import execute_startup_script
 from pathlib import Path
 
@@ -65,6 +65,7 @@ def main():
 
     app_config = None
     pipeline_config = None
+    
     # Handle special '_MEIPASS' argument for frozen builds
     if getattr(sys, '_MEIPASS', None):
         app_config = AppConfig.from_yaml(

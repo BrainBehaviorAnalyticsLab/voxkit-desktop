@@ -26,8 +26,7 @@ from voxkit.gui.utils import validate_path, validate_paths
 from voxkit.gui.workers.worker_thread import WorkerThread
 from voxkit.storage import alignments, datasets
 from voxkit.storage.utils import get_storage_root
-
-from .styles import BrowseButtonStyle
+from voxkit.gui.styles import Buttons, Containers, Labels
 
 FIELDS: list[FieldConfig] = [
     FieldConfig(
@@ -194,7 +193,7 @@ class PLLRStacker(QWidget):
 
         # Title
         title = QLabel("Ⓒ Extract GOP Scoring")
-        title.setStyleSheet("font-size: 24px; font-weight: bold; color: #2c3e50;")
+        title.setStyleSheet(Labels.PAGE_TITLE)
         header_layout.addWidget(title)
 
         header_layout.addStretch()
@@ -202,22 +201,7 @@ class PLLRStacker(QWidget):
         # Settings button
         settings_btn = QPushButton("⚙️")
         settings_btn.setFixedSize(65, 40)
-        settings_btn.setStyleSheet("""
-            QPushButton {
-                background-color: white;
-                border: 1px solid #d0d0d0;
-                border-radius: 5px;
-                font-size: 18px;
-                color: #7f8c8d;
-            }
-            QPushButton:hover {
-                background-color: #f0f0f0;
-                color: #4a90e2;
-            }
-            QPushButton:pressed {
-                background-color: #e0e0e0;
-            }
-        """)
+        settings_btn.setStyleSheet(Buttons.ICON)
         settings_btn.clicked.connect(self.on_extract_settings)
         header_layout.addWidget(settings_btn)
 
@@ -227,23 +211,11 @@ class PLLRStacker(QWidget):
 
         # Dataset selection dropdown
         dataset_label = QLabel("① Choose a PLLR Dataset")
-        dataset_label.setStyleSheet("font-weight: bold; color: #2c3e50;")
+        dataset_label.setStyleSheet(Labels.SECTION_LABEL)
         layout.addWidget(dataset_label)
 
         self.pllr_dataset_dropdown = MultiColumnComboBox()
-        self.pllr_dataset_dropdown.setStyleSheet("""
-            QComboBox {
-                padding: 0px 8px;
-                border: 1px solid #bdc3c7;
-                border-radius: 4px;
-                background-color: white;
-                min-height: 25px;
-            }
-            QComboBox:disabled {
-                background-color: #f5f5f5;
-                color: #999;
-            }
-        """)
+        self.pllr_dataset_dropdown.setStyleSheet(Containers.COMBOBOX_STANDARD)
 
         # Connect to selection handler
         self.pllr_dataset_dropdown.currentIndexChanged.connect(self.on_dataset_selected)
@@ -252,24 +224,11 @@ class PLLRStacker(QWidget):
 
         # Alignment selection dropdown (initially disabled)
         alignment_label = QLabel("② Choose an Alignment")
-        alignment_label.setStyleSheet("font-weight: bold; color: #2c3e50;")
+        alignment_label.setStyleSheet(Labels.SECTION_LABEL)
         layout.addWidget(alignment_label)
 
         self.pllr_alignment_dropdown = MultiColumnComboBox()
-        self.pllr_alignment_dropdown.setStyleSheet("""
-            QComboBox {
-                padding: 0px 8px;
-                border: 1px solid #bdc3c7;
-                border-radius: 4px;
-                background-color: white;
-                min-height: 25px;
-            }
-            QComboBox:disabled {
-                background-color: #f5f5f5;
-                color: #999;
-            }
-        
-        """)
+        self.pllr_alignment_dropdown.setStyleSheet(Containers.COMBOBOX_STANDARD)
 
         self.pllr_alignment_dropdown.set_data(
             [{"id": None, "data": ("Select a dataset first", "", "")}],
@@ -285,7 +244,7 @@ class PLLRStacker(QWidget):
 
         # Output Path
         extract_output_label = QLabel("③ Output Path")
-        extract_output_label.setStyleSheet("font-weight: bold; color: #34495e;")
+        extract_output_label.setStyleSheet(Labels.SECTION_LABEL)
         layout.addWidget(extract_output_label)
 
         extract_output_layout = QHBoxLayout()
@@ -293,7 +252,7 @@ class PLLRStacker(QWidget):
         self.extract_output_path = QLineEdit(Defaults["output_path"])
         self.extract_browse = QPushButton("Browse")
         self.extract_browse.setFixedWidth(100)
-        self.extract_browse.setStyleSheet(BrowseButtonStyle)
+        self.extract_browse.setStyleSheet(Buttons.BROWSE)
         self.extract_browse.clicked.connect(lambda: self.browse_directory(self.extract_output_path))
         extract_output_layout.addWidget(self.extract_output_path, stretch=1)
         extract_output_layout.addWidget(self.extract_browse)
@@ -304,31 +263,13 @@ class PLLRStacker(QWidget):
         # Extract PLLR Button
         self.extract_btn = QPushButton("④ Start GOP Extraction")
         self.extract_btn.setMinimumHeight(45)
-        self.extract_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #27ae60;
-                color: white;
-                border: none;
-                border-radius: 6px;
-                font-size: 14px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #229954;
-            }
-            QPushButton:pressed {
-                background-color: #1e8449;
-            }
-            QPushButton:disabled {
-                background-color: #a9dfbf;
-            }
-        """)
+        self.extract_btn.setStyleSheet(Buttons.PRIMARY)
         self.extract_btn.clicked.connect(self.on_extract_pllr)
         layout.addWidget(self.extract_btn)
 
         # Status label
         self.extract_status = QLabel("Ready")
-        self.extract_status.setStyleSheet("color: #7f8c8d; font-size: 12px; margin-top: 5px;")
+        self.extract_status.setStyleSheet(Labels.INFO_SMALL)
         self.extract_status.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(self.extract_status)
 
