@@ -3,7 +3,6 @@ from typing import Any
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QDialog, QLabel, QMessageBox
 
-from voxkit.engines import engines
 from voxkit.gui.frameworks.categorical_table.categorical_table import CategoricalTableWidget
 from voxkit.gui.frameworks.settings_modal import (
     FieldConfig,
@@ -17,7 +16,6 @@ from voxkit.storage import models
 from .import_dialog import ImportModelDialog
 from .utils import handle_delete, handle_export, handle_import
 
-ENGINE_IDS = engines.list_engines()
 # TODO : Implement Aligner managment logic by see
 # frameworks/widget/categorical_list/api.py | __init__.py
 
@@ -33,7 +31,7 @@ class ManageAlignersWidget(CategoricalTableWidget):
         def refresh_models_function() -> dict[str, list[dict[Any, Any]]]:
             try:
                 model_dict = {}
-                for engine in ENGINE_IDS:
+                for engine in self.get_engines():
                     engine_models = models.list_models(engine)
                     model_dict[engine] = engine_models
 
@@ -79,6 +77,10 @@ class ManageAlignersWidget(CategoricalTableWidget):
         credit.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.layout().addWidget(credit)
 
+    def get_engines(self) -> list:
+        from voxkit.engines import engines
+
+        return engines.list_engines()
     def showEvent(self, event):
         """Refresh models when the widget is shown.
 
@@ -197,8 +199,8 @@ class ManageAlignersWidget(CategoricalTableWidget):
                     name="engine_id",
                     label="Engine",
                     field_type=FieldType.COMBOBOX,
-                    default_value=ENGINE_IDS[0] if ENGINE_IDS else "MFAENGINE",
-                    options=ENGINE_IDS,
+                    default_value=self.get_engines()[0] if self.get_engines() else "MFAENGINE",
+                    options=self.get_engines(),
                     tooltip="Select the engine for this model",
                 ),
             ],

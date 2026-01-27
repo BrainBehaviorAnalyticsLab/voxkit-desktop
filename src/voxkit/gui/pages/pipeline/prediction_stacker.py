@@ -5,8 +5,6 @@ from PyQt6.QtWidgets import (
     QMessageBox,
     QPushButton,
 )
-
-from voxkit.engines import engines
 from voxkit.gui.components import ModelSelectionPanel, MultiColumnComboBox
 from voxkit.gui.frameworks.settings_modal import GenericDialog
 from voxkit.gui.workers.worker_thread import WorkerThread
@@ -18,9 +16,11 @@ from .base_stacker import BaseStacker
 
 class PredictionStacker(BaseStacker):
     def __init__(self, parent):
+        from voxkit.engines import engines
         self.predict_dataset_dropdown = None
         self.model_panel = None
         self.predict_btn = None
+        self.engines = engines
         super().__init__(parent)
 
     def get_title(self) -> str:
@@ -33,7 +33,7 @@ class PredictionStacker(BaseStacker):
     
     def on_settings(self):
         """Open settings dialog for selected engine."""
-        engine = engines.get_engine(self.model_panel.get_selected_engine())
+        engine = self.engines.get_engine(self.model_panel.get_selected_engine())
         if engine:
             settings_dialog = GenericDialog(self, config=engine.get_settings_config("align"))
             settings_dialog.exec()
@@ -77,8 +77,8 @@ class PredictionStacker(BaseStacker):
     def build_ui(self):
         """Create the predict alignments page."""
         # Model Selection Panel
-        available_engines = engines.list_engines()
-        engines_dict = {engine_id: engines.get_engine(engine_id) for engine_id in available_engines}
+        available_engines = self.engines.list_engines()
+        engines_dict = {engine_id: self.engines.get_engine(engine_id) for engine_id in available_engines}
 
         self.model_panel = ModelSelectionPanel(engines_dict)
         self.content_layout.addWidget(self.model_panel)
@@ -154,7 +154,7 @@ class PredictionStacker(BaseStacker):
         print(f"Selected model ID: {selected_model_id}")
 
         # Get engine and call align method
-        engine = engines.get_engine(selected_engine)
+        engine = self.engines.get_engine(selected_engine)
         engine.align(
             dataset_id=dataset_id,
             model_id=selected_model_id,

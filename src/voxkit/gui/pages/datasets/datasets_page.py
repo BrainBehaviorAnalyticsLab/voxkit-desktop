@@ -23,20 +23,12 @@ from PyQt6.QtWidgets import (
 )
 
 from voxkit.analyzers import ManageAnalyzers
-from voxkit.engines import engines
 from voxkit.gui.components import HuggingFaceButton
 from voxkit.gui.components.csv_viewer_dialog import CSVViewerDialog
-from voxkit.gui.frameworks.settings_modal import (
-    FieldConfig,
-    FieldType,
-    GenericDialog,
-    SettingsConfig,
-)
+
 from voxkit.gui.workers import DatasetRegistrationWorker
 from voxkit.storage import alignments, datasets
 from voxkit.gui.styles import Buttons, Colors, Containers, Labels
-
-ENGINE_IDS = engines.list_engines()
 
 
 class DatasetsPage(QWidget):
@@ -50,6 +42,10 @@ class DatasetsPage(QWidget):
         self.init_ui()
         self.refresh_datasets()
 
+    def get_engines(self) -> list:
+        from voxkit.engines import engines
+        return engines.list_engines()
+    
     def init_ui(self):
         """Initialize the UI components"""
         main_layout = QVBoxLayout(self)
@@ -421,7 +417,7 @@ class DatasetsPage(QWidget):
         self.engine_filter_combo.blockSignals(True)
         self.engine_filter_combo.clear()
         self.engine_filter_combo.addItem("All Engines")
-        self.engine_filter_combo.addItems(sorted(ENGINE_IDS))
+        self.engine_filter_combo.addItems(sorted(self.get_engines()))
         self.engine_filter_combo.setCurrentText(current_filter)
         self.engine_filter_combo.blockSignals(False)
 
@@ -580,78 +576,85 @@ class DatasetsPage(QWidget):
 
     def open_registration_dialog(self):
         """Open the dataset registration settings dialog"""
-        # Create settings config
-        config = SettingsConfig(
-            title="Register New Dataset",
-            dimensions=(500, 400),
-            apply_blur=False,  # Disable blur to avoid parent issues
-            store_file="dataset_registration_settings.json",
-            fields=[
-                FieldConfig(
-                    name="dataset_path",
-                    label="Dataset Path",
-                    field_type=FieldType.LINEEDIT,
-                    default_value="",
-                    placeholder="Browse for dataset directory...",
-                    tooltip="Root directory containing speaker subdirectories",
-                ),
-                FieldConfig(
-                    name="dataset_name",
-                    label="Dataset Name",
-                    field_type=FieldType.LINEEDIT,
-                    default_value="",
-                    placeholder="e.g., timit_train",
-                    tooltip="Unique identifier for this dataset",
-                ),
-                FieldConfig(
-                    name="description",
-                    label="Description",
-                    field_type=FieldType.LINEEDIT,
-                    default_value="",
-                    placeholder="Semantic description of the dataset...",
-                    tooltip="Brief description of the dataset purpose and contents",
-                ),
-                FieldConfig(
-                    name="analysis_method",
-                    label="Analysis Method",
-                    field_type=FieldType.COMBOBOX,
-                    default_value=self.analysis_methods[0] if self.analysis_methods else "Default",
-                    options=self.analysis_methods,
-                    tooltip="Select the analysis method for generating the dataset summary CSV",
-                ),
-                FieldConfig(
-                    name="cache",
-                    label="Cache Dataset",
-                    field_type=FieldType.CHECKBOX,
-                    default_value=False,
-                    tooltip="Copy entire dataset to storage (recommended for remote datasets)",
-                ),
-                FieldConfig(
-                    name="anonymize",
-                    label="De-identify",
-                    field_type=FieldType.CHECKBOX,
-                    default_value=False,
-                    tooltip="Mark dataset for anonymization during inference/training",
-                ),
-                FieldConfig(
-                    name="transcribed",
-                    label="Transcribed",
-                    field_type=FieldType.CHECKBOX,
-                    default_value=False,
-                    tooltip="Mark as already containing transcriptions",
-                ),
-            ],
-        )
+        pass
+        # from voxkit.gui.frameworks.settings_modal import (
+        #     FieldConfig,
+        #     FieldType,
+        #     GenericDialog,
+        #     SettingsConfig,
+        # )
+        # # Create settings config
+        # config = SettingsConfig(
+        #     title="Register New Dataset",
+        #     dimensions=(500, 400),
+        #     apply_blur=False,  # Disable blur to avoid parent issues
+        #     store_file="dataset_registration_settings.json",
+        #     fields=[
+        #         FieldConfig(
+        #             name="dataset_path",
+        #             label="Dataset Path",
+        #             field_type=FieldType.LINEEDIT,
+        #             default_value="",
+        #             placeholder="Browse for dataset directory...",
+        #             tooltip="Root directory containing speaker subdirectories",
+        #         ),
+        #         FieldConfig(
+        #             name="dataset_name",
+        #             label="Dataset Name",
+        #             field_type=FieldType.LINEEDIT,
+        #             default_value="",
+        #             placeholder="e.g., timit_train",
+        #             tooltip="Unique identifier for this dataset",
+        #         ),
+        #         FieldConfig(
+        #             name="description",
+        #             label="Description",
+        #             field_type=FieldType.LINEEDIT,
+        #             default_value="",
+        #             placeholder="Semantic description of the dataset...",
+        #             tooltip="Brief description of the dataset purpose and contents",
+        #         ),
+        #         FieldConfig(
+        #             name="analysis_method",
+        #             label="Analysis Method",
+        #             field_type=FieldType.COMBOBOX,
+        #             default_value=self.analysis_methods[0] if self.analysis_methods else "Default",
+        #             options=self.analysis_methods,
+        #             tooltip="Select the analysis method for generating the dataset summary CSV",
+        #         ),
+        #         FieldConfig(
+        #             name="cache",
+        #             label="Cache Dataset",
+        #             field_type=FieldType.CHECKBOX,
+        #             default_value=False,
+        #             tooltip="Copy entire dataset to storage (recommended for remote datasets)",
+        #         ),
+        #         FieldConfig(
+        #             name="anonymize",
+        #             label="De-identify",
+        #             field_type=FieldType.CHECKBOX,
+        #             default_value=False,
+        #             tooltip="Mark dataset for anonymization during inference/training",
+        #         ),
+        #         FieldConfig(
+        #             name="transcribed",
+        #             label="Transcribed",
+        #             field_type=FieldType.CHECKBOX,
+        #             default_value=False,
+        #             tooltip="Mark as already containing transcriptions",
+        #         ),
+        #     ],
+        # )
 
-        # Create and show dialog - pass self as parent
-        dialog = GenericDialog(self, config=config)
-        result = dialog.exec()
+        # # Create and show dialog - pass self as parent
+        # dialog = GenericDialog(self, config=config)
+        # result = dialog.exec()
 
-        if result == QDialog.DialogCode.Accepted:
-            # Get values from dialog
-            values = dialog.get_values()
-            print("Registration values:", values)
-            self.process_registration(values)
+        # if result == QDialog.DialogCode.Accepted:
+        #     # Get values from dialog
+        #     values = dialog.get_values()
+        #     print("Registration values:", values)
+        #     self.process_registration(values)
 
     def process_registration(self, values: dict):
         """Process the registration with values from the dialog"""

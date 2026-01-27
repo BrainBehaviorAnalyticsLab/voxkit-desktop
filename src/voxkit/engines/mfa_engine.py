@@ -76,6 +76,7 @@ class MFAEngine(AlignmentEngine):
             id=id,
         )
 
+
     def align(self, dataset_id: str, model_id: str) -> None:
         print(f"Aligning with MFA using model: {model_id}")
 

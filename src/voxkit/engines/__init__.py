@@ -103,4 +103,4 @@ w2tg = W2TGEngine(id="W2TGENGINE")
 mfa = MFAEngine(id="MFAENGINE")
 engines = EngineManager({w2tg.id: w2tg, mfa.id: mfa})
 
-__all__ = ["engines"]
+__all__ = ["engines", "W2TGEngine", "MFAEngine", "AlignmentEngine", "ToolType"]

@@ -11,7 +11,6 @@ from PyQt6.QtWidgets import (
 )
 
 from voxkit.config import Defaults
-from voxkit.engines import engines
 from voxkit.gui.components import ModelSelectionPanel, MultiColumnComboBox
 from voxkit.gui.frameworks.settings_modal import GenericDialog
 from voxkit.gui.utils import validate_path, validate_paths
@@ -21,11 +20,12 @@ from voxkit.gui.styles import Buttons, Containers, Labels
 
 from .base_stacker import BaseStacker
 
-TrainingTools = engines.get_tool_providers("train")
 
 
 class TrainingStacker(BaseStacker):
     def __init__(self, parent):
+        from voxkit.engines import engines
+        self.engines = engines
         self.train_dataset_dropdown = None
         self.train_alignment_dropdown = None
         self.train_textgrid_path = Defaults["textgrid_path"]
@@ -47,7 +47,7 @@ class TrainingStacker(BaseStacker):
         """Handle settings button click on training page."""
         self.settings_dialog = GenericDialog(
             parent=self,
-            config=TrainingTools[self.model_panel.get_selected_engine()].get_settings_config(
+            config=self.engines.get_tool_providers("train")[self.model_panel.get_selected_engine()].get_settings_config(
                 "train"
             ),
         )
@@ -204,7 +204,7 @@ class TrainingStacker(BaseStacker):
         selected_engine = self.model_panel.get_selected_engine()
         base_model_id = self.model_panel.get_selected_model_id()
 
-        TrainingTools[selected_engine].train_aligner(
+        self.engines.get_tool_providers("train")[selected_engine].train_aligner(
             audio_root=Path(audio_path),
             textgrid_root=Path(textgrid_path),
             base_model_id=base_model_id,
@@ -275,7 +275,7 @@ class TrainingStacker(BaseStacker):
     def build_ui(self):
         """Build the training UI."""
         # Model Selection Panel
-        engines_dict = {engine_id: engine for engine_id, engine in TrainingTools.items()}
+        engines_dict = {engine_id: engine for engine_id, engine in self.engines.get_tool_providers("train").items()}
 
         self.model_panel = ModelSelectionPanel(engines_dict)
         self.content_layout.addWidget(self.model_panel)

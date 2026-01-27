@@ -24,11 +24,12 @@ execute at import time.
 import json
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Literal
+from typing import Literal, Any
 
-from voxkit.gui.frameworks.settings_modal import SettingsConfig
 from voxkit.storage.utils import get_storage_root
 
+
+    
 """
 A tool is a unit of compatible functionality present in an engine that can be used to perform
 a specific task. Each engine can have no more than one of each type of tool, and each engine->tool
@@ -46,7 +47,7 @@ class AlignmentEngine(ABC):
     specific validation criteria.
 
     Attributes:
-        settings_configurations (dict[ToolType, SettingsConfig]): Mapping of
+        settings_configurations (dict[ToolType, Any]): Mapping of
             tool type names ("train"/"align") to their store configuration.
         reference_url (str | None): Optional reference URL for the engine.
         description (str | None): Human-readable description of the engine.
@@ -56,7 +57,7 @@ class AlignmentEngine(ABC):
 
     def __init__(
         self,
-        settings_configurations: dict[ToolType, SettingsConfig],
+        settings_configurations: dict[ToolType, Any],
         reference_url: str | None = None,
         description: str | None = None,
         human_readable_name: str | None = None,
@@ -172,12 +173,12 @@ class AlignmentEngine(ABC):
         with open(path, "r", encoding="utf-8") as f:
             return json.load(f)
 
-    def _get_default_settings(self, cfg: SettingsConfig) -> dict:
+    def _get_default_settings(self, cfg: Any) -> dict:
         """
-        Extract default values from SettingsConfig fields.
+        Extract default values from Any fields.
 
         Args:
-            cfg: The SettingsConfig object containing field definitions.
+            cfg: The Any object containing field definitions.
 
         Returns:
             Dictionary mapping field names to their default values.
@@ -192,7 +193,7 @@ class AlignmentEngine(ABC):
         ``settings_configurations`` for the given ``tool_type``, validates the
         settings using the engine-provided validator, and returns the parsed
         settings dictionary. If the settings file doesn't exist, it falls back
-        to default values extracted from the SettingsConfig fields and saves
+        to default values extracted from the Any fields and saves
         them to disk for future use.
 
         Args:
@@ -234,9 +235,9 @@ class AlignmentEngine(ABC):
 
         return settings
 
-    def get_settings_config(self, tool_type: ToolType) -> SettingsConfig:
+    def get_settings_config(self, tool_type: ToolType) -> Any:
         """
-        Return the :class:`SettingsConfig` for a tool type.
+        Return the :class:`Any` for a tool type.
 
         Args:
             tool_type: The tool type to query.
