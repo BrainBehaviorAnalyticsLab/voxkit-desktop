@@ -135,7 +135,6 @@ def build(args):
                 'g2p_en',
                 'speechbrain',
                 'speechbrain.utils',
-                # Engine modules that need to be explicitly included
                 'voxkit.engines._w2tg_engine',
                 'voxkit.engines._whisperx_engine',
                 'voxkit.engines.mfa_engine',
@@ -143,7 +142,12 @@ def build(args):
                 'PyQt6.QtGui',
                 'PyQt6.QtWidgets',
                 'PyQt6.QtSvg',
-                'PyQt6.QtSvgWidgets'
+                'PyQt6.QtSvgWidgets',
+                'rich._unicode_data.unicode13-0-0',
+                'rich._unicode_data.unicode14-0-0',
+                'rich._unicode_data.unicode15-0-0',
+                'rich._unicode_data.unicode16-0-0',
+                'rich._unicode_data.unicode17-0-0',
         ]
         for hi in default_hidden + args.hidden_import:
                 opts.append(f'--hidden-import={hi}')
