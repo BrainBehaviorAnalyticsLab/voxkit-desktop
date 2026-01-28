@@ -1,75 +1,166 @@
 # Pipeline Configuration
 # Define the stackers to include in the pipeline and their order
+# This file can be modified post-build to adapt to custom workflows
 
 pipeline:
 
+  # ======
+  # INTRODUCTION & ORIENTATION
+  # ======
   - id: "introduction"
     label: "Introduction"
     stacker_class: "MarkdownStacker"
     enabled: true
     markdown_content: |
-      # Welcome ASU/WISCLab Team!
-      Welcome to VoxKit, your comprehensive speech alignment and analysis toolkit designed for clinical speech pathology applications. This introduction provides an overview of the application's features and how to get started.
-      # Key Features:
-      - Train custom alignment models on your datasets
-      - Generate accurate forced alignments using state-of-the-art engines
-      - Extract Goodness of Pronunciation (GOP) scores for pronunciation assessment
-      - Manage datasets and models through an intuitive interface
-      # Welcome ASU/WISCLab Team!
-      Welcome to VoxKit, your comprehensive speech alignment and analysis toolkit designed for clinical speech pathology applications. This introduction provides an overview of the application's features and how to get started.
-      # Key Features:
-      - Train custom alignment models on your datasets
-      - Generate accurate forced alignments using state-of-the-art engines
-      - Extract Goodness of Pronunciation (GOP) scores for pronunciation assessment
-      - Manage datasets and models through an intuitive interface
-      # Welcome ASU/WISCLab Team!
-      Welcome to VoxKit, your comprehensive speech alignment and analysis toolkit designed for clinical speech pathology applications. This introduction provides an overview of the application's features and how to get started.
-      # Key Features:
-      - Train custom alignment models on your datasets
-      - Generate accurate forced alignments using state-of-the-art engines
-      - Extract Goodness of Pronunciation (GOP) scores for pronunciation assessment
-      - Manage datasets and models through an intuitive interface
-      # Welcome ASU/WISCLab Team!
-      Welcome to VoxKit, your comprehensive speech alignment and analysis toolkit designed for clinical speech pathology applications. This introduction provides an overview of the application's features and how to get started.
-      # Key Features:
-      - Train custom alignment models on your datasets
-      - Generate accurate forced alignments using state-of-the-art engines
-      - Extract Goodness of Pronunciation (GOP) scores for pronunciation assessment
-      - Manage datasets and models through an intuitive interface
+      <h1><a href="https://voxkit-web.vercel.app">Welcome</a></h1>
+
+      VoxKit separates developer-level code from researcher-level configuration:
+      - **Developer level**: Implement stackers, engines, analyzers, startup_script (requires coding).
+      - **Researcher level**: Edit YAML files in config folder post-build.
+
+      ###
+
+      On the left side, you will find the `pipeline workflow navigation` menu, each item in this menu is called a `Stacker`. Each instance (version) of VoxKit comes with a set of Stackers baked in (see the available stackers for this version below). These Stackers can be composed into Pipelines to implement research workflows or repetitive data processing tasks.
+      The order and inclusion of Stackers in an apps Pipeline is configurable via the `config/pipeline_definitions.yaml` file (bundled with the app), you can access this file via the command line by navigating to the internal assets within the bundle. This file can be modified to adapt workflows without requiring code changes, or rebuilding the application.
+      
+      ###
+
+      ## Researcher Level Configuration
+      - Review the default pipeline steps in the left navigation menu
+      - Verify startup routines have downloaded necessary models/datasets
+      - Customize collapsible help sections for each stacker as needed by editing `config/pipeline_definitions.yaml`
+      - Reorder and enable/disable stackers by editing `config/pipeline_definitions.yaml`
+      - Distribute your customized config file or app bundle to the relevant parties
+      
+      ###
+      
+      ## Available Stackers
+      - **TrainingStacker**: Train acoustic models on labeled datasets
+      - **PredictionStacker**: Generate forced alignments using trained/pretrained models
+      - **PLLRStacker**: Extract Goodness of Pronunciation (GOP) scores from alignments
+      - **MarkdownStacker**: Display informational markdown content (this step)
+
+      ###
+      
+      ## Need Help?
+      - Visit the [Help Center](https://voxkit-web.vercel.app/help) for detailed guidance and overviews
+      - Report issues via [GitHub](https://github.com/BrainBehaviorAnalyticsLab/voxkit-desktop/issues)
 
     collapsible_sections:
-      "References": "For more information, visit the [VoxKit Help Page](http://localhost:3000/help)."
-      "About Voxkit": "VoxKit is a comprehensive speech alignment and analysis toolkit designed for clinical speech pathology applications. It offers tools for training acoustic models, generating forced alignments, and computing Goodness of Pronunciation (GOP) scores for speech assessment."
-      "Abut GOP": "Goodness of Pronunciation (GOP) is a metric used to assess the quality of pronunciation in speech. It compares the acoustic features of spoken phonemes against expected realizations, providing a score that reflects pronunciation accuracy. Higher GOP scores indicate better pronunciation."
+      "Key Terminology": |
+        Engine: Low-level component providing a set of tools (MFA, W2TG, etc.).
+        Analyzer: Data passovers that happen when the dataset is registered (i.e. dataset summary, one time analyses, etc.).
+        Stacker: Orchestration layer composing engines/analyzers/gui-components into workflow steps.
+        Pipeline: Named sequence of Stackers (workflow steps) with navigation.
+        Artifact: Output files added to the host os's local memory (TextGrids, CSVs, models, logs, etc.).
+        startup_script: Code that runs once at application startup to prepare adn retrieve assets (requires coding).
+      
+      "Configuration Best Practices": |
+        - Use Unicode symbols (Ⓐ Ⓑ Ⓒ) in labels for visual hierarchy
+        - Keep collapsible sections concise (1-3 sentences)
+        - Set enabled: false to hide steps without deleting configuration
+        - Test configuration changes in development before distributing
+        - Version control your YAML files alongside research protocols
 
+  # ======
+  # PIPELINE STEP A: MODEL TRAINING
+  # ======
   - id: "training"
     label: "Ⓐ Train Aligners"
     stacker_class: "TrainingStacker"
     enabled: true
     collapsible_sections:
-      "Step Instructions": "Train custom alignment models on your datasets"
-      "Additional Info": "Training creates acoustic models that learn from your labeled audio data. This process can take several hours depending on dataset size and model complexity."
-      "Requirements": "Ensure your dataset is properly formatted with aligned text transcriptions before beginning training."
-      "Misc": "This is an example of an additional collapsible section."
-    
+      "Collapsible Section 1": |
+        To be, or not to be: that is the question: whether 'tis nobler in the mind to suffer the slings and arrows of outrageous fortune, or to take arms against a sea of troubles, and by opposing end them? To die: to sleep; no more; and, by a sleep to say we end the heart-ache and the thousand natural shocks that flesh is heir to, 'tis a consummation devoutly to be wish'd. To die, to sleep; to sleep: perchance to dream: ay, there's the rub; for in that sleep of death what dreams may come when we have shuffled off this mortal coil, must give us pause. There's the respect that makes calamity of so long a life; for who would bear the whips and scorns of time, the oppressor's wrong, the proud man's contumely, the pangs of dispriz'd love, the law's delay, the insolence of office, and the spurns that patient merit of the unworthy takes, when he himself might his quietus make with a bare bodkin? Who would fardels bear, to grunt and sweat under a weary life, but that the dread of something after death, the undiscover'd country from whose bourn no traveller returns, puzzles the will, and makes us rather bear those ills we have, than fly to others that we know not of? Thus consience doth make cowards of us all; and thus the native hue of resolution is sicklied o'er with the pale cast of thought, and enterprises of great pith and moment with this regard their currents turn awry, and lose the name of action.
+
+      "Collapsible Section 2": |
+        - Bullet point one
+        - Bullet point two
+        - Bullet point three
+      
+      "Collapsible Section 3": |
+        1. Numbered item one
+        2. Numbered item two
+        3. Numbered item three
+
+  # ======
+  # PIPELINE STEP B: FORCED ALIGNMENT
+  # ======
   - id: "prediction"
-    label: "Ⓑ Predict Alignments"
+    label: "Ⓑ Generate Alignments"
     stacker_class: "PredictionStacker"
     enabled: true
     collapsible_sections:
-      "Step Instructions": "Generate forced alignments using trained models"
-      "Additional Info": "Forced alignment automatically determines the precise timing of phonemes in your audio recordings. Select a trained model and dataset to begin alignment."
-    
+      "Collapsible Section 1": |
+        To be, or not to be: that is the question: whether 'tis nobler in the mind to suffer the slings and arrows of outrageous fortune, or to take arms against a sea of troubles, and by opposing end them? To die: to sleep; no more; and, by a sleep to say we end the heart-ache and the thousand natural shocks that flesh is heir to, 'tis a consummation devoutly to be wish'd. To die, to sleep; to sleep: perchance to dream: ay, there's the rub; for in that sleep of death what dreams may come when we have shuffled off this mortal coil, must give us pause. There's the respect that makes calamity of so long a life; for who would bear the whips and scorns of time, the oppressor's wrong, the proud man's contumely, the pangs of dispriz'd love, the law's delay, the insolence of office, and the spurns that patient merit of the unworthy takes, when he himself might his quietus make with a bare bodkin? Who would fardels bear, to grunt and sweat under a weary life, but that the dread of something after death, the undiscover'd country from whose bourn no traveller returns, puzzles the will, and makes us rather bear those ills we have, than fly to others that we know not of? Thus consience doth make cowards of us all; and thus the native hue of resolution is sicklied o'er with the pale cast of thought, and enterprises of great pith and moment with this regard their currents turn awry, and lose the name of action.
+
+      "Collapsible Section 2": |
+        - Bullet point one
+        - Bullet point two
+        - Bullet point three
+      
+      "Collapsible Section 3": |
+        1. Numbered item one
+        2. Numbered item two
+        3. Numbered item three
+      
+
+  # ======
+  # PIPELINE STEP C: GOP EXTRACTION
+  # ======
   - id: "pllr"
     label: "Ⓒ Extract GOP Scoring"
     stacker_class: "PLLRStacker"
     enabled: true
     collapsible_sections:
-      "Step Instructions": "Compute Goodness of Pronunciation scores from alignments"
-      "Additional Info": "GOP scores measure pronunciation quality by comparing acoustic features against expected phoneme realizations. Higher scores indicate better pronunciation accuracy."
+      "Collapsible Section 1": |
+        To be, or not to be: that is the question: whether 'tis nobler in the mind to suffer the slings and arrows of outrageous fortune, or to take arms against a sea of troubles, and by opposing end them? To die: to sleep; no more; and, by a sleep to say we end the heart-ache and the thousand natural shocks that flesh is heir to, 'tis a consummation devoutly to be wish'd. To die, to sleep; to sleep: perchance to dream: ay, there's the rub; for in that sleep of death what dreams may come when we have shuffled off this mortal coil, must give us pause. There's the respect that makes calamity of so long a life; for who would bear the whips and scorns of time, the oppressor's wrong, the proud man's contumely, the pangs of dispriz'd love, the law's delay, the insolence of office, and the spurns that patient merit of the unworthy takes, when he himself might his quietus make with a bare bodkin? Who would fardels bear, to grunt and sweat under a weary life, but that the dread of something after death, the undiscover'd country from whose bourn no traveller returns, puzzles the will, and makes us rather bear those ills we have, than fly to others that we know not of? Thus consience doth make cowards of us all; and thus the native hue of resolution is sicklied o'er with the pale cast of thought, and enterprises of great pith and moment with this regard their currents turn awry, and lose the name of action.
 
-# UI Configuration
+      "Collapsible Section 2": |
+        - Bullet point one
+        - Bullet point two
+        - Bullet point three
+      
+      "Collapsible Section 3": |
+        1. Numbered item one
+        2. Numbered item two
+        3. Numbered item three
+
+# ======
+# UI CONFIGURATION
+# ======
 ui:
-  menu_max_width: 500
-  animation_duration: 300  # milliseconds
-  content_spacing: 20
+  menu_max_width: 500          # Maximum width in pixels for navigation menu
+  animation_duration: 300      # Slide transition time in milliseconds
+  content_spacing: 20          # Padding between content elements in pixels
+  
+# ======
+# NOTES FOR RESEARCHERS
+# ======
+# 
+# Customizing This Configuration:
+# 
+# 1. To add a new pipeline step:
+#    - Developer must first implement a new Stacker subclass in code
+#    - Build the updated application executable
+#
+# 2. To reorder workflow steps:
+#    - Simply change the order of entries in the pipeline configuration above
+#    - Steps show in the order defined here
+#
+# 3. To hide a Stacker:
+#    - Set enabled: false (rather than deleting the configuration)
+#
+# 4. To customize guidance for your study:
+#    - Add collapsible_sections to match your protocol 
+#    - Reference your lab's standard operating procedures
+#
+# 5. Version control recommendations:
+#    - If modifying the code, fork the repo and track changes via Git
+#    - Tag config versions when distributing to research staff
+#    - Document any deviations from standard workflows
+#
+# For questions about configuration options, see:
+# http://voxkit-web.vercel.app/help/configuration
+#
+# ======
