@@ -1,42 +1,43 @@
-"""Pipeline page management with configurable stackers.
+"""Pipeline Module.
 
-This module provides the PipelineFormStack widget that dynamically creates
-pipeline navigation and pages based on configuration.
+Pipeline page management with dynamically configurable stackers.
 
-## Adding New Stackers
+API
+---
+- **PipelineFormStack**: Container widget with sidebar navigation and stacked pages
+- **BaseStacker**: Abstract base class for pipeline pages
+- **STACKER_REGISTRY**: Mapping of stacker names to classes
 
-To add a new stacker to the pipeline:
+Adding New Stackers
+-------------------
+1. Create a new file (e.g., ``my_stacker.py``)
+2. Inherit from ``BaseStacker`` and implement required methods::
 
-1. Create a new file in this directory (e.g., `my_stacker.py`)
-2. Inherit from `BaseStacker` and implement required methods:
-   ```python
-   from .base_stacker import BaseStacker
-   
-   class MyStacker(BaseStacker):
-       def build_ui(self):
-           # Build your UI using self.content_layout
-           pass
-       
-       def get_title(self) -> str:
-           return "My Stacker Title"
-       
-       def has_settings(self) -> bool:
-           return True  # if you have settings
-       
-       def on_settings(self):
-           # Handle settings button click
-           pass
-   ```
+       from .base_stacker import BaseStacker
 
-3. Register it in STACKER_REGISTRY below
+       class MyStacker(BaseStacker):
+           def build_ui(self):
+               # Build UI using self.content_layout
+               pass
+
+           def get_title(self) -> str:
+               return "My Stacker Title"
+
+           def has_settings(self) -> bool:
+               return True  # if you have settings
+
+           def on_settings(self):
+               # Handle settings button click
+               pass
+
+3. Register it in ``STACKER_REGISTRY`` below
 4. Add it to your pipeline config YAML file
-5. The stacker will automatically get:
-   - Standard layout and margins
-   - Header with title and settings button (if has_settings() returns True)
-   - Status label at bottom (if has_status_label() returns True)
-   - reload_models() and reload_datasets() hooks
 
-See `base_stacker.py` for all available methods to override.
+Notes
+-----
+- Stackers automatically get standard layout, header, and status label
+- Override ``reload_models()`` and ``reload_datasets()`` for data refresh hooks
+- See ``base_stacker.py`` for all available methods to override
 """
 
 from typing import TYPE_CHECKING, Optional

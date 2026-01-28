@@ -1,3 +1,19 @@
+"""PLLR Stacker Module.
+
+Pipeline page for extracting GOP (Goodness of Pronunciation) scores using PLLR.
+
+API
+---
+- **PLLRStacker**: GOP extraction workflow UI
+- **get_pllr_settings_config**: Returns PLLR settings configuration
+
+Notes
+-----
+- PLLR = Probabilistic Linear Likelihood Ratio
+- Requires existing alignments (TextGrids) and audio files
+- Outputs phonewise and framewise probability CSVs
+"""
+
 from pathlib import Path
 
 from pypllrcomputer import compute_pllr
@@ -92,6 +108,12 @@ def get_pllr_settings_config() -> SettingsConfig:
 
 
 class PLLRStacker(QWidget):
+    """GOP extraction pipeline page.
+
+    Allows users to extract Goodness of Pronunciation scores from
+    existing alignments using the PLLR (Probabilistic Linear Likelihood Ratio) method.
+    """
+
     def __init__(self, parent=None):
         super().__init__()
         self.parent = parent

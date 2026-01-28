@@ -1,3 +1,12 @@
+"""Training Stacker Module.
+
+Pipeline page for training custom alignment models from existing alignments.
+
+API
+---
+- **TrainingStacker**: Model training workflow UI (dataset + alignment selection)
+"""
+
 from pathlib import Path
 
 from PyQt6.QtCore import Qt
@@ -21,8 +30,12 @@ from voxkit.gui.styles import Buttons, Containers, Labels
 from .base_stacker import BaseStacker
 
 
-
 class TrainingStacker(BaseStacker):
+    """Model training pipeline page.
+
+    Allows users to train custom alignment models using a dataset and
+    existing alignment as training data.
+    """
     def __init__(self, parent):
         from voxkit.engines import engines
         self.engines = engines

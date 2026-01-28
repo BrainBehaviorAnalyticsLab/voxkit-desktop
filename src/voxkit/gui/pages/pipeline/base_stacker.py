@@ -1,7 +1,10 @@
-"""Base stacker class for pipeline pages.
+"""Base Stacker Module.
 
-This module provides a base class that captures common patterns across all stackers,
-making it easier to create new stackers with consistent behavior and styling.
+Abstract base class capturing common patterns for pipeline page stackers.
+
+API
+---
+- **BaseStacker**: Base class with standard layout, header, and status management
 """
 
 from PyQt6.QtCore import Qt

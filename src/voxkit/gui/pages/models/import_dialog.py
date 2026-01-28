@@ -1,3 +1,12 @@
+"""Import Model Dialog Module.
+
+Modal dialog for importing alignment models from HuggingFace Hub.
+
+API
+---
+- **ImportModelDialog**: GenericDialog subclass for HuggingFace model import
+"""
+
 from typing import Callable, Optional
 
 from PyQt6.QtWidgets import QMessageBox
@@ -13,7 +22,10 @@ from voxkit.storage import models
 
 
 class ImportModelDialog(GenericDialog):
-    """Modal dialog for importing models from HuggingFace"""
+    """Modal dialog for importing models from HuggingFace.
+
+    Extends GenericDialog with fields for HuggingFace path and local path input.
+    """
 
     def __init__(
         self,

@@ -1,3 +1,12 @@
+"""Model Selection Panel Module.
+
+Combined engine and model selection widget for pipeline pages.
+
+API
+---
+- **ModelSelectionPanel**: GroupBox with engine radio buttons and model dropdowns
+"""
+
 from PyQt6.QtWidgets import (
     QButtonGroup,
     QGroupBox,
@@ -11,6 +20,7 @@ from PyQt6.QtWidgets import (
 from voxkit.gui.components import MultiColumnComboBox
 from voxkit.storage import models
 from voxkit.gui.styles import Labels, Containers
+
 
 class ModelSelectionPanel(QGroupBox):
     """Reusable panel for selecting alignment engines and models.

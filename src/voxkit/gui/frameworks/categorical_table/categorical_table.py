@@ -1,3 +1,12 @@
+"""Categorical Table Widget Module.
+
+Table-based widget for displaying and managing data grouped into categories.
+
+API
+---
+- **CategoricalTableWidget**: Main widget with category navigation and CRUD callbacks
+"""
+
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QDialog,
@@ -20,7 +29,11 @@ from voxkit.gui.styles import Buttons, Colors, Containers, Labels
 
 
 class CategoricalTableWidget(QWidget):
-    """Widget for viewing and managing categorical data in table format"""
+    """Widget for viewing and managing categorical data in table format.
+
+    Displays data organized into categories with Previous/Next navigation,
+    row selection (single or multi), and action buttons for CRUD operations.
+    """
 
     def __init__(
         self,

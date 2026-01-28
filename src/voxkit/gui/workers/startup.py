@@ -1,12 +1,11 @@
 """Startup Script Module.
 
-This module handles the execution of startup scripts that run on the first
-launch of the application. It provides a mechanism to execute a Python
-function before the GUI is fully initialized.
+First-launch script execution with loading dialog display.
 
 API
 ---
-- **execute_startup_script**: Execute the configured startup script if applicable
+- **StartupScriptWorker**: QThread worker for non-blocking script execution
+- **execute_startup_script**: Execute startup script on first launch
 """
 
 from typing import Callable

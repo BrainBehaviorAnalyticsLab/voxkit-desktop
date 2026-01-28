@@ -1,3 +1,12 @@
+"""DNA Strand Widget Module.
+
+Decorative audio waveform visualization for the toolbar.
+
+API
+---
+- **DNAStrandWidget**: Procedural audio waveform decoration (Wav2Vec homage)
+"""
+
 import math
 
 from PyQt6.QtCore import QPointF, Qt
@@ -8,7 +17,11 @@ from PyQt6.QtWidgets import (
 
 
 class DNAStrandWidget(QWidget):
-    """Decorative audio waveform widget for toolbar - homage to Wav2Vec"""
+    """Decorative audio waveform widget for toolbar.
+
+    Renders a stylized waveform visualization as a homage to Wav2Vec.
+    The widget is purely decorative and ignores mouse events.
+    """
 
     def __init__(self, parent=None):
         super().__init__(parent)

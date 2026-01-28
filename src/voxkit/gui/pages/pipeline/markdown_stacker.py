@@ -1,7 +1,10 @@
-"""Markdown display stacker for showing formatted text content.
+"""Markdown Stacker Module.
 
-This stacker displays markdown-formatted text, useful for instructions,
-documentation, or any text-heavy content in the pipeline.
+Pipeline stacker for displaying markdown-formatted text content.
+
+API
+---
+- **MarkdownStacker**: Stacker widget that renders markdown text
 """
 
 from PyQt6.QtWidgets import QSizePolicy, QTextBrowser

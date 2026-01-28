@@ -1,8 +1,19 @@
-"""
+"""Styles Module.
+
 Centralized style definitions for VoxKit GUI components.
 
-This module provides a unified styling system organized by component type,
-eliminating duplicate styles across the application.
+API
+---
+- **Colors**: Global color palette (primary, text, status, neutral, background)
+- **Buttons**: Button stylesheet presets (PRIMARY, SECONDARY, DANGER, etc.)
+- **Inputs**: Input field stylesheets (LINE_EDIT, SPINBOX, CHECKBOX, COMBOBOX)
+- **Labels**: Label stylesheets (TITLE, HEADER, STATUS variants)
+- **Containers**: Container stylesheets (GROUP_BOX, TABLE_WIDGET, SCROLL_AREA)
+
+Notes
+-----
+- All styles use f-strings referencing Colors for consistency
+- Import specific classes to apply styles via setStyleSheet()
 """
 
 

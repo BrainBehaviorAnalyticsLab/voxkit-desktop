@@ -1,3 +1,13 @@
+"""Dataset Utilities Module.
+
+Helper functions for dataset export and delete operations.
+
+API
+---
+- **on_export**: Handle export button click for selected dataset
+- **on_delete**: Handle delete button click for selected dataset
+"""
+
 from PyQt6.QtWidgets import QFileDialog, QMessageBox
 
 from voxkit.storage import datasets

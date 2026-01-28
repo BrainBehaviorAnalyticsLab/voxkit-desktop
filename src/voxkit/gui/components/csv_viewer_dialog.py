@@ -1,7 +1,10 @@
-"""
-CSV Viewer Dialog Component
+"""CSV Viewer Dialog Module.
 
-A blurred popup dialog for viewing CSV files in a formatted table.
+Modal dialog for viewing CSV files in a formatted table.
+
+API
+---
+- **CSVViewerDialog**: Dialog that displays CSV data with blur background effect
 """
 
 import csv

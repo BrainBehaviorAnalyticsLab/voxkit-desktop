@@ -1,7 +1,10 @@
-"""
-A custom ComboBox widget that supports multiple columns in its dropdown list.
+"""Column Dropdown Module.
 
-Single selection only.
+QComboBox with multi-column table dropdown display.
+
+API
+---
+- **MultiColumnComboBox**: ComboBox with tabular dropdown (single selection)
 """
 
 import sys

@@ -1,5 +1,10 @@
-"""
-HuggingFace branded button component with logo
+"""HuggingFace Button Module.
+
+Branded button with HuggingFace logo for model hub integration.
+
+API
+---
+- **HuggingFaceButton**: QPushButton with HuggingFace emoji and styling
 """
 
 from PyQt6.QtCore import Qt

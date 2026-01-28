@@ -1,3 +1,13 @@
+"""Model Registration Worker Module.
+
+Background worker for registering and copying model files to storage.
+
+Signals
+-------
+- ``finished(bool, str)``: Emitted on completion with (success, message)
+- ``progress(str)``: Emitted with status updates during registration
+"""
+
 import os
 
 from PyQt6.QtCore import QThread, pyqtSignal
@@ -6,7 +16,14 @@ from voxkit.storage import models
 
 
 class ModelRegistrationWorker(QThread):
-    """Worker thread for model registration to avoid blocking the UI"""
+    """Worker thread for model registration.
+
+    Creates model metadata and copies model files (zip, .model, or directory).
+
+    Attributes:
+        finished: Signal emitted on completion with (success, message).
+        progress: Signal emitted with status updates.
+    """
 
     finished = pyqtSignal(bool, str)
     progress = pyqtSignal(str)

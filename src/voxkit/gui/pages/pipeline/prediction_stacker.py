@@ -1,3 +1,12 @@
+"""Prediction Stacker Module.
+
+Pipeline page for running forced alignment on datasets using trained models.
+
+API
+---
+- **PredictionStacker**: Alignment prediction workflow UI
+"""
+
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QDialog,
@@ -15,6 +24,11 @@ from .base_stacker import BaseStacker
 
 
 class PredictionStacker(BaseStacker):
+    """Alignment prediction pipeline page.
+
+    Allows users to run forced alignment on datasets using selected
+    engine and model combinations.
+    """
     def __init__(self, parent):
         from voxkit.engines import engines
         self.predict_dataset_dropdown = None

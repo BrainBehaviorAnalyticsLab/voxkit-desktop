@@ -1,23 +1,16 @@
-"""
-Generic settings modal framework for VoxKit engine tool configuration.
+"""Settings Modal Framework.
 
-This module provides a reusable framework for creating settings dialogs that
-manage configuration for VoxKit engine tools. The framework handles:
+Reusable framework for creating settings dialogs with declarative field configurations.
 
-- Dynamic form field generation from declarative configurations
-- Automatic persistence of settings to JSON files
-- Type-safe field definitions with validation support
-- Integration with VoxKit storage system
+API
+---
+- **GenericDialog**: Modal dialog with automatic field generation and JSON persistence
+- **SettingsConfig**: Configuration container for dialog title, dimensions, and fields
+- **FieldConfig**: Individual field definition (name, label, type, defaults, validation)
+- **FieldType**: Enum of supported widget types (SPINBOX, CHECKBOX, LINEEDIT, etc.)
 
-The primary components are:
-
-- :class:`GenericDialog`: Modal dialog widget with automatic field generation
-- :class:`SettingsConfig`: Configuration container for dialog specification
-- :class:`FieldConfig`: Individual field configuration with type and validation
-- :class:`FieldType`: Enum of supported field widget types
-
-Example usage
--------------
+Example
+-------
 Create a settings dialog for an engine tool::
 
     from voxkit.gui.frameworks.settings_modal import (

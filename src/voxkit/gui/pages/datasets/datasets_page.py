@@ -1,5 +1,10 @@
-"""
-Datasets management page for registering, validating, and managing speech datasets.
+"""Datasets Page Module.
+
+Main widget for registering, validating, and managing speech datasets.
+
+API
+---
+- **DatasetsPage**: Dataset management page with alignment viewer panel
 """
 
 from pathlib import Path

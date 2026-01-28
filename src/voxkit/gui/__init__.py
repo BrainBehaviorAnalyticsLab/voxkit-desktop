@@ -1,5 +1,34 @@
-"""
-Alignment GUI main window and components.
+"""VoxKit GUI Module.
+
+PyQt6-based graphical user interface for the VoxKit desktop application.
+
+Structure
+---------
+The GUI layer is organized as follows:
+
+    voxkit/gui/
+    ├── __init__.py           # Main window (AlignmentGUI)
+    ├── utils.py              # Path validation helpers
+    ├── styles/               # Centralized styling (Colors, Buttons, Labels)
+    ├── components/           # Reusable widgets (dropdowns, dialogs, toggles)
+    ├── workers/              # QThread background workers
+    ├── frameworks/           # UI pattern frameworks
+    │   ├── categorical_table/    # Table view for categorical data
+    │   └── settings_modal/       # Generic settings dialog builder
+    └── pages/                # Main application pages
+        ├── datasets/             # Dataset management
+        ├── models/               # Model management
+        └── pipeline/             # Pipeline workflows (train, predict, PLLR)
+
+API
+---
+- **AlignmentGUI**: Main application window with toolbar navigation
+
+Notes
+-----
+- Uses PyQt6 signals/slots for component communication
+- Long operations run in QThread workers to avoid UI blocking
+- Styling is centralized in the styles module for consistency
 """
 
 import webbrowser

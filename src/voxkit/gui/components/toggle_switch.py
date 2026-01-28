@@ -1,3 +1,12 @@
+"""Toggle Switch Module.
+
+Animated iOS-style toggle switch widget.
+
+API
+---
+- **ToggleSwitch**: Custom toggle switch with smooth animation
+"""
+
 from PyQt6.QtCore import (  # type: ignore[attr-defined]
     QEasingCurve,
     QPropertyAnimation,
@@ -10,6 +19,15 @@ from PyQt6.QtWidgets import QWidget
 
 
 class ToggleSwitch(QWidget):
+    """Animated toggle switch widget.
+
+    A custom iOS-style toggle switch with smooth thumb animation.
+
+    Attributes:
+        _checked: Current checked state.
+        _thumb_pos: Animated thumb position for rendering.
+    """
+
     def __init__(self, checked=False, parent=None):
         super().__init__(parent)
         self._checked = checked

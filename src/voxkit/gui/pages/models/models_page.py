@@ -1,3 +1,12 @@
+"""Models Page Module.
+
+Main widget for managing alignment models across all registered engines.
+
+API
+---
+- **ManageAlignersWidget**: CategoricalTableWidget for model CRUD operations
+"""
+
 from typing import Any
 
 from PyQt6.QtCore import Qt
@@ -16,12 +25,13 @@ from voxkit.storage import models
 from .import_dialog import ImportModelDialog
 from .utils import handle_delete, handle_export, handle_import
 
-# TODO : Implement Aligner managment logic by see
-# frameworks/widget/categorical_list/api.py | __init__.py
-
 
 class ManageAlignersWidget(CategoricalTableWidget):
-    """Widget to manage and display alignment models."""
+    """Widget to manage and display alignment models.
+
+    Provides UI for viewing, importing (local/HuggingFace), exporting,
+    and deleting models grouped by engine type.
+    """
 
     def __init__(self, parent=None):
         self.parent = parent

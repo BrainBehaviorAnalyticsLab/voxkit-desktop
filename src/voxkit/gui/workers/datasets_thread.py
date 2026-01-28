@@ -1,3 +1,13 @@
+"""Dataset Registration Worker Module.
+
+Background worker for validating, registering, and analyzing datasets.
+
+Signals
+-------
+- ``finished(bool, str)``: Emitted on completion with (success, message)
+- ``progress(str)``: Emitted with status updates during registration
+"""
+
 import os
 
 from PyQt6.QtCore import QThread, pyqtSignal
@@ -7,7 +17,14 @@ from voxkit.storage import datasets
 
 
 class DatasetRegistrationWorker(QThread):
-    """Worker thread for dataset registration to avoid blocking the UI"""
+    """Worker thread for dataset registration.
+
+    Validates dataset structure, creates metadata, and generates analysis CSV.
+
+    Attributes:
+        finished: Signal emitted on completion with (success, message).
+        progress: Signal emitted with status updates.
+    """
 
     finished = pyqtSignal(bool, str)
     progress = pyqtSignal(str)

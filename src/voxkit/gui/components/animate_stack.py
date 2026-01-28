@@ -1,9 +1,21 @@
+"""Animated Stack Module.
+
+QStackedWidget with smooth slide transition animations.
+
+API
+---
+- **AnimatedStackedWidget**: Stacked widget with animated page transitions
+"""
+
 from PyQt6.QtCore import QEasingCurve, QPoint, QPropertyAnimation
 from PyQt6.QtWidgets import QStackedWidget
 
 
 class AnimatedStackedWidget(QStackedWidget):
-    """Custom QStackedWidget with slide animations"""
+    """Custom QStackedWidget with slide animations.
+
+    Provides horizontal slide transitions when changing pages.
+    """
 
     def __init__(self, parent=None):
         super().__init__(parent)

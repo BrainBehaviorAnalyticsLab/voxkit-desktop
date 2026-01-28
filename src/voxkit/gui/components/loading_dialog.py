@@ -1,7 +1,10 @@
-"""Loading Dialog Component.
+"""Loading Dialog Module.
 
-This module provides a splash screen/loading dialog for displaying progress
-during long-running operations like first-launch startup scripts.
+Splash screen / loading dialog for long-running operations.
+
+API
+---
+- **LoadingDialog**: Modal dialog with animated spinner and status message
 """
 
 from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, Qt, QTimer

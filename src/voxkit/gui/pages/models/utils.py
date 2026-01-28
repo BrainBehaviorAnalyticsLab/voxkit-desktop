@@ -1,5 +1,14 @@
-"""
-Export handler for copying model files to a download folder
+"""Model Utilities Module.
+
+Handler functions for model import, export, and delete operations.
+
+API
+---
+- **handle_import**: Import models from a directory into storage
+- **handle_delete**: Delete selected models from storage
+- **handle_export**: Export selected models to a download folder
+- **handle_export_lambda**: Create lambda-compatible export handler
+- **create_export_handler**: Simpler inline handler factory
 """
 
 import shutil
