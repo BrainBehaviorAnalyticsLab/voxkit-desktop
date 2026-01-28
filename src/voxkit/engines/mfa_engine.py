@@ -1,3 +1,26 @@
+"""MFA Engine Module.
+
+Montreal Forced Aligner (MFA) integration for VoxKit.
+
+Tools Provided
+--------------
+- **align**: Force-align audio to transcripts using pretrained models
+- **train**: Adapt existing models to new data via MFA's adapt command
+
+Settings
+--------
+Stored at ``~/.voxkit/MFAENGINE/{tool}/settings.json``:
+
+- **align**: use_speaker_adaptation, file_type
+- **train**: epochs, use_gpu
+
+Notes
+-----
+- MFA models use .zip extension
+- Requires base model for training (adaptation only, no from-scratch training)
+- See https://montreal-forced-aligner.readthedocs.io/
+"""
+
 from pathlib import Path
 
 from voxkit.gui.frameworks.settings_modal import (

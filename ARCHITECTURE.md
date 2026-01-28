@@ -83,11 +83,27 @@ Abstraction layer for speech toolkit backends (MFA, W2TG, etc.) that perform ali
 
 **Architecture:**
 - **base.py**: `AlignmentEngine` abstract base class defining the contract for all engines
-- **Concrete Engines**: 
-  - `mfa_engine.py`: Montreal Forced Aligner integration
-  - `w2tg_engine.py`: Wav2TextGrid engine integration
-  - `whisperx_engine.py`: WhisperX engine (in development)
-- **EngineManager**: Discovery, registration, and retrieval system for engines
+- **mfa_engine.py**: Montreal Forced Aligner integration (align, train via adapt)
+- **w2tg_engine.py**: Wav2TextGrid engine integration (align, train)
+- **EngineManager**: Singleton manager for engine discovery and retrieval
+
+**Storage Structure:**
+```
+~/.voxkit/{engine_id}/
+├── aligner/
+│   └── aligner_settings.json     # Alignment tool settings
+├── train/
+│   ├── trainer_settings.json     # Training tool settings
+│   └── {model_id}/               # Trained models
+│       ├── voxkit_model.json
+│       └── entrypoint.model
+└── ...
+```
+
+**API:**
+- `ManageEngines.list_engines()` → List[str]: Registered engine IDs
+- `ManageEngines.get_engine(id)` → AlignmentEngine: Retrieve by ID
+- `ManageEngines.get_tool_providers(tool)` → dict: Engines providing a tool type
 
 ### 3.4 Analyzer Layer (`voxkit.analyzers`)
 Extract structured metadata from datasets at registration time.

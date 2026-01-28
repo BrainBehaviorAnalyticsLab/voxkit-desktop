@@ -1,3 +1,26 @@
+"""W2TG Engine Module.
+
+Wav2TextGrid (W2TG) integration for VoxKit.
+
+Tools Provided
+--------------
+- **align**: Force-align audio using Wav2Vec 2.0 based models
+- **train**: Train or fine-tune alignment models from audio/TextGrid pairs
+
+Settings
+--------
+Stored at ``~/.voxkit/W2TGENGINE/{tool}/settings.json``:
+
+- **align**: use_speaker_adaptation, file_type, use_gpu
+- **train**: start_from_scratch, tokenizer_id, epochs, use_gpu
+
+Notes
+-----
+- Uses Hugging Face models (default tokenizer: charsiu/tokenizer_en_cmu)
+- Supports GPU acceleration for both alignment and training
+- See https://huggingface.co/pkadambi/Wav2TextGrid
+"""
+
 from pathlib import Path
 
 from voxkit.gui.frameworks.settings_modal import (

@@ -1,55 +1,34 @@
-"""
-VoxKit engines package
-======================
+"""VoxKit Engines Module.
 
-This module centralizes the integration points for lowerlevel speech toolkits (engines)
-used by VoxKit. It performs two responsibilities:
+Engines are speech toolkit backends (MFA, W2TG, etc.) that perform alignment
+and training operations. Each engine provides one or more tools
+with configurable settings. Global tool types can be added to ToolType. 
 
-- Auto-discovers and imports engine implementation modules in the package so
-    that their registration side-effects run at import time.
-- Exposes a small manager object, ``ManageEngines``, which provides runtime
-    lookup of registered engines.
-
-The intended workflow for adding a new engine implementation is:
-
-1. Implement an engine subclass of :class:`voxkit.engines.base.AlignmentEngine`.
-2. Annotate the implementation with the ``@register_engine`` decorator defined
-     in :mod:`voxkit.engines.register` (the decorator supports both ``@register_engine``
-     and ``@register_engine(author='name')`` forms).
-3. Place the implementation module inside the ``voxkit.engines`` package. The
-     package initializer will import engine modules matching the pattern
-     ``*_engine.py`` so their decorators execute and populate the global
-     registry.
-
-Engine implementation notes
----------------------------
-
-Each engine encapsulates a set of compatible units of functionality (tools), and a corresponding
-configuration of type :class:`voxkit.gui.frameworks.settings_modal.SettingsConfig`
-this config serves as both documentation and the settings interface for the engine. The settings
-are stored in JSON files under the engine's storage directory.
-
-Registration
-------------
-
-Engine modules should call the decorator at definition time. The package
-initializer imports engine modules so the decorator runs automatically; the
-decorator registers an instantiated engine object in the module-level
-``_REGISTERED_ENGINES`` registry (mapping engine ID strings to engine
-instances).
-
-API (high level)
+Storage Structure
 -----------------
+Engine settings and models are stored under the engine's directory:
 
-- ``ManageEngines.list_engines()`` -> List[str]
-        Returns the list of registered engine IDs.
+    ~/.voxkit/{engine_id}/
+    ├── aligner/
+    │   └── aligner_settings.json     # Alignment tool settings
+    ├── train/
+    │   ├── trainer_settings.json     # Training tool settings
+    │   └── {model_id}/               # Trained models
+    │       ├── voxkit_model.json
+    │       └── entrypoint.model
+    └── ...
 
-- ``ManageEngines.get_engine(engine_id)`` -> AlignmentEngine
-        Returns the registered engine instance for ``engine_id`` or raises
-        ``ValueError`` if the engine is not found.
+API
+---
+- **ManageEngines.list_engines**: List registered engine IDs
+- **ManageEngines.get_engine**: Retrieve engine instance by ID
+- **ManageEngines.get_tool_providers**: Get engines providing a specific tool type
 
-- ``ManageEngines.get_tool_providers(tool)`` -> dict[str, AlignmentEngine]
-        Returns a mapping of engine IDs to engine instances that provide the specified tool type.
+Notes
+-----
+- Each engine's ``id`` property serves as its unique identifier
+- Tools are configured via ``SettingsConfig`` objects with UI field definitions
+- Settings are persisted to JSON and validated before use
 """
 
 from __future__ import annotations

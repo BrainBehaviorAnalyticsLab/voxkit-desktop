@@ -1,24 +1,32 @@
-"""
-Base utilities and abstract interface for alignment engines.
+"""Engine Base Module.
 
-This module defines the :class:`AlignmentEngine` abstract base class which
-encapsulates the contract every alignment engine must implement to
-integrate with VoxKit. The base class handles settings management.
-Concrete engine implementations should subclass this base class and implement the required
-methods for training and alignment, as well as specific validation criteria.
+Defines the abstract interface for alignment engines in VoxKit.
 
--------------
-Create a subclass and register it with :mod:`voxkit.engines.register`::
+Creating a Custom Engine
+------------------------
+To create a new engine:
 
-    from voxkit.engines.base import AlignmentEngine
-    from voxkit.engines.register import register_engine
+1. Subclass ``AlignmentEngine``
+2. Define ``settings_configurations`` mapping tool types to ``SettingsConfig``
+3. Implement required methods: ``align``, ``train_aligner``
+4. Implement validators: ``_validate_align_settings``, ``_validate_train_settings``
+5. Register the instance in ``voxkit.engines.__init__``
 
-    @register_engine(author="alice")
+Example::
+
     class MyEngine(AlignmentEngine):
-        ...
+        def __init__(self, id: str | None = None):
+            super().__init__(
+                settings_configurations={"align": my_align_config},
+                reference_url="https://example.com",
+                description="My custom alignment engine",
+                human_readable_name="MyEngine",
+                id=id,
+            )
 
-The package initializer imports engine modules so registration side-effects
-execute at import time.
+        def align(self, dataset_id: str, model_id: str) -> None:
+            # Implementation here
+            pass
 """
 
 import json
