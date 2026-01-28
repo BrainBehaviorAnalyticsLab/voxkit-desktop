@@ -1,26 +1,29 @@
-"""
-VoxKit analyzer package
-===============================
+"""VoxKit Analyzers Module.
 
-This module centralizes the integration points for lower-level dataset analysis
-implementations used by VoxKit. It auto-discovers and imports analysis
-implementation modules in this package so their registration side-effects run at
-import time and exposes a small manager object, ``ManageAnalyzers``, which
-provides runtime lookup of registered analyzers.
+Analyzers extract structured metadata from datasets at registration time,
+producing CSV summaries that can be visualized within VoxKit without rescanning
+the filesystem.
 
-The package will import modules matching the pattern ``*_analyzer.py`` so that
-their decorators (which register analysis implementations) can execute and
-populate the module-level registry.
+Output Structure
+----------------
+Analyzer output is stored alongside dataset metadata:
 
-The intended workflow for adding a new analysis implementation is:
+    ~/.voxkit/datasets/{dataset_id}/
+    ├── voxkit_dataset.json           # Dataset metadata
+    ├── {analyzer_name}_summary.csv   # Analyzer output
+    └── alignments/                   # Alignment outputs
 
-1. Implement an analyzer subclass of :class:`voxkit.analyzers.base.DatasetAnalyzer`.
-2. Annotate the implementation with the ``@register_analyzer`` decorator defined
-        in :mod:`voxkit.analyzers.register` (the decorator supports both ``@register_analyzer``
-        and ``@register_analyzer(author='name')`` forms).
-3. Place the implementation module inside the ``voxkit.analyzers`` package. The package
- initializer will import analyzer modules matching the pattern ``*_analyzer.py`` so their
- decorators execute and populate the global registry.
+API
+---
+- **ManageAnalyzers.list_analyzers**: List registered analyzer IDs
+- **ManageAnalyzers.get_analyzer**: Retrieve analyzer instance by ID
+- **ManageAnalyzers.get_analyzers**: Get all registered analyzers
+
+Notes
+-----
+- Analyzers run during dataset registration (see ``voxkit.gui.workers.datasets_thread``)
+- Each analyzer's ``name`` property serves as its unique identifier
+- Output is a list of dicts where keys become CSV column headers
 """
 
 from __future__ import annotations

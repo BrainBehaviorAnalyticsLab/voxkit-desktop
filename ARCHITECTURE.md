@@ -93,9 +93,22 @@ Abstraction layer for speech toolkit backends (MFA, W2TG, etc.) that perform ali
 Extract structured metadata from datasets at registration time.
 
 **Architecture:**
-- **base.py**: Abstract base class
-- **default_analyzer.py**: Built-in analyzer extracting file counts, speakers, duration
-- **ManageAnalyzers**: Discovery and registration system for analyzers
+- **base.py**: `DatasetAnalyzer` abstract base class defining the contract for all analyzers
+- **default_analyzer.py**: Built-in analyzer extracting speaker counts and audio file counts
+- **ManageAnalyzers**: Singleton manager for analyzer discovery and retrieval
+
+**Output Structure:**
+```
+~/.voxkit/datasets/{dataset_id}/
+├── voxkit_dataset.json           # Dataset metadata
+├── {analyzer_name}_summary.csv   # Analyzer output (e.g., Default_summary.csv)
+└── alignments/                   # Alignment outputs
+```
+
+**API:**
+- `ManageAnalyzers.list_analyzers()` → List[str]: Registered analyzer IDs
+- `ManageAnalyzers.get_analyzer(id)` → DatasetAnalyzer: Retrieve by ID
+- `ManageAnalyzers.get_analyzers()` → dict: All registered analyzers
 
 **Purpose:**
 Analyzers produce CSV summaries of datasets that can be visualized and analyzed within VoxKit without re-scanning the filesystem.

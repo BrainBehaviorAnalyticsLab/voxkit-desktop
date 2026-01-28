@@ -1,13 +1,29 @@
-"""
-voxkit.datasets.analysis.base
-=================================
+"""Analyzer Base Module.
 
-This module defines the base class for dataset analysis methods.
-The public surface area includes:
+Defines the abstract interface for dataset analyzers in VoxKit.
 
-- :class:`DatasetAnalyzer`: Abstract base class for dataset analysis methods. Subclasses must
-implement the ``name`` and ``description`` properties and the ``analyze`` method which returns
-row dictionaries suitable for CSV export.
+Creating a Custom Analyzer
+--------------------------
+To create a new analyzer:
+
+1. Subclass ``DatasetAnalyzer``
+2. Implement required properties: ``name``, ``description``
+3. Implement the ``analyze`` method returning CSV-exportable data
+4. Register the instance in ``voxkit.analyzers.__init__``
+
+Example::
+
+    class DurationAnalyzer(DatasetAnalyzer):
+        @property
+        def name(self) -> str:
+            return "Duration"
+
+        @property
+        def description(self) -> str:
+            return "Total audio duration per speaker"
+
+        def analyze(self, dataset_path: str) -> List[Dict[str, Any]]:
+            return [{"speaker_id": "spk1", "duration_seconds": 120.5}]
 """
 
 from abc import ABC, abstractmethod
@@ -15,8 +31,7 @@ from typing import Any, Dict, List
 
 
 class DatasetAnalyzer(ABC):
-    """
-    Abstract base class for dataset analysis methods.
+    """Abstract base class for dataset analysis methods.
 
     Subclasses must implement the ``name`` and ``description`` properties and
     the ``analyze`` method which returns row dictionaries suitable for CSV
@@ -26,8 +41,7 @@ class DatasetAnalyzer(ABC):
     @property
     @abstractmethod
     def name(self) -> str:
-        """
-        Display name for this analysis method.
+        """Display name for this analysis method.
 
         Returns:
             str: Human readable name used to register and select the analyzer.
@@ -36,8 +50,7 @@ class DatasetAnalyzer(ABC):
     @property
     @abstractmethod
     def description(self) -> str:
-        """
-        Short description of the analyzer's behavior.
+        """Short description of the analyzer's behavior.
 
         Returns:
             str: Brief description suitable for display in UI lists.
@@ -45,8 +58,7 @@ class DatasetAnalyzer(ABC):
 
     @abstractmethod
     def analyze(self, dataset_path: str) -> List[Dict[str, Any]]:
-        """
-        Analyze a dataset and return structured data for CSV export.
+        """Analyze a dataset and return structured data for CSV export.
 
         Args:
             dataset_path (str): Path to the dataset root directory. The

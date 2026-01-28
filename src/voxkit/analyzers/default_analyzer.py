@@ -1,3 +1,18 @@
+"""Default Analyzer Module.
+
+Built-in analyzer that extracts speaker and audio file counts from datasets.
+
+Output Columns
+--------------
+- **speaker_id**: Name of the speaker subdirectory
+- **audio_file_count**: Number of audio files in that speaker's directory
+
+Notes
+-----
+- Expects MFA-style directory structure with speaker subdirectories
+- Supported audio formats: .wav, .flac, .mp3, .ogg, .m4a
+"""
+
 import os
 from pathlib import Path
 from typing import Any, Dict, List
@@ -6,12 +21,7 @@ from .base import DatasetAnalyzer
 
 
 class DefaultAnalyzer(DatasetAnalyzer):
-    """
-    Default analyzer: extracts speaker and audio file counts per speaker.
-
-    The analyzer expects the dataset to be organized as a directory where
-    each subdirectory represents a speaker and contains audio files.
-    """
+    """Default analyzer extracting speaker and audio file counts per speaker."""
 
     @property
     def name(self) -> str:
