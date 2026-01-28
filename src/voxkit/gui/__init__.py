@@ -1,3 +1,7 @@
+"""
+Alignment GUI main window and components.
+"""
+
 import webbrowser
 from typing import Optional
 

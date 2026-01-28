@@ -46,6 +46,19 @@ from .config import MODELS_ROOT
 
 
 class ModelMetadata(TypedDict):
+    """Model metadata structure.
+
+    Attributes:
+        name: Human-readable name of the model.
+        engine_id: Identifier of the engine this model belongs to (e.g., "mfa").
+        model_path: Path to the model entrypoint file.
+        data_path: Path to the model's data directory.
+        eval_path: Path to the model's evaluation directory.
+        train_path: Path to the model's training artifacts directory.
+        download_date: Human-readable download/creation timestamp.
+        id: Unique identifier (timestamp with microsecond precision).
+    """
+
     name: str
     engine_id: str
     model_path: Path
@@ -92,12 +105,24 @@ def create_model(
 ) -> tuple[Literal[True], ModelMetadata] | tuple[Literal[False], str]:
     """Create a new model entry in the storage.
 
+    Creates a new model directory structure with subdirectories for data, evaluation,
+    and training artifacts. Generates a unique ID and creates a metadata file.
+
     Args:
         engine_id: Identifier of the engine the model belongs to
         model_name: Human-readable name for the model
 
     Returns:
         Tuple of (True, ModelMetadata) on success or (False, error_message) on failure
+
+    Raises:
+        FileNotFoundError: If the engine's model root does not exist
+        Exception: If directory creation or metadata writing fails
+
+    Notes:
+        - Model paths in metadata are stored as strings for JSON serialization
+        - Automatically cleans up partially created directories on failure
+        - Creates four directories: model root, data, eval, and train
     """
 
     engine_models_root = Path(f"{get_storage_root()}/{engine_id}/{MODELS_ROOT}")
@@ -154,6 +179,10 @@ def create_model(
 def update_model_metadata(engine_id: str, model_id: str, updates: dict) -> Tuple[bool, str]:
     """Update metadata for an existing model.
 
+    Updates fields in the model's metadata file. Only fields present in the
+    metadata are updated; unknown fields are ignored. Values are converted to
+    strings before writing.
+
     Args:
         engine_id: Identifier of the engine the model belongs to
         model_id: Identifier of the model to update
@@ -161,6 +190,10 @@ def update_model_metadata(engine_id: str, model_id: str, updates: dict) -> Tuple
 
     Returns:
         Tuple of (True, success_message) on success or (False, error_message) on failure
+
+    Raises:
+        FileNotFoundError: If the model is not found
+        Exception: If metadata file cannot be read or written
     """
     model_root = _get_model_root(engine_id, model_id)
     if not model_root:
@@ -189,11 +222,20 @@ def update_model_metadata(engine_id: str, model_id: str, updates: dict) -> Tuple
 def list_models(engine_id: str) -> list[ModelMetadata]:
     """List available models for the given engine.
 
+    Scans the engine's model directory and collects metadata from all subdirectories
+    containing valid voxkit_model.json files. Creates the models directory if it
+    doesn't exist.
+
     Args:
         engine_id: Identifier of the engine to list models for
 
     Returns:
-        List of ModelMetadata dictionaries
+        List of ModelMetadata dictionaries (empty list if none found)
+
+    Notes:
+        - Skips directories with invalid or missing metadata files
+        - Returns empty list on error
+        - Automatically creates models directory if missing
     """
     try:
         models_root = Path(f"{get_storage_root()}/{engine_id}/{MODELS_ROOT}")
@@ -223,6 +265,9 @@ def list_models(engine_id: str) -> list[ModelMetadata]:
 def get_model_metadata(engine_id: str, model_id: str) -> ModelMetadata:
     """Get metadata for a specific model by its ID.
 
+    Retrieves the model metadata from the voxkit_model.json file in the
+    model's directory.
+
     Args:
         engine_id: Identifier of the engine the model belongs to
         model_id: Identifier of the model
@@ -232,6 +277,7 @@ def get_model_metadata(engine_id: str, model_id: str) -> ModelMetadata:
 
     Raises:
         FileNotFoundError: If the model or metadata file is not found
+        JSONDecodeError: If the metadata file is malformed
     """
     model_root = _get_model_root(engine_id, model_id)
     if not model_root:
@@ -247,12 +293,22 @@ def get_model_metadata(engine_id: str, model_id: str) -> ModelMetadata:
 def delete_model(engine_id: str, model_id: str) -> Tuple[bool, str]:
     """Delete a model given its engine ID and model ID.
 
+    Permanently removes the model directory and all its contents, including
+    the model file, metadata, and associated data/eval/train directories.
+
     Args:
         engine_id: Identifier of the engine the model belongs to
         model_id: Identifier of the model to delete
 
     Returns:
         Tuple of (True, success_message) on success or (False, error_message) on failure
+
+    Raises:
+        Exception: If the directory cannot be removed
+
+    Notes:
+        - This operation is irreversible
+        - Removes the entire model directory tree
     """
 
     print(f"Attempting to delete model: engine_id={engine_id}, model_id={model_id}")
@@ -269,12 +325,19 @@ def delete_model(engine_id: str, model_id: str) -> Tuple[bool, str]:
 def import_models(engine_id, new_models_root: Path) -> Tuple[bool, str]:
     """Import models into the storage system.
 
+    This function imports models from an external directory into VoxKit storage. Each model
+    must have a valid voxkit_model.json metadata file. The function validates metadata,
+    generates new IDs, updates paths, and copies the model to storage.
+
     Args:
         engine_id: Identifier of the engine
         new_models_root: Source directory containing models to import
 
     Returns:
         Tuple of (True, success_message) on success or (False, error_message) on failure
+
+    Raises:
+        Exception: If model validation or copy operations fail
     """
     try:
         for new_model_path in new_models_root.iterdir():

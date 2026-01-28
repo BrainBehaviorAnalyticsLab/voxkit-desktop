@@ -45,9 +45,28 @@ from .models import ModelMetadata, get_model_metadata
 from .utils import generate_unique_id, readable_from_unique_id
 
 AlignmentStatus = Literal["pending", "completed", "failed"]
+"""Status of an alignment operation.
+
+Values:
+    pending: Alignment has been created but not yet processed.
+    completed: Alignment has been successfully completed.
+    failed: Alignment processing failed.
+"""
 
 
 class AlignmentMetadata(TypedDict):
+    """Alignment metadata structure.
+
+    Attributes:
+        id: Unique identifier (timestamp with microsecond precision).
+        engine_id: Identifier of the alignment engine used (e.g., "mfa").
+        model_metadata: Metadata of the model used for alignment.
+        local: Whether TextGrid files are stored locally (cached) or at original path.
+        alignment_date: Human-readable alignment creation timestamp.
+        status: Current status of the alignment operation.
+        tg_path: Path to the directory containing TextGrid output files.
+    """
+
     id: str
     engine_id: str
     model_metadata: ModelMetadata
@@ -98,6 +117,10 @@ def create_alignment(
 ) -> tuple[Literal[True], AlignmentMetadata] | tuple[Literal[False], str]:
     """Create a new alignment entry in the storage.
 
+    Creates an alignment directory, sets up TextGrid output location based on whether
+    the dataset is cached, generates metadata, and initializes the alignment with
+    "pending" status.
+
     Args:
         dataset_id: Identifier of the dataset to align
         engine_id: Identifier of the alignment engine
@@ -105,6 +128,15 @@ def create_alignment(
 
     Returns:
         Tuple of (True, AlignmentMetadata) on success or (False, error_message) on failure
+
+    Raises:
+        FileNotFoundError: If model or dataset is not found
+        Exception: If directory creation or metadata writing fails
+
+    Notes:
+        - For cached datasets, TextGrid output is stored in the alignment directory
+        - For non-cached datasets, TextGrid output is stored in the original dataset path
+        - Automatically cleans up on failure
     """
     # Fetch model metadata
     model_metadata = get_model_metadata(engine_id, model_id)
@@ -167,6 +199,9 @@ def create_alignment(
 def get_alignment_metadata(dataset_id: str, alignment_id: str) -> AlignmentMetadata | None:
     """Get the metadata for a specific alignment by ID.
 
+    Retrieves the alignment metadata from the voxkit_alignment.json file in the
+    alignment's directory. Normalizes status values to lowercase for consistency.
+
     Args:
         dataset_id: Identifier of the dataset containing the alignment
         alignment_id: Identifier of the alignment
@@ -175,7 +210,8 @@ def get_alignment_metadata(dataset_id: str, alignment_id: str) -> AlignmentMetad
         AlignmentMetadata dictionary or None if not found
 
     Raises:
-        Exception: If metadata file cannot be loaded
+        Exception: If metadata file cannot be loaded or parsed
+        JSONDecodeError: If the metadata file is malformed
     """
     alignment_root = _get_alignment_root(dataset_id, alignment_id)
     if not alignment_root:
@@ -198,6 +234,9 @@ def get_alignment_metadata(dataset_id: str, alignment_id: str) -> AlignmentMetad
 def update_alignment(dataset_id: str, alignment_id: str, updates: dict) -> Tuple[bool, str]:
     """Update the status or metadata of an alignment.
 
+    Updates fields in the alignment's metadata file. Only fields present in the
+    metadata are updated. Status values are automatically normalized to lowercase.
+
     Args:
         dataset_id: Identifier of the dataset containing the alignment
         alignment_id: Identifier of the alignment to update
@@ -205,6 +244,14 @@ def update_alignment(dataset_id: str, alignment_id: str, updates: dict) -> Tuple
 
     Returns:
         Tuple of (True, success_message) on success or (False, error_message) on failure
+
+    Raises:
+        FileNotFoundError: If the alignment is not found
+        Exception: If metadata file cannot be read or written
+
+    Notes:
+        - Status values are normalized to lowercase for consistency
+        - Commonly updated fields include "status" for tracking progress
     """
     alignment_root = _get_alignment_root(dataset_id, alignment_id)
     if not alignment_root:
@@ -236,11 +283,20 @@ def update_alignment(dataset_id: str, alignment_id: str, updates: dict) -> Tuple
 def list_alignments(dataset_id: str) -> List[AlignmentMetadata]:
     """List all alignment metadata for a given dataset.
 
+    Scans the dataset's alignments directory and collects metadata from all
+    subdirectories containing valid voxkit_alignment.json files. Normalizes
+    status values to lowercase for consistency.
+
     Args:
         dataset_id: Identifier of the dataset to list alignments for
 
     Returns:
-        List of AlignmentMetadata dictionaries
+        List of AlignmentMetadata dictionaries (empty list if none found)
+
+    Notes:
+        - Skips directories with invalid or missing metadata files
+        - Returns empty list if dataset not found
+        - Status values are normalized to lowercase
     """
     alignments_root = _get_alignments_root(dataset_id)
     if not alignments_root:
@@ -267,12 +323,23 @@ def list_alignments(dataset_id: str) -> List[AlignmentMetadata]:
 def delete_alignment(dataset_id: str, alignment_id: str) -> Tuple[bool, str]:
     """Delete an alignment given its dataset ID and alignment ID.
 
+    Permanently removes the alignment directory and all its contents, including
+    metadata and TextGrid files (if stored locally).
+
     Args:
         dataset_id: Identifier of the dataset containing the alignment
         alignment_id: Identifier of the alignment to delete
 
     Returns:
         Tuple of (True, success_message) on success or (False, error_message) on failure
+
+    Raises:
+        Exception: If the directory cannot be removed
+
+    Notes:
+        - This operation is irreversible
+        - Only removes TextGrid files if they are stored locally (cached datasets)
+        - TextGrid files in the original dataset path are not removed
     """
     alignment_root = _get_alignment_root(dataset_id, alignment_id)
     if not alignment_root:

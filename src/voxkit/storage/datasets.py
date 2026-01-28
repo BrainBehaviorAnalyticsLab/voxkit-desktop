@@ -49,6 +49,19 @@ from voxkit.storage.utils import generate_unique_id, get_storage_root, readable_
 
 
 class DatasetMetadata(TypedDict):
+    """Dataset metadata structure.
+
+    Attributes:
+        name: Human-readable name of the dataset.
+        id: Unique identifier (timestamp with microsecond precision).
+        description: Description of the dataset contents and purpose.
+        original_path: Original file system path to the dataset.
+        cached: Whether the dataset is cached in VoxKit storage.
+        anonymize: Whether speaker identities should be anonymized.
+        transcribed: Whether the dataset includes transcription files.
+        registration_date: Human-readable registration timestamp.
+    """
+
     name: str
     id: str
     description: str
@@ -116,16 +129,29 @@ def create_dataset(
 ) -> tuple[Literal[True], DatasetMetadata] | tuple[Literal[False], str]:
     """Create a dataset metadata dictionary and create necessary directories.
 
+    Validates the dataset structure, creates a unique ID, sets up the directory
+    hierarchy (dataset root and alignments subdirectory), writes metadata to JSON,
+    and optionally caches the dataset by copying it to storage.
+
     Args:
         name: Name of the dataset
         description: Description of the dataset
         original_path: Original path to the dataset
-        cached: Whether the dataset is cached in storage
+        cached: Whether to copy the dataset into VoxKit storage
         anonymize: Whether the dataset should be anonymized
         transcribed: Whether the dataset includes transcription files
 
     Returns:
         Tuple of (True, DatasetMetadata) on success or (False, error_message) on failure
+
+    Raises:
+        FileExistsError: If a dataset with the generated ID already exists
+        Exception: If directory creation, metadata writing, or caching fails
+
+    Notes:
+        - Automatically validates dataset structure before creation
+        - Cleans up partially created directories on failure
+        - Cached datasets are copied with shutil.copytree
     """
     # Validate dataset structure
     valid, msg = validate_dataset(Path(original_path))
@@ -181,11 +207,17 @@ def create_dataset(
 def get_dataset_metadata(dataset_id: str) -> DatasetMetadata | None:
     """Get the metadata for a specific dataset.
 
+    Retrieves the dataset metadata from the voxkit_dataset.json file in the
+    dataset's directory.
+
     Args:
         dataset_id: ID of the dataset to retrieve
 
     Returns:
         Dataset metadata dictionary or None if not found
+
+    Raises:
+        Exception: If metadata file exists but cannot be read or parsed
     """
     try:
         dataset_dir = _get_datasets_root() / dataset_id
@@ -202,8 +234,16 @@ def get_dataset_metadata(dataset_id: str) -> DatasetMetadata | None:
 def list_datasets_metadata() -> List[DatasetMetadata]:
     """List all existing datasets.
 
+    Scans the datasets root directory and collects metadata from all subdirectories
+    containing valid voxkit_dataset.json files.
+
     Returns:
-        List of dataset metadata dictionaries
+        List of dataset metadata dictionaries (empty list if none found)
+
+    Notes:
+        - Silently skips directories without metadata files
+        - Returns empty list on error
+        - Does not guarantee ordering
     """
     datasets = []
     datasets_root = _get_datasets_root()
@@ -229,12 +269,21 @@ def update_dataset_metadata(
 ) -> Tuple[bool, str]:
     """Update the metadata for a specific dataset.
 
+    Updates specific fields in the dataset metadata file. Only updates fields that
+    are present in the updates dictionary and not None. Supported fields:
+    description, cached, anonymize, transcribed.
+
     Args:
         dataset_id: ID of the dataset to update
-        updates: Dictionary of metadata fields to update
+        updates: Dictionary of metadata fields to update (only non-None values are applied)
 
     Returns:
         Tuple of (True, success_message) on success or (False, error_message) on failure
+
+    Raises:
+        KeyError: If an invalid metadata field is specified
+        FileNotFoundError: If the dataset is not found
+        Exception: If metadata file cannot be written
     """
     try:
         metadata = get_dataset_metadata(dataset_id)
@@ -269,11 +318,22 @@ def update_dataset_metadata(
 def delete_dataset(dataset_id: str) -> Tuple[bool, str]:
     """Delete a registered dataset.
 
+    Permanently removes the dataset directory and all its contents, including
+    metadata, alignments, and cached data.
+
     Args:
         dataset_id: ID of the dataset to delete
 
     Returns:
         Tuple of (True, success_message) on success or (False, error_message) on failure
+
+    Raises:
+        Exception: If the directory cannot be removed
+
+    Notes:
+        - This operation is irreversible
+        - Removes the entire dataset directory tree
+        - Validates that dataset_id is not empty before proceeding
     """
     if not dataset_id:
         return False, "Dataset ID cannot be empty."
@@ -297,12 +357,19 @@ def delete_dataset(dataset_id: str) -> Tuple[bool, str]:
 def export_dataset(dataset_id: str, output_root: Path) -> Tuple[bool, str]:
     """Export an existing dataset to a specified output path.
 
+    Copies the entire dataset directory (including metadata, alignments, and cache)
+    to the specified output location. The exported directory is named using the
+    pattern: {dataset_name}_{dataset_id}
+
     Args:
         dataset_id: Identifier of the dataset to export
         output_root: Path to the output directory where the dataset will be copied
 
     Returns:
         Tuple of (True, success_message) on success or (False, error_message) on failure
+
+    Raises:
+        FileExistsError: If destination path already exists
     """
 
     if not output_root.exists():
@@ -328,11 +395,23 @@ def export_dataset(dataset_id: str, output_root: Path) -> Tuple[bool, str]:
 def import_dataset(dataset_path: Path) -> Tuple[bool, str]:
     """Import an existing dataset into VoxKit storage.
 
+    Imports a previously exported dataset or a dataset with valid VoxKit metadata.
+    Generates a new ID, updates metadata with new registration date, validates
+    cached datasets, and verifies original path accessibility for non-cached datasets.
+
     Args:
-        dataset_path: Path to the dataset to import
+        dataset_path: Path to the dataset to import (must contain voxkit_dataset.json)
 
     Returns:
         Tuple of (True, success_message) on success or (False, error_message) on failure
+
+    Raises:
+        Exception: If dataset structure is invalid or copy operations fail
+
+    Notes:
+        - For cached datasets, validates the cache directory structure
+        - For non-cached datasets, verifies the original_path is accessible
+        - Automatically cleans up on failure
     """
     # Validate dataset structure
 
@@ -395,6 +474,15 @@ def import_dataset(dataset_path: Path) -> Tuple[bool, str]:
 
 def validate_dataset(dataset_path: Path) -> Tuple[bool, str]:
     """Validate if a dataset follows the expected organization pattern.
+
+    Validation checks:
+    - Dataset path exists and is a directory
+    - Dataset is not empty
+    - Contains speaker subdirectories (not files at root level)
+    - Each speaker directory is not empty
+    - Each speaker directory contains audio files (.wav, .flac, .mp3, .ogg, .m4a)
+    - Each speaker directory contains label files (.lab, .txt)
+    - Number of audio files matches number of label files per speaker
 
     Expected structure:
 
