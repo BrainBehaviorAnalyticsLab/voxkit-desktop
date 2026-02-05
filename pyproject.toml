@@ -1,0 +1,119 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+[project]
+name = "pypllr-gui"
+version = "0.1.0"
+description = "AI/ML Research -> Clinical Applications (Speech Pathology)"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [
+    {name = "Beckett Frey", email = "bfrey6@wisc.edu"}
+]
+
+dependencies = [
+    "pyqt6>=6.9.1",
+    "torch==2.8.0",
+    "torchaudio==2.8.0",
+    "pypllrcomputer @ git+https://github.com/BrainBehaviorAnalyticsLab/PyPLLRComputer.git@48a0c934e75f73235ba5a002538b8588fd6697e7",
+    "wav2textgrid @ git+https://github.com/pkadambi/Wav2TextGrid.git",
+    "datasets>=4.3.0",
+    "accelerate>=1.11.0",
+    "keyring>=25.6.0",
+    "pre-commit>=4.3.0",
+    "pytest>=8.4.2",
+    "pydantic>=2.12.3",
+    "numba>=0.59.0",
+    "pyyaml>=6.0.0",
+    "rich>=14.2.0",
+    "faster-whisper>=1.1.0",
+]
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.3.0",
+    "coverage-badge>=1.1.2",
+    "pytest>=8.4.2",
+    "pytest-asyncio>=1.3.0",
+    "pytest-cov>=7.0.0",
+    "pytest-qt>=4.4.0",
+    "pre-commit>=4.3.0",
+    "ruff>=0.14.0",
+    "mypy>=1.18.2",
+]
+docs = [
+    "pdoc>=16.0.0",
+]
+installation = [
+    "pyinstaller>=5.10.1",
+]
+
+[project.urls]
+Homepage = "https://github.com/yourusername/your-app-name"
+Repository = "https://github.com/yourusername/your-app-name"
+Issues = "https://github.com/yourusername/your-app-name/issues"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+src = ["src"]
+
+exclude = [
+    ".git",
+    ".mypy_cache",
+    ".ruff_cache",
+    ".venv",
+    "venv",
+    "build",
+    "dist",
+    "examples",
+    "__pycache__",
+    "main.py",
+    "build.py",
+    "example_startup_script.py",
+    "test_imports.py",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "F",   # pyflakes
+    "I",   # isort (import sorting)
+    "S",   # bandit (security)
+]
+
+ignore = [
+    "S101",   # Use of assert (OK in tests)
+    "S301",   # Pickle usage (needed for ML)
+]
+
+fixable = ["ALL"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["S101"]
+"scripts/**/*.py" = ["S101","S603"] # Allow subprocess in scripts
+"src/voxkit/services/**/*.py" = ["S603", "S108"] # Allow subprocess and temp dirs in services
+"hooks/**/*.py" = ["E402"] # Allow imports after code in hooks
+"src/voxkit/gui/pages/pipeline/evaluation_stacker.py" = ["S603", "S607"] # Allow subprocess in eval
+
+[tool.ruff.lint.isort]
+known-first-party = ["Wav2TextGrid"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true
+exclude = [
+    "main.py",
+    "build.py",
+    "example_startup_script.py",
+    "test_imports.py"
+]
+
+
+[tool.setuptools.packages.find]
+where = ["src"]

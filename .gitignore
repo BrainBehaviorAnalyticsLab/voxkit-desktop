@@ -1,0 +1,68 @@
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.pytype/
+.pyre/
+.pyrightcache/
+.cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Dependency/lock files
+uv.lock
+
+# Build/distribution artifacts
+build/
+dist/
+downloads/
+.eggs/
+.eggs/**
+*.egg-info/
+*.egg
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+
+# Test/coverage reports
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+nosetests.xml
+pytestdebug.log
+
+# PyInstaller
+*.spec
+
+# Project-specific generated data
+computed-likelihoods/
+comuted-likelihoods/
+computed_likelihoods/
+
+# Logs
+*.log
+
+# IDE/editor
+.vscode/
+.idea/
+*.iml
+
+# Test files
+test_imports.py
+IMPLEMENTATION_SUMMARY.md
+CODE_REVIEW_CHECKLIST.md
+QUICKSTART_STARTUP_SCRIPT.md
+
+# OS files
+.DS_Store
+Thumbs.db
