@@ -175,7 +175,7 @@ exclude_lines = [
     "pass",
     
     # Ellipsis in stub files or protocols
-    r"\.\.\.",
+    '^\s*\.\.\.\s*$',
 ]
 
 # Report settings for clearer output
