@@ -174,8 +174,8 @@ exclude_lines = [
     # Pass statements in abstract classes/protocols
     "pass",
     
-    # Ellipsis in stub files or protocols
-    "^\\.\\.\\.\\s*$",
+    # Ellipsis in stub files or protocols  
+    '^\\.\\.\\.\\s*$',
 ]
 
 # Report settings for clearer output

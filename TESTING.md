@@ -111,13 +111,27 @@ make run-tests
 
 ### Generate Coverage Report
 ```bash
+# Generate detailed coverage report for core modules
+make test-coverage
+
+# View the HTML report
+open htmlcov/index.html  # macOS
+xdg-open htmlcov/index.html  # Linux
+```
+
+### Generate Coverage Badge
+```bash
+# Update the coverage badge SVG file
 make generate-coverage-badge
 ```
 
 This will:
-1. Run tests on **core business logic only** (storage, config, analyzers)
-2. Generate coverage report showing meaningful coverage percentage
-3. Update the coverage badge in the repository
+1. Run tests on **core business logic only** (storage, config, analyzers, engines/base.py)
+2. Generate coverage report showing meaningful coverage percentage for testable modules
+3. Exclude GUI, engine implementations, and services from coverage calculation
+4. Create an HTML report in `htmlcov/index.html` for detailed line-by-line coverage
+
+The coverage badge generation command specifically updates the `coverage.svg` file used in the README.
 
 ### Understanding Coverage Reports
 

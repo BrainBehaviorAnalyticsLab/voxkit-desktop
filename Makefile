@@ -92,13 +92,13 @@ test-coverage: ## Run tests with detailed coverage report for core modules
 	uv run pytest --cov=voxkit --cov-report=term-missing --cov-report=html tests/
 	@echo "$(GREEN)Coverage report generated in htmlcov/index.html$(RESET)"
 
-test-coverage-all: ## Run tests with coverage for ALL modules (including GUI)
-	@echo "$(BLUE)Running tests with full coverage (including GUI/engines)...$(RESET)"
-	@echo "$(YELLOW)Note: This temporarily disables coverage omissions for comparison$(RESET)"
+test-coverage-all: ## Show coverage including excluded modules (for comparison)
+	@echo "$(BLUE)Running tests to see ALL coverage (including excluded modules)...$(RESET)"
+	@echo "$(YELLOW)Note: Run 'pytest --cov=voxkit tests/' directly to bypass omit config$(RESET)"
+	@echo "$(YELLOW)This make target shows the same focused coverage as test-coverage$(RESET)"
 	uv run pytest --cov=voxkit --cov-report=term-missing tests/
 	@echo ""
-	@echo "$(YELLOW)Compare this with 'make test-coverage' to see the difference$(RESET)"
-	@echo "$(GREEN)Full coverage report generated$(RESET)"
+	@echo "$(YELLOW)To see truly unfiltered coverage, temporarily edit pyproject.toml's omit list$(RESET)"
 
 generate-coverage-badge: ## Generate coverage badge (focused on core modules)
 	@echo "$(BLUE)Generating coverage badge...$(RESET)"

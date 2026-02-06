@@ -111,9 +111,10 @@ make generate-coverage-badge  # Now with clearer output messages
 2. `Makefile` - New coverage commands
 3. `TESTING.md` - Complete testing documentation (NEW)
 4. `COVERAGE_STRATEGY.md` - Quick reference (NEW)
-5. `.coveragerc.all` - Alternative config (NEW)
-6. `README.md` - Link to testing docs
-7. `CONTRIBUTING.md` - Testing guidelines
+5. `IMPLEMENTATION_NOTES.md` - Implementation summary (NEW)
+6. `COVERAGE_RECOMMENDATIONS.md` - Improvement roadmap (NEW)
+7. `README.md` - Link to testing docs
+8. `CONTRIBUTING.md` - Testing guidelines
 
 ## Validation
 
