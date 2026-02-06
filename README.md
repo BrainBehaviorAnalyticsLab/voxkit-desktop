@@ -15,6 +15,7 @@
 ## 🔎 Quick Links
 
 - 🏗️ [ARCHITECTURE](./ARCHITECTURE.md) - Codebase terminology
+- 🧪 [TESTING](./TESTING.md) - Testing strategy & coverage approach
 - 📚 [RESEARCH](./RESEARCH.md) - Papers & research background
 - ✍️ [CONTRIBUTING](./CONTRIBUTING.md) - Contribution guidelines
 - 🌐 [Website](<TODO>) - Main site

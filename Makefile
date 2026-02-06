@@ -87,9 +87,22 @@ fresh-slate: ## Remove virtual environment and lock file
 run-tests: ## Run all tests (unit + GUI)
 	uv run pytest tests/
 
-generate-coverage-badge:
-	uv run pytest --cov=voxkit --cov-report=term src/voxkit tests
-	uv run coverage-badge -o coverage.svg -f
+test-coverage: ## Run tests with detailed coverage report for core modules
+	@echo "$(BLUE)Running tests with coverage (core modules only)...$(RESET)"
+	uv run pytest --cov=voxkit --cov-report=term-missing --cov-report=html tests/
+	@echo "$(GREEN)Coverage report generated in htmlcov/index.html$(RESET)"
 
-generate-documentation:
+test-coverage-all: ## Run tests with coverage for ALL modules (including GUI)
+	@echo "$(BLUE)Running tests with full coverage (including GUI/engines)...$(RESET)"
+	@echo "$(YELLOW)Note: This includes hard-to-test modules for comparison$(RESET)"
+	uv run pytest --cov=voxkit --cov-report=term-missing --cov-config=.coveragerc.all tests/
+	@echo "$(GREEN)Full coverage report generated$(RESET)"
+
+generate-coverage-badge: ## Generate coverage badge (focused on core modules)
+	@echo "$(BLUE)Generating coverage badge...$(RESET)"
+	uv run pytest --cov=voxkit --cov-report=term tests/
+	uv run coverage-badge -o coverage.svg -f
+	@echo "$(GREEN)Coverage badge updated: coverage.svg$(RESET)"
+
+generate-documentation: ## Generate API documentation
 	uv run --group docs pdoc -o docs src/voxkit

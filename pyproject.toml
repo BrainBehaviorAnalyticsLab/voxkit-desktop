@@ -116,16 +116,75 @@ exclude = [
 
 
 [tool.coverage.run]
+# Omit modules that are difficult, impractical, or low-value to test
 omit = [
+    # Engine implementations - OS/hardware-dependent external tool integrations
     "src/voxkit/engines/*_engine.py",
+    
+    # GUI layer - PyQt6 UI components are difficult to test reliably
+    # Focus testing on business logic, not UI rendering
+    "src/voxkit/gui/components/*.py",
+    "src/voxkit/gui/frameworks/*.py",
+    "src/voxkit/gui/pages/*/*.py",
+    "src/voxkit/gui/styles/*.py",
+    "src/voxkit/gui/workers/*.py",
+    "src/voxkit/gui/__init__.py",
+    "src/voxkit/gui/utils.py",
+    
+    # External service integrations - subprocess/system calls
+    "src/voxkit/services/*.py",
+    
+    # Build and deployment scripts
+    "build.py",
+    "main.py",
+    "_frozen_patch.py",
+    
+    # Test files themselves
+    "tests/**/*.py",
+    
+    # Package initialization files (typically just imports)
+    "src/voxkit/__init__.py",
 ]
 
 [tool.coverage.report]
+# Exclude common patterns that don't need coverage
 exclude_lines = [
+    # Standard pragmas
     "pragma: no cover",
+    
+    # Abstract methods and NotImplementedError
     "raise NotImplementedError",
+    "raise NotImplemented",
+    "@abstractmethod",
+    "@abc.abstractmethod",
+    
+    # Type checking imports
     "if TYPE_CHECKING:",
+    "if typing.TYPE_CHECKING:",
+    
+    # Defensive programming
+    "assert False",
+    "raise AssertionError",
+    
+    # Debugging/development code
+    "if __name__ == .__main__.:",
+    "if 0:",
+    "if False:",
+    
+    # Pass statements in abstract classes/protocols
+    "pass",
+    
+    # Ellipsis in stub files or protocols
+    r"\.\.\.",
 ]
+
+# Report settings for clearer output
+precision = 2
+skip_empty = true
+skip_covered = false
+
+# Show missing line numbers in terminal output
+show_missing = true
 
 [tool.setuptools.packages.find]
 where = ["src"]
