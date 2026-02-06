@@ -2,7 +2,8 @@ from pathlib import Path
 
 import pytest
 
-from ..utils import get_storage_root
+from voxkit.storage.utils import get_storage_root
+
 from .test_setup import (
     ENGINE_IDS,
     activate_test_environment,
@@ -23,8 +24,8 @@ def manage_test_environment():
 class TestModels:
     class TestCreateModel:
         def test_create_model_success(self, monkeypatch):
-            from .. import models
-            from ..models import ModelMetadata, create_model
+            from voxkit.storage import models
+            from voxkit.storage.models import ModelMetadata, create_model
 
             monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
             for engine_id in ENGINE_IDS:
@@ -41,8 +42,8 @@ class TestModels:
                 assert message["engine_id"] == engine_id
 
         def test_create_model_invalid_engine(self, monkeypatch):
-            from .. import models
-            from ..models import create_model
+            from voxkit.storage import models
+            from voxkit.storage.models import create_model
 
             monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
 
@@ -55,8 +56,8 @@ class TestModels:
             assert Path(get_storage_root() / "INVALID_ENGINE").exists() is False
 
         def test_create_multiple_models(self, monkeypatch):
-            from .. import models
-            from ..models import create_model
+            from voxkit.storage import models
+            from voxkit.storage.models import create_model
 
             monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
 
@@ -75,8 +76,8 @@ class TestModels:
                 created_ids.add(message["id"])
 
         def test_model_paths_created(self, monkeypatch):
-            from .. import models
-            from ..models import create_model
+            from voxkit.storage import models
+            from voxkit.storage.models import create_model
 
             monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
 
@@ -99,8 +100,8 @@ class TestModels:
             assert train_path.exists()
 
         def test_model_fits_modelmetadata(self, monkeypatch):
-            from .. import models
-            from ..models import ModelMetadata, create_model
+            from voxkit.storage import models
+            from voxkit.storage.models import ModelMetadata, create_model
 
             monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
 
@@ -118,8 +119,8 @@ class TestModels:
 
     class TestListModels:
         def test_list_models_empty(self, monkeypatch):
-            from .. import models
-            from ..models import list_models
+            from voxkit.storage import models
+            from voxkit.storage.models import list_models
 
             monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
 
@@ -129,8 +130,8 @@ class TestModels:
             assert len(models_list) == 0
 
         def test_list_models_non_empty(self, monkeypatch):
-            from .. import models
-            from ..models import create_model, list_models
+            from voxkit.storage import models
+            from voxkit.storage.models import create_model, list_models
 
             monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
 
@@ -147,8 +148,8 @@ class TestModels:
             assert len(models_list) == 3
 
         def test_list_models_output_format(self, monkeypatch):
-            from .. import models
-            from ..models import create_model, list_models
+            from voxkit.storage import models
+            from voxkit.storage.models import create_model, list_models
 
             monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
 
@@ -169,8 +170,8 @@ class TestModels:
             assert not missing, f"Missing keys in model metadata: {missing}"
 
         def test_list_models_multiple_engines(self, monkeypatch):
-            from .. import models
-            from ..models import create_model, list_models
+            from voxkit.storage import models
+            from voxkit.storage.models import create_model, list_models
 
             monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
 
@@ -189,8 +190,8 @@ class TestModels:
 
     class TestDeleteModel:
         def test_delete_model_success(self, monkeypatch):
-            from .. import models
-            from ..models import create_model, delete_model, list_models
+            from voxkit.storage import models
+            from voxkit.storage.models import create_model, delete_model, list_models
 
             monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
 
@@ -217,8 +218,8 @@ class TestModels:
                 assert model_id not in model_ids
 
         def test_delete_model_nonexistent(self, monkeypatch):
-            from .. import models
-            from ..models import delete_model
+            from voxkit.storage import models
+            from voxkit.storage.models import delete_model
 
             monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
 
@@ -234,8 +235,8 @@ class TestModels:
             assert "not found" in msg
 
         def test_delete_model_multiple(self, monkeypatch):
-            from .. import models
-            from ..models import create_model, delete_model, list_models
+            from voxkit.storage import models
+            from voxkit.storage.models import create_model, delete_model, list_models
 
             monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
 
@@ -264,8 +265,8 @@ class TestModels:
             assert len(models_list) == 0
 
         def test_delete_model_invalid_engine(self, monkeypatch):
-            from .. import models
-            from ..models import create_model, delete_model
+            from voxkit.storage import models
+            from voxkit.storage.models import create_model, delete_model
 
             monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
 
@@ -291,8 +292,8 @@ class TestModels:
 
     class TestGetModelMetadata:
         def test_get_model_metadata_success(self, monkeypatch):
-            from .. import models
-            from ..models import create_model, get_model_metadata
+            from voxkit.storage import models
+            from voxkit.storage.models import create_model, get_model_metadata
 
             monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
 
@@ -315,8 +316,8 @@ class TestModels:
                 assert metadata["engine_id"] == engine_id
 
         def test_get_model_metadata_nonexistent(self, monkeypatch):
-            from .. import models
-            from ..models import get_model_metadata
+            from voxkit.storage import models
+            from voxkit.storage.models import get_model_metadata
 
             monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
 
@@ -330,8 +331,8 @@ class TestModels:
                 )
 
         def test_get_model_metadata_multiple(self, monkeypatch):
-            from .. import models
-            from ..models import create_model, get_model_metadata
+            from voxkit.storage import models
+            from voxkit.storage.models import create_model, get_model_metadata
 
             monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
 
@@ -357,8 +358,8 @@ class TestModels:
                 assert metadata["engine_id"] == engine_id
 
         def test_get_model_metadata_invalid_engine(self, monkeypatch):
-            from .. import models
-            from ..models import create_model, get_model_metadata
+            from voxkit.storage import models
+            from voxkit.storage.models import create_model, get_model_metadata
 
             monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
 
@@ -380,8 +381,8 @@ class TestModels:
                 )
 
         def test_get_model_metadata_output_format(self, monkeypatch):
-            from .. import models
-            from ..models import create_model, get_model_metadata
+            from voxkit.storage import models
+            from voxkit.storage.models import create_model, get_model_metadata
 
             monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
 
@@ -406,8 +407,12 @@ class TestModels:
 
     class TestUpdateModelMetadata:
         def test_update_model_metadata_success(self, monkeypatch):
-            from .. import models
-            from ..models import create_model, get_model_metadata, update_model_metadata
+            from voxkit.storage import models
+            from voxkit.storage.models import (
+                create_model,
+                get_model_metadata,
+                update_model_metadata,
+            )
 
             monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
 
@@ -434,8 +439,8 @@ class TestModels:
             assert metadata["name"] == "updated_model_name"
 
         def test_update_model_metadata_nonexistent(self, monkeypatch):
-            from .. import models
-            from ..models import update_model_metadata
+            from voxkit.storage import models
+            from voxkit.storage.models import update_model_metadata
 
             monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
 
@@ -450,8 +455,8 @@ class TestModels:
             assert "not found" in update_msg
 
         def test_update_model_metadata_invalid_engine(self, monkeypatch):
-            from .. import models
-            from ..models import create_model, update_model_metadata
+            from voxkit.storage import models
+            from voxkit.storage.models import create_model, update_model_metadata
 
             monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
 
@@ -474,8 +479,12 @@ class TestModels:
             assert "not found" in update_msg
 
         def test_update_model_metadata_ignores_unknown_fields(self, monkeypatch):
-            from .. import models
-            from ..models import create_model, get_model_metadata, update_model_metadata
+            from voxkit.storage import models
+            from voxkit.storage.models import (
+                create_model,
+                get_model_metadata,
+                update_model_metadata,
+            )
 
             monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
 
@@ -503,8 +512,8 @@ class TestModels:
 
     class TestCreateModelWithSourcePath:
         def test_create_model_with_directory_source(self, monkeypatch):
-            from .. import models
-            from ..models import create_model
+            from voxkit.storage import models
+            from voxkit.storage.models import create_model
 
             monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
 
@@ -534,8 +543,8 @@ class TestModels:
         def test_create_model_with_zip_source(self, monkeypatch):
             import zipfile
 
-            from .. import models
-            from ..models import create_model
+            from voxkit.storage import models
+            from voxkit.storage.models import create_model
 
             monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
 
@@ -561,8 +570,8 @@ class TestModels:
             assert model_path.suffix == ".zip"
 
         def test_create_model_with_nonexistent_source(self, monkeypatch):
-            from .. import models
-            from ..models import create_model
+            from voxkit.storage import models
+            from voxkit.storage.models import create_model
 
             monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
 
@@ -582,9 +591,9 @@ class TestModels:
         def test_import_models_success(self, monkeypatch):
             import json
 
-            from .. import models
-            from ..config import MODELS_ROOT
-            from ..models import import_models
+            from voxkit.storage import models
+            from voxkit.storage.config import MODELS_ROOT
+            from voxkit.storage.models import import_models
 
             monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
 
@@ -623,8 +632,8 @@ class TestModels:
             assert "imported successfully" in msg
 
         def test_import_models_missing_metadata(self, monkeypatch):
-            from .. import models
-            from ..models import import_models
+            from voxkit.storage import models
+            from voxkit.storage.models import import_models
 
             monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
 
@@ -643,9 +652,9 @@ class TestModels:
         def test_import_models_engine_mismatch(self, monkeypatch):
             import json
 
-            from .. import models
-            from ..config import MODELS_ROOT
-            from ..models import import_models
+            from voxkit.storage import models
+            from voxkit.storage.config import MODELS_ROOT
+            from voxkit.storage.models import import_models
 
             monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
 
@@ -678,8 +687,8 @@ class TestModels:
             assert "engine_id mismatch" in msg
 
         def test_import_models_empty_source(self, monkeypatch):
-            from .. import models
-            from ..models import import_models
+            from voxkit.storage import models
+            from voxkit.storage.models import import_models
 
             monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
 

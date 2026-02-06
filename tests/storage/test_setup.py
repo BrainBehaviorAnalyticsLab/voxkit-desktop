@@ -1,7 +1,7 @@
 import shutil
 from pathlib import Path
 
-from ..config import MODELS_ROOT
+from voxkit.storage.config import MODELS_ROOT
 
 ENGINE_IDS = ["ENGINE_A", "ENGINE_B", "ENGINE_C"]
 

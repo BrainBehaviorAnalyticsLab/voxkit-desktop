@@ -4,7 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from ..datasets import DatasetMetadata
+from voxkit.storage.datasets import DatasetMetadata
+
 from .test_setup import (
     activate_test_environment,
     deactivate_test_environment,
@@ -66,8 +67,8 @@ empty_dataset_path = mock_get_storage_root() / "fake_datasets" / "empty"
 class TestDatasets:
     class TestValidateDataset:
         def test_validate_dataset_valid(self, monkeypatch):
-            from .. import models
-            from ..datasets import validate_dataset
+            from voxkit.storage import models
+            from voxkit.storage.datasets import validate_dataset
 
             monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
 
@@ -76,8 +77,8 @@ class TestDatasets:
 
     class TestCreateDataset:
         def test_create_dataset_success_no_cache(self, monkeypatch):
-            from .. import datasets
-            from ..datasets import DatasetMetadata, create_dataset
+            from voxkit.storage import datasets
+            from voxkit.storage.datasets import DatasetMetadata, create_dataset
 
             monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
 
@@ -101,8 +102,8 @@ class TestDatasets:
             assert message["description"] == "A test dataset"
 
         def test_create_dataset_success_with_cache(self, monkeypatch):
-            from .. import datasets
-            from ..datasets import DatasetMetadata, create_dataset
+            from voxkit.storage import datasets
+            from voxkit.storage.datasets import DatasetMetadata, create_dataset
 
             monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
 
@@ -125,8 +126,8 @@ class TestDatasets:
             assert message["description"] == "A test dataset with caching"
 
         def test_create_dataset_invalid_path(self, monkeypatch):
-            from .. import datasets
-            from ..datasets import create_dataset
+            from voxkit.storage import datasets
+            from voxkit.storage.datasets import create_dataset
 
             monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
 
@@ -145,8 +146,8 @@ class TestDatasets:
 
     class TestListDatasets:
         def test_list_datasets_metadata(self, monkeypatch):
-            from .. import datasets
-            from ..datasets import create_dataset, list_datasets_metadata
+            from voxkit.storage import datasets
+            from voxkit.storage.datasets import create_dataset, list_datasets_metadata
 
             monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
 
@@ -176,8 +177,8 @@ class TestDatasets:
             assert "dataset_two" in names
 
         def test_list_datasets_output_format(self, monkeypatch):
-            from .. import datasets
-            from ..datasets import create_dataset, list_datasets_metadata
+            from voxkit.storage import datasets
+            from voxkit.storage.datasets import create_dataset, list_datasets_metadata
 
             monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
 
@@ -199,8 +200,8 @@ class TestDatasets:
                     assert key in datasets[i].keys()
 
         def test_list_datasets_empty(self, monkeypatch):
-            from .. import datasets
-            from ..datasets import list_datasets_metadata
+            from voxkit.storage import datasets
+            from voxkit.storage.datasets import list_datasets_metadata
 
             monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
 
@@ -214,8 +215,8 @@ class TestDatasets:
 
     class TestGetDatasetMetadata:
         def test_get_dataset_metadata_success(self, monkeypatch):
-            from .. import datasets
-            from ..datasets import create_dataset, get_dataset_metadata
+            from voxkit.storage import datasets
+            from voxkit.storage.datasets import create_dataset, get_dataset_metadata
 
             monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
 
@@ -239,8 +240,8 @@ class TestDatasets:
             assert metadata == message
 
         def test_get_dataset_metadata_nonexistent(self, monkeypatch):
-            from .. import datasets
-            from ..datasets import get_dataset_metadata
+            from voxkit.storage import datasets
+            from voxkit.storage.datasets import get_dataset_metadata
 
             monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
 
@@ -249,8 +250,8 @@ class TestDatasets:
             assert metadata is None
 
         def test_get_dataset_metadata_invalid_id(self, monkeypatch):
-            from .. import datasets
-            from ..datasets import get_dataset_metadata
+            from voxkit.storage import datasets
+            from voxkit.storage.datasets import get_dataset_metadata
 
             monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
 
@@ -260,8 +261,8 @@ class TestDatasets:
 
     class TestDeleteDataset:
         def test_delete_dataset_success(self, monkeypatch):
-            from .. import datasets
-            from ..datasets import create_dataset, delete_dataset, get_dataset_metadata
+            from voxkit.storage import datasets
+            from voxkit.storage.datasets import create_dataset, delete_dataset, get_dataset_metadata
 
             monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
 
@@ -285,8 +286,8 @@ class TestDatasets:
             assert metadata is None
 
         def test_delete_dataset_nonexistent(self, monkeypatch):
-            from .. import datasets
-            from ..datasets import delete_dataset
+            from voxkit.storage import datasets
+            from voxkit.storage.datasets import delete_dataset
 
             monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
 
@@ -296,8 +297,8 @@ class TestDatasets:
             assert "not found" in del_message
 
         def test_delete_dataset_invalid_id(self, monkeypatch):
-            from .. import datasets
-            from ..datasets import delete_dataset
+            from voxkit.storage import datasets
+            from voxkit.storage.datasets import delete_dataset
 
             monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
 
@@ -307,8 +308,8 @@ class TestDatasets:
             assert "cannot be empty" in del_message
 
         def test_delete_dataset_twice(self, monkeypatch):
-            from .. import datasets
-            from ..datasets import create_dataset, delete_dataset
+            from voxkit.storage import datasets
+            from voxkit.storage.datasets import create_dataset, delete_dataset
 
             monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
 
@@ -333,8 +334,8 @@ class TestDatasets:
             assert "not found" in del_message
 
         def test_delete_dataset_invalid_id_format(self, monkeypatch):
-            from .. import datasets
-            from ..datasets import delete_dataset
+            from voxkit.storage import datasets
+            from voxkit.storage.datasets import delete_dataset
 
             monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
 
@@ -345,8 +346,8 @@ class TestDatasets:
 
     class TestExportDataset:
         def test_export_dataset_success(self, monkeypatch, tmp_path):
-            from .. import datasets
-            from ..datasets import create_dataset, export_dataset
+            from voxkit.storage import datasets
+            from voxkit.storage.datasets import create_dataset, export_dataset
 
             monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
 
@@ -368,8 +369,8 @@ class TestDatasets:
             assert "exported successfully" in exp_message
 
         def test_export_equal(self, monkeypatch):
-            from .. import datasets
-            from ..datasets import _get_datasets_root, create_dataset, export_dataset
+            from voxkit.storage import datasets
+            from voxkit.storage.datasets import _get_datasets_root, create_dataset, export_dataset
 
             monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
 
@@ -408,8 +409,8 @@ class TestDatasets:
 
     class TestImportDataset:
         def test_import_dataset_success(self, monkeypatch):
-            from .. import datasets
-            from ..datasets import create_dataset, import_dataset, validate_dataset
+            from voxkit.storage import datasets
+            from voxkit.storage.datasets import create_dataset, import_dataset, validate_dataset
 
             monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
 
@@ -447,8 +448,8 @@ class TestDatasets:
             assert "imported successfully" in imp_message
 
         def test_import_dataset_nonexistent(self, monkeypatch):
-            from .. import datasets
-            from ..datasets import import_dataset
+            from voxkit.storage import datasets
+            from voxkit.storage.datasets import import_dataset
 
             monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
 
@@ -461,8 +462,8 @@ class TestDatasets:
             assert "does not exist" in imp_message
 
         def test_import_dataset_empty_cache_true(self, monkeypatch):
-            from .. import datasets
-            from ..datasets import _get_datasets_root, create_dataset, import_dataset
+            from voxkit.storage import datasets
+            from voxkit.storage.datasets import _get_datasets_root, create_dataset, import_dataset
 
             monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
 
@@ -496,8 +497,12 @@ class TestDatasets:
 
     class TestUpdateDatasetMetadata:
         def test_update_dataset_metadata_success(self, monkeypatch):
-            from .. import datasets
-            from ..datasets import create_dataset, get_dataset_metadata, update_dataset_metadata
+            from voxkit.storage import datasets
+            from voxkit.storage.datasets import (
+                create_dataset,
+                get_dataset_metadata,
+                update_dataset_metadata,
+            )
 
             monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
 
@@ -534,8 +539,8 @@ class TestDatasets:
             assert metadata["cached"] is False
 
         def test_update_dataset_metadata_nonexistent(self, monkeypatch):
-            from .. import datasets
-            from ..datasets import update_dataset_metadata
+            from voxkit.storage import datasets
+            from voxkit.storage.datasets import update_dataset_metadata
 
             monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
 
@@ -551,8 +556,12 @@ class TestDatasets:
             assert "not found" in update_msg
 
         def test_update_dataset_metadata_partial(self, monkeypatch):
-            from .. import datasets
-            from ..datasets import create_dataset, get_dataset_metadata, update_dataset_metadata
+            from voxkit.storage import datasets
+            from voxkit.storage.datasets import (
+                create_dataset,
+                get_dataset_metadata,
+                update_dataset_metadata,
+            )
 
             monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
 
@@ -587,8 +596,8 @@ class TestDatasets:
 
     class TestCreateDatasetWithAnalysis:
         def test_create_dataset_with_analysis_data(self, monkeypatch):
-            from .. import datasets
-            from ..datasets import _get_datasets_root, create_dataset
+            from voxkit.storage import datasets
+            from voxkit.storage.datasets import _get_datasets_root, create_dataset
 
             monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
 
@@ -627,8 +636,8 @@ class TestDatasets:
             assert rows[1]["speaker"] == "speaker_2"
 
         def test_create_dataset_without_analysis_data(self, monkeypatch):
-            from .. import datasets
-            from ..datasets import _get_datasets_root, create_dataset
+            from voxkit.storage import datasets
+            from voxkit.storage.datasets import _get_datasets_root, create_dataset
 
             monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
 
@@ -651,7 +660,7 @@ class TestDatasets:
 
     class TestValidateDatasetNegativeCases:
         def test_validate_dataset_nonexistent_path(self, monkeypatch):
-            from ..datasets import validate_dataset
+            from voxkit.storage.datasets import validate_dataset
 
             nonexistent_path = mock_get_storage_root() / "does_not_exist"
             is_valid, msg = validate_dataset(nonexistent_path)
@@ -660,7 +669,7 @@ class TestDatasets:
             assert "does not exist" in msg
 
         def test_validate_dataset_file_not_directory(self, monkeypatch):
-            from ..datasets import validate_dataset
+            from voxkit.storage.datasets import validate_dataset
 
             # Create a file instead of directory
             file_path = mock_get_storage_root() / "not_a_directory.txt"
@@ -672,7 +681,7 @@ class TestDatasets:
             assert "not a directory" in msg
 
         def test_validate_dataset_empty_directory(self, monkeypatch):
-            from ..datasets import validate_dataset
+            from voxkit.storage.datasets import validate_dataset
 
             is_valid, msg = validate_dataset(empty_dataset_path)
 
@@ -680,7 +689,7 @@ class TestDatasets:
             assert "empty" in msg
 
         def test_validate_dataset_files_at_root(self, monkeypatch):
-            from ..datasets import validate_dataset
+            from voxkit.storage.datasets import validate_dataset
 
             # Create a dataset with files at root level
             files_at_root_path = mock_get_storage_root() / "fake_datasets" / "files_at_root"
@@ -693,7 +702,7 @@ class TestDatasets:
             assert "Expected speaker directories" in msg
 
         def test_validate_dataset_empty_speaker_directory(self, monkeypatch):
-            from ..datasets import validate_dataset
+            from voxkit.storage.datasets import validate_dataset
 
             # Create a dataset with empty speaker directory
             empty_speaker_path = mock_get_storage_root() / "fake_datasets" / "empty_speaker"
@@ -706,7 +715,7 @@ class TestDatasets:
             assert "empty" in msg
 
         def test_validate_dataset_missing_audio_files(self, monkeypatch):
-            from ..datasets import validate_dataset
+            from voxkit.storage.datasets import validate_dataset
 
             # Create a dataset with only label files
             no_audio_path = mock_get_storage_root() / "fake_datasets" / "no_audio"
@@ -720,7 +729,7 @@ class TestDatasets:
             assert "No audio files" in msg
 
         def test_validate_dataset_missing_label_files(self, monkeypatch):
-            from ..datasets import validate_dataset
+            from voxkit.storage.datasets import validate_dataset
 
             is_valid, msg = validate_dataset(invalid_dataset_path)
 
@@ -728,7 +737,7 @@ class TestDatasets:
             assert "No label files" in msg
 
         def test_validate_dataset_mismatched_counts(self, monkeypatch):
-            from ..datasets import validate_dataset
+            from voxkit.storage.datasets import validate_dataset
 
             # Create a dataset with mismatched audio/label counts
             mismatched_path = mock_get_storage_root() / "fake_datasets" / "mismatched"

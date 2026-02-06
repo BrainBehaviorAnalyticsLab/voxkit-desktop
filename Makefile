@@ -85,7 +85,7 @@ fresh-slate: ## Remove virtual environment and lock file
 	@read -p "Are you sure you want to proceed? [y/N] " confirm && [ $${confirm} = "y" ] || [ $${confirm} = "Y" ] && rm -rf uv.lock .venv || echo "Aborted."
 
 run-tests: ## Run all tests (unit + GUI)
-	uv run pytest src/voxkit tests/gui
+	uv run pytest tests/
 
 generate-coverage-badge:
 	uv run pytest --cov=voxkit --cov-report=term src/voxkit tests/gui

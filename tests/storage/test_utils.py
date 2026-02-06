@@ -2,6 +2,9 @@ import json
 
 import pytest
 
+from voxkit.storage import utils
+from voxkit.storage.utils import generate_unique_id, readable_from_unique_id
+
 from .test_setup import (
     activate_test_environment,
     deactivate_test_environment,
@@ -22,8 +25,6 @@ class TestUtils:
     class TestIsFirstLaunch:
         def test_is_first_launch_true(self, monkeypatch):
             """Test that is_first_launch returns True when flag file doesn't exist."""
-            from .. import utils
-
             monkeypatch.setattr(utils, "get_storage_root", mock_get_storage_root)
 
             # Ensure no flag file exists
@@ -36,8 +37,6 @@ class TestUtils:
 
         def test_is_first_launch_false(self, monkeypatch):
             """Test that is_first_launch returns False when flag file exists."""
-            from .. import utils
-
             monkeypatch.setattr(utils, "get_storage_root", mock_get_storage_root)
 
             # Create the flag file
@@ -50,8 +49,6 @@ class TestUtils:
     class TestMarkFirstLaunchComplete:
         def test_mark_first_launch_complete(self, monkeypatch):
             """Test that mark_first_launch_complete creates the flag file."""
-            from .. import utils
-
             monkeypatch.setattr(utils, "get_storage_root", mock_get_storage_root)
 
             # Ensure no flag file exists
@@ -73,8 +70,6 @@ class TestUtils:
 
         def test_mark_first_launch_complete_idempotent(self, monkeypatch):
             """Test that calling mark_first_launch_complete multiple times is safe."""
-            from .. import utils
-
             monkeypatch.setattr(utils, "get_storage_root", mock_get_storage_root)
 
             # Call multiple times - should not raise
@@ -88,8 +83,6 @@ class TestUtils:
     class TestSaveJson:
         def test_save_json_success(self, monkeypatch):
             """Test that save_json writes JSON data correctly."""
-            from .. import utils
-
             monkeypatch.setattr(utils, "get_storage_root", mock_get_storage_root)
 
             test_data = {"key": "value", "number": 42, "nested": {"inner": "data"}}
@@ -106,8 +99,6 @@ class TestUtils:
 
         def test_save_json_creates_parent_directories(self, monkeypatch):
             """Test that save_json creates parent directories if they don't exist."""
-            from .. import utils
-
             monkeypatch.setattr(utils, "get_storage_root", mock_get_storage_root)
 
             test_data = {"test": "data"}
@@ -128,8 +119,6 @@ class TestUtils:
 
         def test_save_json_overwrites_existing(self, monkeypatch):
             """Test that save_json overwrites existing files."""
-            from .. import utils
-
             monkeypatch.setattr(utils, "get_storage_root", mock_get_storage_root)
 
             file_path = mock_get_storage_root() / "overwrite_test.json"
@@ -151,8 +140,6 @@ class TestUtils:
     class TestGenerateUniqueId:
         def test_generate_unique_id_format(self):
             """Test that generate_unique_id returns correct format."""
-            from ..utils import generate_unique_id
-
             unique_id = generate_unique_id()
 
             # Format should be YYYYMMDD_HHMMSS_ffffff
@@ -164,8 +151,6 @@ class TestUtils:
 
         def test_generate_unique_id_with_prefix(self):
             """Test that generate_unique_id handles prefix correctly."""
-            from ..utils import generate_unique_id
-
             unique_id = generate_unique_id(prefix="test")
 
             assert unique_id.startswith("test_")
@@ -175,8 +160,6 @@ class TestUtils:
 
         def test_generate_unique_id_uniqueness(self):
             """Test that multiple calls generate unique IDs."""
-            from ..utils import generate_unique_id
-
             ids = [generate_unique_id() for _ in range(100)]
             unique_ids = set(ids)
 
@@ -186,8 +169,6 @@ class TestUtils:
     class TestReadableFromUniqueId:
         def test_readable_from_unique_id(self):
             """Test that readable_from_unique_id converts correctly."""
-            from ..utils import readable_from_unique_id
-
             unique_id = "20240115_143022_123456"
             readable = readable_from_unique_id(unique_id)
 
@@ -197,8 +178,6 @@ class TestUtils:
 
         def test_readable_from_unique_id_format(self):
             """Test that readable output has expected format."""
-            from ..utils import readable_from_unique_id
-
             unique_id = "20231225_120000_000000"
             readable = readable_from_unique_id(unique_id)
 

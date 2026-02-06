@@ -45,8 +45,8 @@ def manage_test_environment():
 @pytest.fixture
 def sample_dataset(monkeypatch):
     """Create a sample dataset for testing alignments."""
-    from .. import datasets
-    from ..datasets import create_dataset
+    from voxkit.storage import datasets
+    from voxkit.storage.datasets import create_dataset
 
     monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
 
@@ -68,8 +68,8 @@ def sample_dataset(monkeypatch):
 @pytest.fixture
 def sample_model(monkeypatch):
     """Create a sample model for testing alignments."""
-    from .. import models
-    from ..models import create_model
+    from voxkit.storage import models
+    from voxkit.storage.models import create_model
 
     monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
 
@@ -86,8 +86,8 @@ def sample_model(monkeypatch):
 class TestAlignments:
     class TestCreateAlignment:
         def test_create_alignment_success(self, monkeypatch, sample_dataset, sample_model):
-            from .. import models
-            from ..alignments import AlignmentMetadata, create_alignment
+            from voxkit.storage import models
+            from voxkit.storage.alignments import AlignmentMetadata, create_alignment
 
             monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
 
@@ -116,8 +116,8 @@ class TestAlignments:
             assert "tg_path" in result
 
     def test_create_alignment_invalid_model(self, monkeypatch, sample_dataset):
-        from .. import models
-        from ..alignments import create_alignment
+        from voxkit.storage import models
+        from voxkit.storage.alignments import create_alignment
 
         monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
 
@@ -134,8 +134,8 @@ class TestAlignments:
             )
 
     def test_create_alignment_invalid_dataset(self, monkeypatch, sample_model):
-        from .. import datasets
-        from ..alignments import create_alignment
+        from voxkit.storage import datasets
+        from voxkit.storage.alignments import create_alignment
 
         monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
 
@@ -154,9 +154,9 @@ class TestAlignments:
         assert "Dataset" in result
 
     def test_create_alignment_non_cached_dataset(self, monkeypatch, sample_model):
-        from .. import datasets
-        from ..alignments import AlignmentMetadata, create_alignment
-        from ..datasets import create_dataset
+        from voxkit.storage import datasets
+        from voxkit.storage.alignments import AlignmentMetadata, create_alignment
+        from voxkit.storage.datasets import create_dataset
 
         monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
 
@@ -205,8 +205,8 @@ class TestAlignments:
 
     class TestGetAlignmentMetadata:
         def test_get_alignment_metadata_success(self, monkeypatch, sample_dataset, sample_model):
-            from .. import models
-            from ..alignments import create_alignment, get_alignment_metadata
+            from voxkit.storage import models
+            from voxkit.storage.alignments import create_alignment, get_alignment_metadata
 
             monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
 
@@ -234,7 +234,7 @@ class TestAlignments:
             assert fetched_metadata["engine_id"] == engine_id
 
         def test_get_alignment_metadata_invalid_id(self, monkeypatch, sample_dataset, sample_model):
-            from ..alignments import create_alignment, get_alignment_metadata
+            from voxkit.storage.alignments import create_alignment, get_alignment_metadata
 
             dataset_id = sample_dataset["id"]
             engine_id = sample_model["engine_id"]
@@ -258,8 +258,8 @@ class TestAlignments:
             assert fetched_metadata is None
 
         def test_get_alignment_metadata_invalid_dataset(self, monkeypatch, sample_model):
-            from .. import datasets
-            from ..alignments import get_alignment_metadata
+            from voxkit.storage import datasets
+            from voxkit.storage.alignments import get_alignment_metadata
 
             monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
 
@@ -275,8 +275,8 @@ class TestAlignments:
 
     class TestListAlignments:
         def test_list_alignments_invalid_dataset(self, monkeypatch):
-            from .. import datasets
-            from ..alignments import list_alignments
+            from voxkit.storage import datasets
+            from voxkit.storage.alignments import list_alignments
 
             monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
             invalid_dataset_id = "NON_EXISTENT_DATASET"
@@ -286,8 +286,8 @@ class TestAlignments:
             assert alignments_list == []
 
         def test_list_alignments_success(self, monkeypatch, sample_dataset, sample_model):
-            from .. import datasets
-            from ..alignments import create_alignment, list_alignments
+            from voxkit.storage import datasets
+            from voxkit.storage.alignments import create_alignment, list_alignments
 
             monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
 
@@ -314,7 +314,7 @@ class TestAlignments:
             assert created_alignment_ids == fetched_alignment_ids
 
         def test_list_alignments_empty(self, monkeypatch, sample_dataset):
-            from ..alignments import list_alignments
+            from voxkit.storage.alignments import list_alignments
 
             dataset_id = sample_dataset["id"]
 
@@ -324,7 +324,11 @@ class TestAlignments:
 
     class TestDeleteAlignment:
         def test_delete_alignment_success(self, sample_dataset, sample_model):
-            from ..alignments import create_alignment, delete_alignment, get_alignment_metadata
+            from voxkit.storage.alignments import (
+                create_alignment,
+                delete_alignment,
+                get_alignment_metadata,
+            )
 
             dataset_id = sample_dataset["id"]
             engine_id = sample_model["engine_id"]
@@ -357,7 +361,7 @@ class TestAlignments:
             assert fetched_metadata is None
 
         def test_delete_alignment_invalid_id(self, sample_dataset):
-            from ..alignments import delete_alignment
+            from voxkit.storage.alignments import delete_alignment
 
             dataset_id = sample_dataset["id"]
             invalid_alignment_id = "NON_EXISTENT_ALIGNMENT"
@@ -371,8 +375,8 @@ class TestAlignments:
             assert "not found" in delete_msg
 
         def test_delete_alignment_invalid_dataset(self, monkeypatch):
-            from .. import datasets
-            from ..alignments import delete_alignment
+            from voxkit.storage import datasets
+            from voxkit.storage.alignments import delete_alignment
 
             monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
 
@@ -389,7 +393,11 @@ class TestAlignments:
 
     class TestUpdateAlignment:
         def test_update_alignment_success(self, sample_dataset, sample_model):
-            from ..alignments import create_alignment, get_alignment_metadata, update_alignment
+            from voxkit.storage.alignments import (
+                create_alignment,
+                get_alignment_metadata,
+                update_alignment,
+            )
 
             dataset_id = sample_dataset["id"]
             engine_id = sample_model["engine_id"]
@@ -425,7 +433,11 @@ class TestAlignments:
 
         def test_update_alignment_status_case_insensitive(self, sample_dataset, sample_model):
             """Test that status values are normalized to lowercase."""
-            from ..alignments import create_alignment, get_alignment_metadata, update_alignment
+            from voxkit.storage.alignments import (
+                create_alignment,
+                get_alignment_metadata,
+                update_alignment,
+            )
 
             dataset_id = sample_dataset["id"]
             engine_id = sample_model["engine_id"]
@@ -460,7 +472,7 @@ class TestAlignments:
             assert fetched_metadata["status"] == "completed"
 
         def test_update_alignment_invalid_id(self, sample_dataset):
-            from ..alignments import update_alignment
+            from voxkit.storage.alignments import update_alignment
 
             dataset_id = sample_dataset["id"]
             invalid_alignment_id = "NON_EXISTENT_ALIGNMENT"
@@ -479,8 +491,8 @@ class TestAlignments:
             """Test that list_alignments normalizes status values to lowercase."""
             import json
 
-            from .. import datasets
-            from ..alignments import create_alignment, list_alignments
+            from voxkit.storage import datasets
+            from voxkit.storage.alignments import create_alignment, list_alignments
 
             monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
 
@@ -500,7 +512,7 @@ class TestAlignments:
             alignment_id = alignment_metadata["id"]
 
             # Manually update the JSON file with capital status
-            from ..datasets import _get_dataset_root
+            from voxkit.storage.datasets import _get_dataset_root
 
             dataset_root = _get_dataset_root(dataset_id)
             alignment_path = dataset_root / "alignments" / alignment_id / "voxkit_alignment.json"
@@ -525,8 +537,8 @@ class TestAlignments:
             """Test that get_alignment_metadata normalizes status values to lowercase."""
             import json
 
-            from .. import datasets
-            from ..alignments import create_alignment, get_alignment_metadata
+            from voxkit.storage import datasets
+            from voxkit.storage.alignments import create_alignment, get_alignment_metadata
 
             monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
 
@@ -546,7 +558,7 @@ class TestAlignments:
             alignment_id = alignment_metadata["id"]
 
             # Manually update the JSON file with capital status
-            from ..datasets import _get_dataset_root
+            from voxkit.storage.datasets import _get_dataset_root
 
             dataset_root = _get_dataset_root(dataset_id)
             alignment_path = dataset_root / "alignments" / alignment_id / "voxkit_alignment.json"
