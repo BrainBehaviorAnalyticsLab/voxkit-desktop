@@ -88,7 +88,7 @@ run-tests: ## Run all tests (unit + GUI)
 	uv run pytest tests/
 
 generate-coverage-badge:
-	uv run pytest --cov=voxkit --cov-report=term src/voxkit tests/gui
+	uv run pytest --cov=voxkit --cov-report=term src/voxkit tests
 	uv run coverage-badge -o coverage.svg -f
 
 generate-documentation:

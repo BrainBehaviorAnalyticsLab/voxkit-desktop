@@ -115,5 +115,17 @@ exclude = [
 ]
 
 
+[tool.coverage.run]
+omit = [
+    "src/voxkit/engines/*_engine.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+]
+
 [tool.setuptools.packages.find]
 where = ["src"]
