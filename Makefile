@@ -94,8 +94,10 @@ test-coverage: ## Run tests with detailed coverage report for core modules
 
 test-coverage-all: ## Run tests with coverage for ALL modules (including GUI)
 	@echo "$(BLUE)Running tests with full coverage (including GUI/engines)...$(RESET)"
-	@echo "$(YELLOW)Note: This includes hard-to-test modules for comparison$(RESET)"
-	uv run pytest --cov=voxkit --cov-report=term-missing --cov-config=.coveragerc.all tests/
+	@echo "$(YELLOW)Note: This temporarily disables coverage omissions for comparison$(RESET)"
+	uv run pytest --cov=voxkit --cov-report=term-missing tests/
+	@echo ""
+	@echo "$(YELLOW)Compare this with 'make test-coverage' to see the difference$(RESET)"
 	@echo "$(GREEN)Full coverage report generated$(RESET)"
 
 generate-coverage-badge: ## Generate coverage badge (focused on core modules)

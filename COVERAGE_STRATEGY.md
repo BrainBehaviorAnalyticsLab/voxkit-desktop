@@ -32,7 +32,7 @@ make test-coverage
 # Generate coverage badge
 make generate-coverage-badge
 
-# Run tests with ALL modules for comparison
+# Run tests with ALL modules for comparison (note: will show lower %)
 make test-coverage-all
 ```
 

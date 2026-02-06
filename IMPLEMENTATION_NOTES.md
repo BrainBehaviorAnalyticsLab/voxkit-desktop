@@ -64,9 +64,7 @@ make test-coverage-all    # Full coverage including GUI (for comparison)
 make generate-coverage-badge  # Now with clearer output messages
 ```
 
-### 4. Alternative Configuration
-
-Created `.coveragerc.all` for optional full-codebase coverage measurement when comparison is needed.
+**Note**: The `test-coverage-all` command runs with the same configuration but includes all code. Since the pyproject.toml omit list is active, this provides a way to temporarily see full coverage by running pytest directly if needed.
 
 ## Results
 

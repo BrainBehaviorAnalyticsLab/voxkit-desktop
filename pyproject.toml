@@ -167,7 +167,7 @@ exclude_lines = [
     "raise AssertionError",
     
     # Debugging/development code
-    "if __name__ == .__main__.:",
+    "if __name__ == \"__main__\":",
     "if 0:",
     "if False:",
     
@@ -175,7 +175,7 @@ exclude_lines = [
     "pass",
     
     # Ellipsis in stub files or protocols
-    '^\s*\.\.\.\s*$',
+    "^\\.\\.\\.\\s*$",
 ]
 
 # Report settings for clearer output
