@@ -38,6 +38,7 @@ Notes
 - Importing datasets adjusts metadata and validates structure
 """
 
+import csv
 import json
 import os
 import shutil
@@ -126,12 +127,14 @@ def create_dataset(
     cached: bool,
     anonymize: bool,
     transcribed: bool = False,
+    analysis_data: list[dict[str, Any]] | None = None,
+    analysis_method: str | None = None,
 ) -> tuple[Literal[True], DatasetMetadata] | tuple[Literal[False], str]:
     """Create a dataset metadata dictionary and create necessary directories.
 
     Validates the dataset structure, creates a unique ID, sets up the directory
     hierarchy (dataset root and alignments subdirectory), writes metadata to JSON,
-    and optionally caches the dataset by copying it to storage.
+    optionally caches the dataset, and optionally saves analysis results to CSV.
 
     Args:
         name: Name of the dataset
@@ -140,6 +143,8 @@ def create_dataset(
         cached: Whether to copy the dataset into VoxKit storage
         anonymize: Whether the dataset should be anonymized
         transcribed: Whether the dataset includes transcription files
+        analysis_data: Optional list of analysis result dictionaries to save as CSV
+        analysis_method: Optional name of the analysis method (used for CSV filename)
 
     Returns:
         Tuple of (True, DatasetMetadata) on success or (False, error_message) on failure
@@ -152,6 +157,7 @@ def create_dataset(
         - Automatically validates dataset structure before creation
         - Cleans up partially created directories on failure
         - Cached datasets are copied with shutil.copytree
+        - If analysis_data is provided, saves to {analysis_method}_summary.csv
     """
     # Validate dataset structure
     valid, msg = validate_dataset(Path(original_path))
@@ -192,6 +198,11 @@ def create_dataset(
             cache_dir.mkdir(parents=False, exist_ok=False)
             shutil.copytree(original_path, cache_dir, dirs_exist_ok=True)
 
+        # Save analysis results if provided
+        if analysis_data is not None and analysis_method is not None:
+            csv_path = dataset_dir / f"{analysis_method.lower()}_summary.csv"
+            _save_analysis_csv(analysis_data, csv_path)
+
         return True, metadata
 
     except Exception as e:
@@ -202,6 +213,27 @@ def create_dataset(
 
         print("Error during dataset creation:", str(e))
         return False, f"Failed to create dataset metadata: {str(e)}"
+
+
+def _save_analysis_csv(data: list[dict[str, Any]], path: Path) -> None:
+    """Save analysis data to a CSV file.
+
+    Args:
+        data: List of dictionaries where each dictionary represents a row
+        path: Output path for the CSV file
+
+    Raises:
+        ValueError: If data is empty
+    """
+    if not data:
+        raise ValueError("No data to write to CSV.")
+
+    fieldnames = data[0].keys()
+    with open(path, "w", newline="", encoding="utf-8") as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer.writeheader()
+        for row in data:
+            writer.writerow(row)
 
 
 def get_dataset_metadata(dataset_id: str) -> DatasetMetadata | None:

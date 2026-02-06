@@ -17,8 +17,8 @@ from voxkit.gui.frameworks.settings_modal import (
     GenericDialog,
     SettingsConfig,
 )
-from voxkit.services.hf import download_and_copy_huggingface_model
 from voxkit.storage import models
+from voxkit.storage.models import download_and_copy_huggingface_model
 
 
 class ImportModelDialog(GenericDialog):

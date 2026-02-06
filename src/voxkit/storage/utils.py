@@ -10,6 +10,7 @@ API
 - **readable_from_unique_id**: Convert a unique ID to human-readable format
 - **is_first_launch**: Check if this is the first launch of the application
 - **mark_first_launch_complete**: Mark the first launch as complete
+- **save_json**: Save JSON data to a file within storage
 
 Notes
 -----
@@ -19,9 +20,11 @@ Notes
 - First launch tracking uses a flag file (.first_launch_complete) in the storage root
 """
 
+import json
 from datetime import datetime
 from functools import lru_cache
 from pathlib import Path
+from typing import Any
 
 from .config import STORAGE_ROOT
 
@@ -87,3 +90,17 @@ def mark_first_launch_complete() -> None:
     storage_root.mkdir(parents=True, exist_ok=True)
     flag_file = storage_root / ".first_launch_complete"
     flag_file.touch()
+
+
+def save_json(file_path: Path, data: dict[str, Any]) -> None:
+    """Save JSON data to a file within storage.
+
+    Creates parent directories if they don't exist.
+
+    Args:
+        file_path: Path to the JSON file (should be within storage root)
+        data: Dictionary to serialize as JSON
+    """
+    file_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(file_path, "w") as f:
+        json.dump(data, f, indent=4)

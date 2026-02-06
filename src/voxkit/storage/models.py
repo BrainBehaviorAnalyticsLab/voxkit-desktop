@@ -101,16 +101,18 @@ def _get_models_root(engine_id: str) -> Path | None:
 
 
 def create_model(
-    engine_id: str, model_name: str
+    engine_id: str, model_name: str, source_path: Path | str | None = None
 ) -> tuple[Literal[True], ModelMetadata] | tuple[Literal[False], str]:
     """Create a new model entry in the storage.
 
     Creates a new model directory structure with subdirectories for data, evaluation,
     and training artifacts. Generates a unique ID and creates a metadata file.
+    Optionally copies model files from a source path.
 
     Args:
         engine_id: Identifier of the engine the model belongs to
         model_name: Human-readable name for the model
+        source_path: Optional path to source model files (.zip, .model, or directory)
 
     Returns:
         Tuple of (True, ModelMetadata) on success or (False, error_message) on failure
@@ -123,6 +125,8 @@ def create_model(
         - Model paths in metadata are stored as strings for JSON serialization
         - Automatically cleans up partially created directories on failure
         - Creates four directories: model root, data, eval, and train
+        - If source_path is a .zip file, copies as entrypoint.zip
+        - If source_path is a .model file or directory, copies via copytree
     """
 
     engine_models_root = Path(f"{get_storage_root()}/{engine_id}/{MODELS_ROOT}")
@@ -158,6 +162,21 @@ def create_model(
         train_path.mkdir(parents=True, exist_ok=False)
         metadata_path = model_root / "voxkit_model.json"
 
+        # Copy source files if provided
+        if source_path is not None:
+            source_path = Path(source_path)
+            if not source_path.exists():
+                raise FileNotFoundError(f"Source path does not exist: {source_path}")
+
+            if str(source_path).endswith(".zip"):
+                # Copy zip file as entrypoint.zip
+                dest_file = model_root / "entrypoint.zip"
+                shutil.copy2(source_path, dest_file)
+                model_metadata["model_path"] = dest_file
+            else:
+                # Copy directory or .model file
+                shutil.copytree(source_path, model_path, dirs_exist_ok=True)
+
         # Convert Path objects to strings for JSON serialization
         json_metadata = {k: str(v) if isinstance(v, Path) else v for k, v in model_metadata.items()}
 
@@ -173,7 +192,7 @@ def create_model(
         if model_root and model_root.exists():
             shutil.rmtree(model_root)
 
-        return False, "Failed to create model metadata."
+        return False, f"Failed to create model: {e}"
 
 
 def update_model_metadata(engine_id: str, model_id: str, updates: dict) -> Tuple[bool, str]:
@@ -288,6 +307,80 @@ def get_model_metadata(engine_id: str, model_id: str) -> ModelMetadata:
     with open(metadata_path, "r") as f:
         metadata = json.load(f)
         return metadata
+
+
+def download_and_copy_huggingface_model(
+    model_path: str,
+    destination: str,
+) -> str | None:
+    """
+    Download model from HuggingFace and copy actual files to destination.
+    Follows symlinks to get real model files (like git clone behavior).
+
+    Args:
+        model_path: HuggingFace model path (e.g., 'pkadambi/Wav2TextGrid')
+        destination: Where to copy the model files
+
+    Returns:
+        Destination path if successful, None if failed
+    """
+    try:
+        from huggingface_hub import snapshot_download
+        from huggingface_hub.utils import HfHubHTTPError, RepositoryNotFoundError
+
+        # Validate model path format
+        if not model_path or "/" not in model_path:
+            print(f"Invalid model path format: {model_path}")
+            return None
+
+        # Download to HF cache (returns path to snapshot with symlinks)
+        cache_snapshot_path = snapshot_download(
+            repo_id=model_path,
+            resume_download=True,
+        )
+
+        print(f"Downloaded to cache: {cache_snapshot_path}")
+
+        # Create destination directory
+        dest_path = Path(destination).expanduser()
+        dest_path.mkdir(parents=True, exist_ok=True)
+
+        # Copy all files, following symlinks (like git clone)
+        cache_path = Path(cache_snapshot_path)
+        for item in cache_path.iterdir():
+            if item.name.startswith("."):
+                # Skip .gitattributes and other hidden files if desired
+                continue
+
+            if item.is_symlink() or item.is_file():
+                # Resolve symlink to get actual file, then copy
+                actual_file = item.resolve()
+                dest_file = dest_path / item.name
+                shutil.copy2(actual_file, dest_file)
+                print(f"Copied: {item.name}")
+            elif item.is_dir():
+                # Recursively copy directories
+                shutil.copytree(
+                    item,
+                    dest_path / item.name,
+                    symlinks=False,  # Follow symlinks
+                    dirs_exist_ok=True,
+                )
+
+        print(f"Successfully copied model to: {dest_path}")
+        return str(dest_path)
+
+    except RepositoryNotFoundError:
+        print(f"Model not found: {model_path}")
+        return None
+
+    except HfHubHTTPError as e:
+        print(f"HTTP error downloading model: {e}")
+        return None
+
+    except Exception as e:
+        print(f"Error downloading model {model_path}: {e}")
+        return None
 
 
 def delete_model(engine_id: str, model_id: str) -> Tuple[bool, str]:
