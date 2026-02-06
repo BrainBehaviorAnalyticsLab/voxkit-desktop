@@ -433,13 +433,13 @@ def import_models(engine_id, new_models_root: Path) -> Tuple[bool, str]:
         Exception: If model validation or copy operations fail
     """
     try:
-        for new_model_path in new_models_root.iterdir():
-            if new_model_path.is_dir():
+        for source_model_path in new_models_root.iterdir():
+            if source_model_path.is_dir():
                 try:
                     # Check for voxkit_model.json file
-                    metadata_path = Path(new_model_path / "voxkit_model.json")
+                    metadata_path = Path(source_model_path / "voxkit_model.json")
                     if not metadata_path.exists():
-                        return False, f"{new_model_path.name} (missing metadata file)"
+                        return False, f"{source_model_path.name} (missing metadata file)"
 
                     metadata = None
                     # Read json metadata
@@ -448,7 +448,7 @@ def import_models(engine_id, new_models_root: Path) -> Tuple[bool, str]:
                         metadata = json.load(f)
 
                     if metadata is None:
-                        return False, f"{new_model_path.name} (invalid metadata file)"
+                        return False, f"{source_model_path.name} (invalid metadata file)"
 
                     engine_models_root = get_storage_root() / engine_id
                     if not engine_models_root.exists():
@@ -457,22 +457,22 @@ def import_models(engine_id, new_models_root: Path) -> Tuple[bool, str]:
                     model_id = generate_unique_id()
 
                     if engine_id != metadata["engine_id"]:
-                        return False, f"{new_model_path.name} (engine_id mismatch)"
+                        return False, f"{source_model_path.name} (engine_id mismatch)"
 
                     parts = metadata["model_path"].split(MODELS_ROOT)
                     if len(parts) != 2:
-                        return False, f"{new_model_path.name} (invalid model_path in metadata)"
+                        return False, f"{source_model_path.name} (invalid model_path in metadata)"
 
                     # Retain the model path don't assume it's the same for all models
                     path_after_root = parts[1]
 
-                    new_model_path = (
+                    dest_model_entrypoint = (
                         engine_models_root / MODELS_ROOT / model_id / path_after_root.split("/")[-1]
                     )
                     new_metadata = ModelMetadata(
                         name=metadata["name"],
                         engine_id=metadata["engine_id"],
-                        model_path=Path(new_model_path),
+                        model_path=Path(dest_model_entrypoint),
                         data_path=Path(engine_models_root / MODELS_ROOT / model_id / "data"),
                         eval_path=Path(engine_models_root / MODELS_ROOT / model_id / "eval"),
                         train_path=Path(engine_models_root / MODELS_ROOT / model_id / "train"),
@@ -483,7 +483,7 @@ def import_models(engine_id, new_models_root: Path) -> Tuple[bool, str]:
                     # Copy model directory to storage
                     dest_path = engine_models_root / MODELS_ROOT / model_id
 
-                    shutil.copytree(new_model_path, dest_path, dirs_exist_ok=True)
+                    shutil.copytree(source_model_path, dest_path, dirs_exist_ok=True)
 
                     # Convert Path objects to strings for JSON serialization
                     json_metadata = {
@@ -497,7 +497,7 @@ def import_models(engine_id, new_models_root: Path) -> Tuple[bool, str]:
                         json.dump(json_metadata, f, indent=4)
 
                 except Exception as e:
-                    return False, f"{new_model_path.name} (error: {str(e)})"
+                    return False, f"{source_model_path.name} (error: {str(e)})"
 
         return True, f"Models imported successfully from: {new_models_root}"
 

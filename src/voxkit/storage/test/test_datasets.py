@@ -493,3 +493,253 @@ class TestDatasets:
 
             assert imp_success is False
             assert "file not found" in msg
+
+    class TestUpdateDatasetMetadata:
+        def test_update_dataset_metadata_success(self, monkeypatch):
+            from .. import datasets
+            from ..datasets import create_dataset, get_dataset_metadata, update_dataset_metadata
+
+            monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
+
+            # Create a dataset
+            success, message = create_dataset(
+                name="dataset_update_test",
+                description="Original description",
+                original_path=valid_dataset_path,
+                cached=False,
+                anonymize=False,
+                transcribed=False,
+            )
+            assert success is True
+            dataset_id = message["id"]
+
+            # Update the dataset metadata
+            updates = {
+                "description": "Updated description",
+                "cached": None,
+                "anonymize": True,
+                "transcribed": True,
+            }
+            update_success, update_msg = update_dataset_metadata(dataset_id, updates)
+
+            assert update_success is True
+            assert "updated successfully" in update_msg
+
+            # Verify the updates
+            metadata = get_dataset_metadata(dataset_id)
+            assert metadata["description"] == "Updated description"
+            assert metadata["anonymize"] is True
+            assert metadata["transcribed"] is True
+            # cached should remain unchanged since we passed None
+            assert metadata["cached"] is False
+
+        def test_update_dataset_metadata_nonexistent(self, monkeypatch):
+            from .. import datasets
+            from ..datasets import update_dataset_metadata
+
+            monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
+
+            updates = {
+                "description": "New description",
+                "cached": None,
+                "anonymize": None,
+                "transcribed": None,
+            }
+            update_success, update_msg = update_dataset_metadata("nonexistent_id_12345", updates)
+
+            assert update_success is False
+            assert "not found" in update_msg
+
+        def test_update_dataset_metadata_partial(self, monkeypatch):
+            from .. import datasets
+            from ..datasets import create_dataset, get_dataset_metadata, update_dataset_metadata
+
+            monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
+
+            # Create a dataset
+            success, message = create_dataset(
+                name="dataset_partial_update_test",
+                description="Original description",
+                original_path=valid_dataset_path,
+                cached=True,
+                anonymize=True,
+                transcribed=True,
+            )
+            assert success is True
+            dataset_id = message["id"]
+
+            # Update only description
+            updates = {
+                "description": "Only description updated",
+                "cached": None,
+                "anonymize": None,
+                "transcribed": None,
+            }
+            update_success, _ = update_dataset_metadata(dataset_id, updates)
+            assert update_success is True
+
+            # Verify only description changed
+            metadata = get_dataset_metadata(dataset_id)
+            assert metadata["description"] == "Only description updated"
+            assert metadata["cached"] is True
+            assert metadata["anonymize"] is True
+            assert metadata["transcribed"] is True
+
+    class TestCreateDatasetWithAnalysis:
+        def test_create_dataset_with_analysis_data(self, monkeypatch):
+            from .. import datasets
+            from ..datasets import _get_datasets_root, create_dataset
+
+            monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
+
+            analysis_data = [
+                {"speaker": "speaker_1", "duration": 10.5, "files": 3},
+                {"speaker": "speaker_2", "duration": 15.2, "files": 5},
+            ]
+
+            success, message = create_dataset(
+                name="dataset_with_analysis",
+                description="A dataset with analysis data",
+                original_path=valid_dataset_path,
+                cached=False,
+                anonymize=False,
+                transcribed=True,
+                analysis_data=analysis_data,
+                analysis_method="test_analysis",
+            )
+
+            assert success is True
+            dataset_id = message["id"]
+
+            # Verify CSV file was created
+            csv_path = _get_datasets_root() / dataset_id / "test_analysis_summary.csv"
+            assert csv_path.exists() is True
+
+            # Verify CSV content
+            import csv
+
+            with open(csv_path, "r") as f:
+                reader = csv.DictReader(f)
+                rows = list(reader)
+
+            assert len(rows) == 2
+            assert rows[0]["speaker"] == "speaker_1"
+            assert rows[1]["speaker"] == "speaker_2"
+
+        def test_create_dataset_without_analysis_data(self, monkeypatch):
+            from .. import datasets
+            from ..datasets import _get_datasets_root, create_dataset
+
+            monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
+
+            success, message = create_dataset(
+                name="dataset_no_analysis",
+                description="A dataset without analysis data",
+                original_path=valid_dataset_path,
+                cached=False,
+                anonymize=False,
+                transcribed=True,
+            )
+
+            assert success is True
+            dataset_id = message["id"]
+
+            # Verify no CSV file was created
+            dataset_dir = _get_datasets_root() / dataset_id
+            csv_files = list(dataset_dir.glob("*_summary.csv"))
+            assert len(csv_files) == 0
+
+    class TestValidateDatasetNegativeCases:
+        def test_validate_dataset_nonexistent_path(self, monkeypatch):
+            from ..datasets import validate_dataset
+
+            nonexistent_path = mock_get_storage_root() / "does_not_exist"
+            is_valid, msg = validate_dataset(nonexistent_path)
+
+            assert is_valid is False
+            assert "does not exist" in msg
+
+        def test_validate_dataset_file_not_directory(self, monkeypatch):
+            from ..datasets import validate_dataset
+
+            # Create a file instead of directory
+            file_path = mock_get_storage_root() / "not_a_directory.txt"
+            file_path.touch()
+
+            is_valid, msg = validate_dataset(file_path)
+
+            assert is_valid is False
+            assert "not a directory" in msg
+
+        def test_validate_dataset_empty_directory(self, monkeypatch):
+            from ..datasets import validate_dataset
+
+            is_valid, msg = validate_dataset(empty_dataset_path)
+
+            assert is_valid is False
+            assert "empty" in msg
+
+        def test_validate_dataset_files_at_root(self, monkeypatch):
+            from ..datasets import validate_dataset
+
+            # Create a dataset with files at root level
+            files_at_root_path = mock_get_storage_root() / "fake_datasets" / "files_at_root"
+            files_at_root_path.mkdir(parents=True, exist_ok=True)
+            (files_at_root_path / "sample.wav").touch()
+
+            is_valid, msg = validate_dataset(files_at_root_path)
+
+            assert is_valid is False
+            assert "Expected speaker directories" in msg
+
+        def test_validate_dataset_empty_speaker_directory(self, monkeypatch):
+            from ..datasets import validate_dataset
+
+            # Create a dataset with empty speaker directory
+            empty_speaker_path = mock_get_storage_root() / "fake_datasets" / "empty_speaker"
+            empty_speaker_path.mkdir(parents=True, exist_ok=True)
+            (empty_speaker_path / "speaker_1").mkdir(parents=True, exist_ok=True)
+
+            is_valid, msg = validate_dataset(empty_speaker_path)
+
+            assert is_valid is False
+            assert "empty" in msg
+
+        def test_validate_dataset_missing_audio_files(self, monkeypatch):
+            from ..datasets import validate_dataset
+
+            # Create a dataset with only label files
+            no_audio_path = mock_get_storage_root() / "fake_datasets" / "no_audio"
+            speaker_path = no_audio_path / "speaker_1"
+            speaker_path.mkdir(parents=True, exist_ok=True)
+            (speaker_path / "sample.lab").touch()
+
+            is_valid, msg = validate_dataset(no_audio_path)
+
+            assert is_valid is False
+            assert "No audio files" in msg
+
+        def test_validate_dataset_missing_label_files(self, monkeypatch):
+            from ..datasets import validate_dataset
+
+            is_valid, msg = validate_dataset(invalid_dataset_path)
+
+            assert is_valid is False
+            assert "No label files" in msg
+
+        def test_validate_dataset_mismatched_counts(self, monkeypatch):
+            from ..datasets import validate_dataset
+
+            # Create a dataset with mismatched audio/label counts
+            mismatched_path = mock_get_storage_root() / "fake_datasets" / "mismatched"
+            speaker_path = mismatched_path / "speaker_1"
+            speaker_path.mkdir(parents=True, exist_ok=True)
+            (speaker_path / "sample_1.wav").touch()
+            (speaker_path / "sample_2.wav").touch()
+            (speaker_path / "sample_1.lab").touch()
+            # Missing sample_2.lab
+
+            is_valid, msg = validate_dataset(mismatched_path)
+
+            assert is_valid is False
+            assert "Mismatch" in msg

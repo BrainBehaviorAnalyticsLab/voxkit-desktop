@@ -403,3 +403,293 @@ class TestModels:
             required_keys = set(models.ModelMetadata.__annotations__.keys())
             missing = required_keys - set(metadata.keys())
             assert not missing, f"Missing keys in model metadata: {missing}"
+
+    class TestUpdateModelMetadata:
+        def test_update_model_metadata_success(self, monkeypatch):
+            from .. import models
+            from ..models import create_model, get_model_metadata, update_model_metadata
+
+            monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
+
+            engine_id = ENGINE_IDS[0]
+            success, message = create_model(
+                engine_id=engine_id,
+                model_name="update_test_model",
+            )
+            assert success is True
+            model_id = message["id"]
+
+            # Update the model metadata
+            update_success, update_msg = update_model_metadata(
+                engine_id=engine_id,
+                model_id=model_id,
+                updates={"name": "updated_model_name"},
+            )
+
+            assert update_success is True
+            assert "updated successfully" in update_msg
+
+            # Verify the update
+            metadata = get_model_metadata(engine_id=engine_id, model_id=model_id)
+            assert metadata["name"] == "updated_model_name"
+
+        def test_update_model_metadata_nonexistent(self, monkeypatch):
+            from .. import models
+            from ..models import update_model_metadata
+
+            monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
+
+            engine_id = ENGINE_IDS[0]
+            update_success, update_msg = update_model_metadata(
+                engine_id=engine_id,
+                model_id="nonexistent_model_id",
+                updates={"name": "new_name"},
+            )
+
+            assert update_success is False
+            assert "not found" in update_msg
+
+        def test_update_model_metadata_invalid_engine(self, monkeypatch):
+            from .. import models
+            from ..models import create_model, update_model_metadata
+
+            monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
+
+            engine_id = ENGINE_IDS[0]
+            success, message = create_model(
+                engine_id=engine_id,
+                model_name="invalid_engine_update_model",
+            )
+            assert success is True
+            model_id = message["id"]
+
+            # Try to update with invalid engine
+            update_success, update_msg = update_model_metadata(
+                engine_id="INVALID_ENGINE",
+                model_id=model_id,
+                updates={"name": "new_name"},
+            )
+
+            assert update_success is False
+            assert "not found" in update_msg
+
+        def test_update_model_metadata_ignores_unknown_fields(self, monkeypatch):
+            from .. import models
+            from ..models import create_model, get_model_metadata, update_model_metadata
+
+            monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
+
+            engine_id = ENGINE_IDS[0]
+            success, message = create_model(
+                engine_id=engine_id,
+                model_name="unknown_fields_model",
+            )
+            assert success is True
+            model_id = message["id"]
+
+            # Update with unknown field
+            update_success, _ = update_model_metadata(
+                engine_id=engine_id,
+                model_id=model_id,
+                updates={"unknown_field": "value", "name": "updated_name"},
+            )
+
+            assert update_success is True
+
+            # Verify only known field was updated
+            metadata = get_model_metadata(engine_id=engine_id, model_id=model_id)
+            assert metadata["name"] == "updated_name"
+            assert "unknown_field" not in metadata
+
+    class TestCreateModelWithSourcePath:
+        def test_create_model_with_directory_source(self, monkeypatch):
+            from .. import models
+            from ..models import create_model
+
+            monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
+
+            engine_id = ENGINE_IDS[0]
+
+            # Create a source directory with some files
+            source_dir = mock_get_storage_root() / "model_source"
+            source_dir.mkdir(parents=True, exist_ok=True)
+            (source_dir / "model_file.bin").touch()
+            (source_dir / "config.json").touch()
+
+            success, message = create_model(
+                engine_id=engine_id,
+                model_name="model_from_source",
+                source_path=source_dir,
+            )
+
+            assert success is True
+            assert message["name"] == "model_from_source"
+
+            # Verify source files were copied
+            model_path = Path(message["model_path"])
+            assert model_path.exists()
+            assert (model_path / "model_file.bin").exists()
+            assert (model_path / "config.json").exists()
+
+        def test_create_model_with_zip_source(self, monkeypatch):
+            import zipfile
+
+            from .. import models
+            from ..models import create_model
+
+            monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
+
+            engine_id = ENGINE_IDS[0]
+
+            # Create a zip file
+            zip_path = mock_get_storage_root() / "model_source.zip"
+            with zipfile.ZipFile(zip_path, "w") as zf:
+                zf.writestr("model_data.bin", "fake model data")
+
+            success, message = create_model(
+                engine_id=engine_id,
+                model_name="model_from_zip",
+                source_path=zip_path,
+            )
+
+            assert success is True
+            assert message["name"] == "model_from_zip"
+
+            # Verify zip was copied as entrypoint.zip
+            model_path = Path(message["model_path"])
+            assert model_path.exists()
+            assert model_path.suffix == ".zip"
+
+        def test_create_model_with_nonexistent_source(self, monkeypatch):
+            from .. import models
+            from ..models import create_model
+
+            monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
+
+            engine_id = ENGINE_IDS[0]
+            nonexistent_path = mock_get_storage_root() / "nonexistent_source"
+
+            success, message = create_model(
+                engine_id=engine_id,
+                model_name="model_bad_source",
+                source_path=nonexistent_path,
+            )
+
+            assert success is False
+            assert "does not exist" in message
+
+    class TestImportModels:
+        def test_import_models_success(self, monkeypatch):
+            import json
+
+            from .. import models
+            from ..config import MODELS_ROOT
+            from ..models import import_models
+
+            monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
+
+            engine_id = ENGINE_IDS[0]
+
+            # Create a source directory with models to import
+            import_source = mock_get_storage_root() / "import_source"
+
+            # Create a model with proper structure
+            model_dir = import_source / "model_to_import"
+            model_dir.mkdir(parents=True, exist_ok=True)
+
+            # Create entrypoint.model directory
+            entrypoint = model_dir / "entrypoint.model"
+            entrypoint.mkdir(parents=True, exist_ok=True)
+
+            # Create metadata file with correct model_path format
+            model_path_str = f"/some/path/{engine_id}/{MODELS_ROOT}/old_id/entrypoint.model"
+            metadata = {
+                "name": "imported_model",
+                "engine_id": engine_id,
+                "model_path": model_path_str,
+                "data_path": "/some/path/data",
+                "eval_path": "/some/path/eval",
+                "train_path": "/some/path/train",
+                "download_date": "January 01, 2024 at 12:00:00 PM",
+                "id": "old_id",
+            }
+
+            with open(model_dir / "voxkit_model.json", "w") as f:
+                json.dump(metadata, f, indent=4)
+
+            success, msg = import_models(engine_id=engine_id, new_models_root=import_source)
+
+            assert success is True
+            assert "imported successfully" in msg
+
+        def test_import_models_missing_metadata(self, monkeypatch):
+            from .. import models
+            from ..models import import_models
+
+            monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
+
+            engine_id = ENGINE_IDS[0]
+
+            # Create a source directory with model missing metadata
+            import_source = mock_get_storage_root() / "import_source_no_meta"
+            model_dir = import_source / "model_without_metadata"
+            model_dir.mkdir(parents=True, exist_ok=True)
+
+            success, msg = import_models(engine_id=engine_id, new_models_root=import_source)
+
+            assert success is False
+            assert "missing metadata file" in msg
+
+        def test_import_models_engine_mismatch(self, monkeypatch):
+            import json
+
+            from .. import models
+            from ..config import MODELS_ROOT
+            from ..models import import_models
+
+            monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
+
+            engine_id = ENGINE_IDS[0]
+            different_engine = ENGINE_IDS[1]
+
+            # Create a source directory with model for different engine
+            import_source = mock_get_storage_root() / "import_source_mismatch"
+            model_dir = import_source / "model_wrong_engine"
+            model_dir.mkdir(parents=True, exist_ok=True)
+
+            model_path_str = f"/some/path/{different_engine}/{MODELS_ROOT}/old_id/entrypoint.model"
+            metadata = {
+                "name": "wrong_engine_model",
+                "engine_id": different_engine,
+                "model_path": model_path_str,
+                "data_path": "/some/path/data",
+                "eval_path": "/some/path/eval",
+                "train_path": "/some/path/train",
+                "download_date": "January 01, 2024 at 12:00:00 PM",
+                "id": "old_id",
+            }
+
+            with open(model_dir / "voxkit_model.json", "w") as f:
+                json.dump(metadata, f, indent=4)
+
+            success, msg = import_models(engine_id=engine_id, new_models_root=import_source)
+
+            assert success is False
+            assert "engine_id mismatch" in msg
+
+        def test_import_models_empty_source(self, monkeypatch):
+            from .. import models
+            from ..models import import_models
+
+            monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
+
+            engine_id = ENGINE_IDS[0]
+
+            # Create an empty source directory
+            import_source = mock_get_storage_root() / "import_source_empty"
+            import_source.mkdir(parents=True, exist_ok=True)
+
+            success, msg = import_models(engine_id=engine_id, new_models_root=import_source)
+
+            assert success is True
+            assert "imported successfully" in msg
