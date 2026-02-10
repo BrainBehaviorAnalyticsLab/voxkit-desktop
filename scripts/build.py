@@ -18,21 +18,21 @@ Example:
 def codesign_macos_app(app_path):
     """Ad-hoc code sign the macOS app bundle"""
     print(f"[macOS] Code signing app bundle...")
-    
+
     # Find all dylibs and executables to sign
     files_to_sign = []
-    
+
     internal_dir = app_path / "_internal"
     if internal_dir.exists():
         for dylib in internal_dir.glob("*.dylib"):
             files_to_sign.append(dylib)
         for so in internal_dir.glob("**/*.so"):
             files_to_sign.append(so)
-    
+
     executable = app_path / "VoxKit"
     if executable.exists():
         files_to_sign.append(executable)
-    
+
     # Sign each file with ad-hoc signature
     for file_path in files_to_sign:
         print(f"[macOS]   Signing {file_path.name}...")
@@ -43,10 +43,10 @@ def codesign_macos_app(app_path):
             "--sign", "-",  # Ad-hoc signature
             str(file_path)
         ], capture_output=True, text=True)
-        
+
         if result.returncode != 0:
             print(f"[WARNING] Failed to sign {file_path.name}: {result.stderr}")
-    
+
     print(f"[macOS] Code signing complete")
     return True
 
@@ -54,21 +54,21 @@ def codesign_macos_app(app_path):
 def fix_macos_dylib_paths(app_path, python_lib_source):
     """Fix dylib paths for macOS .app bundles"""
     print(f"[macOS] Fixing dynamic library paths...")
-    
+
     internal_dir = app_path / "_internal"
     executable = app_path / "VoxKit"
-    
+
     if not internal_dir.exists():
         print(f"[ERROR] _internal directory not found at {internal_dir}")
         return False
-    
+
     # Copy Python shared library if it exists
     python_lib_dest = internal_dir / "libpython3.11.dylib"
-    
+
     if python_lib_source.exists() and not python_lib_dest.exists():
         print(f"[macOS] Copying Python library from {python_lib_source}")
         shutil.copy2(python_lib_source, python_lib_dest)
-    
+
     if python_lib_dest.exists():
         print(f"[macOS] Fixing library ID for {python_lib_dest.name}")
         # Make writable
@@ -79,7 +79,7 @@ def fix_macos_dylib_paths(app_path, python_lib_source):
             "-id", "@loader_path/libpython3.11.dylib",
             str(python_lib_dest)
         ], check=False)
-    
+
     if executable.exists():
         print(f"[macOS] Updating executable to reference bundled Python library")
         os.chmod(executable, 0o755)
@@ -90,7 +90,7 @@ def fix_macos_dylib_paths(app_path, python_lib_source):
             "@loader_path/../_internal/libpython3.11.dylib",
             str(executable)
         ], check=False)
-    
+
     print(f"[macOS] Dylib path fixing complete")
     return True
 
@@ -107,14 +107,14 @@ def build(args):
         # Basic options
         if args.name:
                 opts.append(f'--name={args.name}')
-        
+
         # macOS: Always use onedir mode for .app bundles
         if sys.platform == 'darwin' and args.windowed:
                 print("[macOS] Using onedir mode (required for .app bundles)")
                 # Don't add --onefile
         elif args.onefile:
                 opts.append('--onefile')
-        
+
         if args.windowed:
                 opts.append('--windowed')
         if args.clean:
@@ -127,11 +127,11 @@ def build(args):
                 opts.append(f'--specpath={args.specpath}')
         if args.icon:
                 opts.append(f'--icon={args.icon}')
-        
+
         # Hidden imports
         default_hidden = [
-                'typeguard', 
-                'inflect', 
+                'typeguard',
+                'inflect',
                 'g2p_en',
                 'speechbrain',
                 'speechbrain.utils',
@@ -151,7 +151,7 @@ def build(args):
         ]
         for hi in default_hidden + args.hidden_import:
                 opts.append(f'--hidden-import={hi}')
-        
+
         # Add hooks directory if it exists
         hooks_dir = Path(__file__).parent / "hooks"
         if hooks_dir.exists():
@@ -164,7 +164,7 @@ def build(args):
         if config_dir.exists() and config_dir.is_dir():
                 print(f"[INFO] Adding config folder to build assets")
                 opts.append(f'--add-data={config_dir}{sep}config')
-                
+
         for ad in args.add_data:
                 if sep in ad:
                         opts.append(f'--add-data={ad}')
@@ -181,16 +181,16 @@ def build(args):
 
         print("Running PyInstaller with options:", opts)
         pyi_main.run(opts)
-        
+
         # Post-build: Fix macOS dylib paths and code sign
         if sys.platform == 'darwin':
                 print("\n[macOS] Running post-build fixes...")
                 dist_path = Path(args.distpath) if args.distpath else Path("dist")
                 app_path = dist_path / args.name
-                
+
                 # Find Python shared library
                 python_lib = Path(sys.base_prefix) / "lib" / "libpython3.11.dylib"
-                
+
                 if app_path.exists():
                         fix_macos_dylib_paths(app_path, python_lib)
                         codesign_macos_app(app_path)

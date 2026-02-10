@@ -36,7 +36,7 @@ dev: ## Run the development server
 
 build: clean ## Build standalone executable for current platform
 	@echo "$(BLUE)Building VoxKit for macOS...$(RESET)"
-	uv run --group installation python build.py build --entry main.py --name VoxKit --icon ./assets/voxkit.icns --windowed
+	uv run --group installation python scripts/build.py build --entry main.py --name VoxKit --icon ./assets/voxkit.icns --windowed
 
 build-info: ## Show information about the built app
 	@echo "$(BLUE)Checking build output...$(RESET)"
