@@ -22,15 +22,10 @@ from PyQt6.QtWidgets import (
 )
 
 from voxkit.gui.components import OverlayWidget, ToggleSwitch
-from voxkit.storage.utils import get_storage_root
+from voxkit.gui.styles import Buttons, Containers, Inputs, Labels
+from voxkit.storage.utils import get_storage_root, save_json
 
 from .api import FieldConfig, FieldType, SettingsConfig
-from voxkit.gui.styles import (
-    Buttons,
-    Containers,
-    Labels,
-    Inputs
-)
 
 
 class GenericDialog(QDialog):
@@ -111,11 +106,8 @@ class GenericDialog(QDialog):
             return
 
         defaults = {field.name: field.default_value for field in self.field_configs}
-        if not os.path.exists(os.path.dirname(self.store_values_path)):
-            os.makedirs(os.path.dirname(self.store_values_path))
-        with open(self.store_values_path, "w") as f:
-            json.dump(defaults, f, indent=4)
-            print(f"Default settings saved to {self.store_values_path}")
+        save_json(self.store_values_path, defaults)
+        print(f"Default settings saved to {self.store_values_path}")
 
     def _setup_overlay(self, parent) -> None:
         """
@@ -510,8 +502,5 @@ class GenericDialog(QDialog):
             ...     dialog.save()  # Persist settings to disk
         """
         values = self.get_values()
-        if not os.path.exists(os.path.dirname(self.store_values_path)):
-            os.makedirs(os.path.dirname(self.store_values_path))
-        with open(self.store_values_path, "w") as f:
-            json.dump(values, f, indent=4)
-            print(f"Settings saved to {self.store_values_path}")
+        save_json(self.store_values_path, values)
+        print(f"Settings saved to {self.store_values_path}")
