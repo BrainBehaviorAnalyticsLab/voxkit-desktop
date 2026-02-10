@@ -95,8 +95,8 @@ test-coverage: ## Run tests with detailed coverage report for core modules
 generate-coverage-badge:
 	@echo "$(BLUE)Generating coverage badge...$(RESET)"
 	uv run pytest --cov=voxkit --cov-report=xml tests/
-	uv run genbadge coverage -i coverage.xml -o coverage.svg
-	@echo "$(GREEN)Coverage badge updated: coverage.svg$(RESET)"
+	uv run genbadge coverage -i coverage.xml -o assets/coverage.svg
+	@echo "$(GREEN)Coverage badge updated: assets/coverage.svg$(RESET)"
 
 generate-documentation: ## Generate API documentation
 	uv run --group docs pdoc -o docs src/voxkit
