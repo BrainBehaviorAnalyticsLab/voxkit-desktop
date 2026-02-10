@@ -1,13 +1,73 @@
 import subprocess
 
 
-def run_mfa_align(corpus_dir, model_path, output_dir, eval_dir=None) -> None:
+def ensure_dictionary_downloaded(dictionary_name: str = "english_us_arpa") -> None:
+    """Ensure the specified MFA dictionary is downloaded.
+
+    Args:
+        dictionary_name: Name of the dictionary to download (default: "english_us_arpa").
+
+    Raises:
+        AssertionError: If dictionary download fails and dictionary is not available.
+    """
+    download_cmd = [
+        "conda",
+        "run",
+        "-n",
+        "aligner",
+        "mfa",
+        "model",
+        "download",
+        "dictionary",
+        dictionary_name,
+    ]
+
+    print(f"[mfa] Ensuring dictionary '{dictionary_name}' is downloaded...")
+    result = subprocess.run(download_cmd, capture_output=True, text=True)
+
+    # Check if dictionary is available (either just downloaded or already present)
+    # MFA returns success if already downloaded, or downloads successfully
+    if result.returncode != 0:
+        # Try to list dictionaries to check if it's already available
+        list_cmd = [
+            "conda",
+            "run",
+            "-n",
+            "aligner",
+            "mfa",
+            "model",
+            "list",
+            "dictionary",
+        ]
+        list_result = subprocess.run(list_cmd, capture_output=True, text=True)
+        assert dictionary_name in list_result.stdout, (
+            f"Dictionary '{dictionary_name}' is not available. "
+            f"Download failed with: {result.stderr}"
+        )
+        print(f"[mfa] Dictionary '{dictionary_name}' already available.")
+    else:
+        print(f"[mfa] Dictionary '{dictionary_name}' is ready.")
+
+
+def run_mfa_align(
+    corpus_dir, model_path, output_dir, dictionary_name="english_us_arpa", eval_dir=None
+) -> None:
     """
     Run MFA align command with the provided arguments.
 
     Args:
-        args (List[str]): List of command-line arguments for MFA align.
+        corpus_dir: Path to the corpus directory.
+        model_path: Path to the acoustic model.
+        output_dir: Path to output TextGrids.
+        dictionary_name: MFA dictionary name (default: "english_us_arpa").
+        eval_dir: Optional path to reference alignments for evaluation.
+
+    Raises:
+        AssertionError: If dictionary is not available.
+        subprocess.CalledProcessError: If MFA alignment fails.
     """
+    # Ensure dictionary is downloaded
+    ensure_dictionary_downloaded(dictionary_name)
 
     cmd = [
         "conda",
@@ -17,9 +77,10 @@ def run_mfa_align(corpus_dir, model_path, output_dir, eval_dir=None) -> None:
         "mfa",
         "align",
         corpus_dir,
-        "english_us_arpa",
+        dictionary_name,
         model_path,
         output_dir,
+        "--clean",  # Add clean flag to avoid cache issues
     ]
 
     if eval_dir:
@@ -51,28 +112,13 @@ def run_mfa_adapt(
         output_model_path (str): Path where the adapted model will be saved.
         dictionary_name (str): Name of the dictionary to use (default: "english_us_arpa").
         num_iterations (int): Number of adaptation iterations.
-    """
-    # First, ensure the dictionary is downloaded
-    download_cmd = [
-        "conda",
-        "run",
-        "-n",
-        "aligner",
-        "mfa",
-        "model",
-        "download",
-        "dictionary",
-        "english_us_arpa",
-    ]
 
-    try:
-        print("[mfa.run_mfa_adapt] Ensuring dictionary is downloaded...")
-        subprocess.run(download_cmd, check=True, capture_output=True, text=True)
-    except subprocess.CalledProcessError:
-        print(
-            "[mfa.run_mfa_adapt] Dictionary already downloaded or "
-            "download failed (continuing anyway)"
-        )
+    Raises:
+        AssertionError: If dictionary is not available.
+        subprocess.CalledProcessError: If MFA adaptation fails.
+    """
+    # Ensure dictionary is downloaded
+    ensure_dictionary_downloaded(dictionary_name)
 
     cmd = [
         "conda",
