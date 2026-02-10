@@ -152,15 +152,16 @@ def build(args):
         for hi in default_hidden + args.hidden_import:
                 opts.append(f'--hidden-import={hi}')
 
-        # Add hooks directory if it exists
-        hooks_dir = Path(__file__).parent / "hooks"
+        # Add hooks directory if it exists (relative to project root)
+        project_root = Path(__file__).parent.parent
+        hooks_dir = project_root / "hooks"
         if hooks_dir.exists():
                 opts.append(f'--additional-hooks-dir={hooks_dir}')
 
         # Add data
         sep = ';' if os.name == 'nt' else ':'
-        # Add config folder if it exists
-        config_dir = Path(__file__).parent / "config"
+        # Add config folder if it exists (relative to project root)
+        config_dir = project_root / "config"
         if config_dir.exists() and config_dir.is_dir():
                 print(f"[INFO] Adding config folder to build assets")
                 opts.append(f'--add-data={config_dir}{sep}config')
