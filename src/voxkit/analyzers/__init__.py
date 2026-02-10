@@ -1,29 +1,37 @@
 """VoxKit Analyzers Module.
 
-Analyzers extract structured metadata from datasets at registration time,
-producing CSV summaries that can be visualized within VoxKit without rescanning
-the filesystem.
+Analyzers observe datasets and link metadata in flexible, abstract ways. They
+extract structured information at registration time, producing CSV summaries
+that can be visualized within VoxKit without rescanning the filesystem.
+
+API
+---
+- **AnalyzerManager.list_analyzers**: List registered analyzer IDs
+- **AnalyzerManager.get_analyzer**: Retrieve analyzer instance by ID
+- **AnalyzerManager.get_analyzers**: Get all registered analyzers
+- **DatasetAnalyzer**: Abstract base class for all analyzers
+
+Available Analyzers
+-------------------
+**DefaultAnalyzer** (``default_analyzer.py``)
+    Extracts speaker count and audio file counts per speaker directory.
+    Includes a bar chart visualization for quick dataset overview.
 
 Output Structure
 ----------------
-Analyzer output is stored alongside dataset metadata:
+Analyzer output is stored alongside dataset metadata::
 
     ~/.voxkit/datasets/{dataset_id}/
     ├── voxkit_dataset.json           # Dataset metadata
     ├── {analyzer_name}_summary.csv   # Analyzer output
     └── alignments/                   # Alignment outputs
 
-API
----
-- **ManageAnalyzers.list_analyzers**: List registered analyzer IDs
-- **ManageAnalyzers.get_analyzer**: Retrieve analyzer instance by ID
-- **ManageAnalyzers.get_analyzers**: Get all registered analyzers
-
 Notes
 -----
-- Analyzers run during dataset registration (see ``voxkit.gui.workers.datasets_thread``)
+- Analyzers run during dataset registration
 - Each analyzer's ``name`` property serves as its unique identifier
 - Output is a list of dicts where keys become CSV column headers
+- Custom visualizations can be provided via the ``visualize`` method
 """
 
 from __future__ import annotations
@@ -68,4 +76,9 @@ default_analyzer_instance = DefaultAnalyzer()
 # Singleton instance for unified export/interface
 ManageAnalyzers = AnalyzerManager({default_analyzer_instance.name: default_analyzer_instance})
 
-__all__ = ["ManageAnalyzers"]
+__all__ = [
+    "ManageAnalyzers",
+    "AnalyzerManager",
+    "DatasetAnalyzer",
+    "DefaultAnalyzer",
+]
