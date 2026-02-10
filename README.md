@@ -19,9 +19,9 @@
 
 ## Appendix
 
-- [ARCHITECTURE](./ARCHITECTURE.md) - System layers and terminology
-- [RESEARCH](./RESEARCH.md) - Papers and research background
-- [CONTRIBUTING](./CONTRIBUTING.md) - Contribution guidelines
+- [ARCHITECTURE](./docs/ARCHITECTURE.md) - System layers and terminology
+- [RESEARCH](./docs/RESEARCH.md) - Papers and research background
+- [CONTRIBUTING](./docs/CONTRIBUTING.md) - Contribution guidelines
 
 ## Project Structure
 
