@@ -4,7 +4,7 @@
 app_name: "VoxKit"
 version: "0.1.0"
 description: "AI/ML Research -> Clinical Applications (Speech Pathology)"
-help_url: "http://localhost:3000/help"
+help_url: "https//voxkit-web.vercel.app/help"
 
 # Introduction text displayed to users
 introduction: |
