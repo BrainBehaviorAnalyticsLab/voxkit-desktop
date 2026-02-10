@@ -33,7 +33,6 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pre-commit>=4.3.0",
-    "coverage-badge>=1.1.2",
     "pytest>=8.4.2",
     "pytest-asyncio>=1.3.0",
     "pytest-cov>=7.0.0",
@@ -41,6 +40,7 @@ dev = [
     "pre-commit>=4.3.0",
     "ruff>=0.14.0",
     "mypy>=1.18.2",
+    "genbadge[coverage]>=1.1.3",
 ]
 docs = [
     "pdoc>=16.0.0",
@@ -73,6 +73,7 @@ exclude = [
     "build.py",
     "example_startup_script.py",
     "test_imports.py",
+    "coverage.svg"
 ]
 
 [tool.ruff.lint]
@@ -120,28 +121,33 @@ exclude = [
 omit = [
     # Engine implementations - OS/hardware-dependent external tool integrations
     "src/voxkit/engines/*_engine.py",
-    
+
     # GUI layer - PyQt6 UI components are difficult to test reliably
     # Focus testing on business logic, not UI rendering
-    "src/voxkit/gui/components/*.py",
-    "src/voxkit/gui/frameworks/*.py",
-    "src/voxkit/gui/pages/*/*.py",
-    "src/voxkit/gui/styles/*.py",
-    "src/voxkit/gui/workers/*.py",
+    # Use **/*.py to match all .py files recursively in subdirectories
+    "src/voxkit/gui/components/**/*.py",
+    "src/voxkit/gui/frameworks/**/*.py",
+    "src/voxkit/gui/pages/**/*.py",
+    "src/voxkit/gui/styles/**/*.py",
+    "src/voxkit/gui/workers/**/*.py",
     "src/voxkit/gui/__init__.py",
     "src/voxkit/gui/utils.py",
-    
+
     # External service integrations - subprocess/system calls
-    "src/voxkit/services/*.py",
-    
+    "src/voxkit/services/**/*.py",
+
+    # Startup routines that download external models (HuggingFace, MFA)
+    "src/voxkit/config.py",
+    "src/voxkit/config/startup_config.py",
+
     # Build and deployment scripts
     "build.py",
     "main.py",
     "_frozen_patch.py",
-    
+
     # Test files themselves
     "tests/**/*.py",
-    
+
     # Package initialization files (typically just imports)
     "src/voxkit/__init__.py",
 ]
@@ -151,30 +157,30 @@ omit = [
 exclude_lines = [
     # Standard pragmas
     "pragma: no cover",
-    
+
     # Abstract methods and NotImplementedError
     "raise NotImplementedError",
     "raise NotImplemented",
     "@abstractmethod",
     "@abc.abstractmethod",
-    
+
     # Type checking imports
     "if TYPE_CHECKING:",
     "if typing.TYPE_CHECKING:",
-    
+
     # Defensive programming
     "assert False",
     "raise AssertionError",
-    
+
     # Debugging/development code
     "if __name__ == \"__main__\":",
     "if 0:",
     "if False:",
-    
+
     # Pass statements in abstract classes/protocols
     "pass",
-    
-    # Ellipsis in stub files or protocols  
+
+    # Ellipsis in stub files or protocols
     '^\\.\\.\\.\\s*$',
 ]
 
