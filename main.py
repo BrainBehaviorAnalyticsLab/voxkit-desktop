@@ -28,6 +28,34 @@ if getattr(sys, 'frozen', False):
         'QT_ENABLE_EMOJI': '0'
     }
 
+    # Add conda to PATH if available (required for MFA alignment)
+    # Check common conda installation locations
+    home = os.path.expanduser('~')
+    conda_locations = [
+        os.path.join(home, 'miniforge3', 'bin'),
+        os.path.join(home, 'mambaforge', 'bin'), 
+        os.path.join(home, 'anaconda3', 'bin'),
+        os.path.join(home, 'miniconda3', 'bin'),
+        os.path.join(home, 'opt', 'anaconda3', 'bin'),
+        os.path.join(home, 'opt', 'miniconda3', 'bin'),
+    ]
+    
+    # Find first available conda installation
+    conda_bin = None
+    for location in conda_locations:
+        if os.path.exists(os.path.join(location, 'conda')):
+            conda_bin = location
+            break
+    
+    # Build PATH with conda if found
+    if conda_bin:
+        existing_path = os.environ.get('PATH', '/usr/bin:/bin:/usr/sbin:/sbin')
+        minimal_env['PATH'] = f"{conda_bin}:{existing_path}"
+        print(f"[FROZEN] Added conda to PATH: {conda_bin}")
+    else:
+        minimal_env['PATH'] = os.environ.get('PATH', '/usr/bin:/bin:/usr/sbin:/sbin')
+        print("[FROZEN] Warning: conda not found in standard locations. MFA alignment may fail.")
+
     # PyInstaller-specific: Add Qt plugin paths
     if getattr(sys, '_MEIPASS', None):
         bundle_dir = sys._MEIPASS

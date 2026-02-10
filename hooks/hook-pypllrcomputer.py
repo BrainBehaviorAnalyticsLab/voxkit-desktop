@@ -6,5 +6,5 @@ that need to be bundled.
 
 from PyInstaller.utils.hooks import collect_data_files
 
-# Collect all data files from pypllrcomputer (includes models/*.pkl)
-datas = collect_data_files("pypllrcomputer")
+# Collect all data files from pypllrcomputer (includes models/*.pkl and .py files)
+datas = collect_data_files("pypllrcomputer", include_py_files=True)

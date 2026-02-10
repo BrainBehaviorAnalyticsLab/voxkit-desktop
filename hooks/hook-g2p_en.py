@@ -11,6 +11,7 @@ datas = collect_data_files("g2p_en", include_py_files=False)
 # If collect_data_files doesn't work, manually specify critical files
 if not datas:
     import os
+
     pkg_base, pkg_dir = get_package_paths("g2p_en")
     datas = [
         (os.path.join(pkg_dir, "checkpoint20.npz"), "g2p_en"),
