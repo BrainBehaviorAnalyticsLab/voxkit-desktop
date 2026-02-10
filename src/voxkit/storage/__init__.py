@@ -1,72 +1,32 @@
 """VoxKit Storage Module.
 
-This module provides persistence and CRUD operations for VoxKit entities including
-datasets, models, and alignments. It manages the hierarchical storage structure
-and ensures data integrity across the application.
-
-Storage Structure
------------------
-The storage system follows this hierarchy:
-
-    ~/.voxkit/                          # STORAGE_ROOT
-    ├── datasets/                       # Dataset storage
-    │   ├── dataset_id_1/
-    │   │   ├── voxkit_dataset.json    # Dataset metadata
-    │   │   ├── alignments/            # Alignment outputs
-    │   │   └── cache/                 # Optional cached dataset copy
-    │   └── dataset_id_2/
-    │       └── ...
-    ├── engine_id_1/                   # Engine-specific storage
-    │   ├── train/                     # Model storage
-    │   │   ├── model_id_1/
-    │   │   │   ├── voxkit_model.json # Model metadata
-    │   │   │   ├── entrypoint.model  # Model file
-    │   │   │   ├── data/             # Training data
-    │   │   │   ├── eval/             # Evaluation results
-    │   │   │   └── train/            # Training artifacts
-    │   │   └── model_id_2/
-    │   │       └── ...
-    │   └── ...
-    └── engine_id_2/
-        └── ...
+Persistence and CRUD operations for datasets, models, and alignments.
 
 Submodules
 ----------
-- **datasets**: Dataset CRUD operations and validation
+- **datasets**: Dataset CRUD and validation
 - **models**: Model management and import/export
 - **alignments**: Alignment creation and tracking
-- **utils**: Utility functions for ID generation and path management
-- **config**: Storage configuration constants
+- **utils**: ID generation and path management
 
-Usage
------
-    from voxkit.storage import datasets, models, alignments
+Storage Structure
+-----------------
+::
 
-    # Create a new dataset
-    success, metadata = datasets.create_dataset(
-        name="My Dataset",
-        description="Training data",
-        original_path="/path/to/data",
-        cached=True,
-        anonymize=False
-    )
-
-    # List available models
-    model_list = models.list_models(engine_id="mfa")
-
-    # Create an alignment
-    success, alignment = alignments.create_alignment(
-        dataset_id="20240101_120000_000000",
-        engine_id="mfa",
-        model_id="20240101_120000_000000"
-    )
+    ~/.voxkit/
+    ├── datasets/{dataset_id}/
+    │   ├── voxkit_dataset.json
+    │   ├── alignments/{alignment_id}/
+    │   └── cache/
+    └── {engine_id}/train/{model_id}/
+        ├── voxkit_model.json
+        └── entrypoint.model
 
 Notes
 -----
-- All IDs are unique timestamps with microsecond precision
-- Storage root is automatically created on first access
-- Failed operations automatically clean up partial changes
-- All paths are managed using pathlib for cross-platform compatibility
+- IDs are unique timestamps (YYYYMMDD_HHMMSS_ffffff)
+- Storage root is created on first access
+- Failed operations clean up partial changes
 """
 
 __author__ = "Beckett Frey"
