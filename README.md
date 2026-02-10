@@ -1,47 +1,37 @@
-# 🌉 VoxKit
+<p align="center">
+  <img src="assets/header_image.png" alt="VoxKit" width="350">
+</p>
 
-[![Project Management](https://img.shields.io/badge/Project-Jira%20Board-0052CC?logo=jira&style=flat-square)](https://voxkit.atlassian.net/jira/software/projects/VOX/boards/2/) 
-[![Docs](https://img.shields.io/badge/Docs-Auto--Generated-blue?logo=readthedocs&style=flat-square)](https://voxkit-web.vercel.app/docs)
+<p align="center">
+  <a href="https://github.com/BrainBehaviorAnalyticsLab/PyPLLR_GUI/releases/latest"><img src="https://img.shields.io/github/v/release/BrainBehaviorAnalyticsLab/PyPLLR_GUI?label=Release&style=flat-square" alt="Release"></a>
+  <a href="https://github.com/BrainBehaviorAnalyticsLab/PyPLLR_GUI/releases"><img src="https://img.shields.io/github/downloads/BrainBehaviorAnalyticsLab/PyPLLR_GUI/total?style=flat-square" alt="Downloads"></a>
+  <img src="./coverage.svg" alt="Coverage">
+</p>
 
-[![Release](https://img.shields.io/github/v/release/BrainBehaviorAnalyticsLab/PyPLLR_GUI?label=Latest%20Release&style=flat-square)](https://github.com/BrainBehaviorAnalyticsLab/PyPLLR_GUI/releases/latest) 
-[![Downloads](https://img.shields.io/github/downloads/BrainBehaviorAnalyticsLab/PyPLLR_GUI/total?style=flat-square)](https://github.com/BrainBehaviorAnalyticsLab/PyPLLR_GUI/releases)
-
-[![Tests](https://img.shields.io/github/actions/workflow/status/BrainBehaviorAnalyticsLab/PyPLLR_GUI/tests.yml?branch=main&label=Tests&style=flat-square)](https://github.com/BrainBehaviorAnalyticsLab/PyPLLR_GUI/actions/workflows/tests.yml)
-[![Code Quality](https://img.shields.io/github/actions/workflow/status/BrainBehaviorAnalyticsLab/PyPLLR_GUI/code-quality.yml?branch=main&label=Code%20Quality&style=flat-square)](https://github.com/BrainBehaviorAnalyticsLab/PyPLLR_GUI/actions/workflows/code-quality.yml)
+<p align="center">
+  <a href="https://github.com/BrainBehaviorAnalyticsLab/PyPLLR_GUI/actions/workflows/tests.yml"><img src="https://img.shields.io/github/actions/workflow/status/BrainBehaviorAnalyticsLab/PyPLLR_GUI/tests.yml?branch=main&label=Tests&style=flat-square" alt="Tests"></a>
+  <a href="https://github.com/BrainBehaviorAnalyticsLab/PyPLLR_GUI/actions/workflows/code-quality.yml"><img src="https://img.shields.io/github/actions/workflow/status/BrainBehaviorAnalyticsLab/PyPLLR_GUI/code-quality.yml?branch=main&label=Code%20Quality&style=flat-square" alt="Code Quality"></a>
+  <a href="https://voxkit.atlassian.net/jira/software/projects/VOX/boards/2/"><img src="https://img.shields.io/badge/Project-Jira-0052CC?logo=jira&style=flat-square" alt="Jira"></a>
+</p>
 
 > [!IMPORTANT]
 > VoxKit is currently in active development. Versions below **1.0.0** are considered **early preview releases** and should be treated as experimental. Your feedback during this development phase is invaluable! Please report issues, suggest improvements, and share your use cases. Thanks.
 
-## 🔎 Quick Links
+## Appendix
 
-- 🏗️ [ARCHITECTURE](./ARCHITECTURE.md) - Codebase terminology
-- 🧪 [TESTING](./TESTING.md) - Testing strategy & coverage approach
-- 📚 [RESEARCH](./RESEARCH.md) - Papers & research background
-- ✍️ [CONTRIBUTING](./CONTRIBUTING.md) - Contribution guidelines
-- 🌐 [Website](<TODO>) - Main site
+- [ARCHITECTURE](./ARCHITECTURE.md) - System layers and terminology
+- [RESEARCH](./RESEARCH.md) - Papers and research background
+- [CONTRIBUTING](./CONTRIBUTING.md) - Contribution guidelines
 
 ## Project Structure
 
 ```
 src/voxkit/
-├── gui/                      # PyQt6 interface
-│   ├── components/           # Reusable widgets
-│   ├── frameworks/           # Dialog/modal frameworks
-│   ├── pages/                # Main application pages
-│   │   ├── datasets/         # Dataset management
-│   │   ├── models/           # Model management
-│   │   └── pipeline/         # Workflow stackers
-│   └── workers/              # Background threads
-├── engines/                  # Speech tool engines
-│   ├── base.py               # Base engine interface
-│   └── w2tg_engine.py        # Wav2TextGrid implementation
-├── analyzers/                # Dataset information extraction
-├── storage/                  # Data persistence
-│   ├── datasets.py           # Dataset management
-│   ├── models.py             # Model management
-│   ├── alignments.py         # Alignment tracking
-│   └── test/                 # Storage tests
-└── services/                 # External services (non-engines)
+├── gui/           # PyQt6 interface (pages, components, workers)
+├── engines/       # Speech toolkit backends
+├── analyzers/     # Dataset metadata extraction
+├── storage/       # Data persistence (datasets, models, alignments)
+└── config/        # Application configuration
 ```
 
 
