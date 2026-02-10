@@ -102,6 +102,15 @@ def build(args):
                 print("PyInstaller not found. Install it with: pip install pyinstaller")
                 sys.exit(1)
 
+        # CRITICAL: Ensure we're running from project root, not scripts/
+        # This is important because PyInstaller resolves paths relative to CWD
+        project_root = Path(__file__).parent.parent
+        original_cwd = Path.cwd()
+        
+        if original_cwd != project_root:
+                print(f"[INFO] Changing working directory to project root: {project_root}")
+                os.chdir(project_root)
+        
         opts = []
 
         # Basic options
@@ -152,15 +161,14 @@ def build(args):
         for hi in default_hidden + args.hidden_import:
                 opts.append(f'--hidden-import={hi}')
 
-        # Add hooks directory if it exists (relative to project root)
-        project_root = Path(__file__).parent.parent
+        # Add hooks directory if it exists (paths already relative to project root due to chdir)
         hooks_dir = project_root / "hooks"
         if hooks_dir.exists():
                 opts.append(f'--additional-hooks-dir={hooks_dir}')
 
         # Add data
         sep = ';' if os.name == 'nt' else ':'
-        # Add config folder if it exists (relative to project root)
+        # Add config folder if it exists
         config_dir = project_root / "config"
         if config_dir.exists() and config_dir.is_dir():
                 print(f"[INFO] Adding config folder to build assets")
@@ -199,6 +207,11 @@ def build(args):
                         print(f"   Run with: ./dist/{args.name}/{args.name}")
                 else:
                         print(f"\n⚠️  Expected build output not found at {app_path}")
+        
+        # Restore original working directory
+        if original_cwd != project_root:
+                os.chdir(original_cwd)
+                print(f"[INFO] Restored working directory to: {original_cwd}")
 
 def main():
         parser = argparse.ArgumentParser(prog="build.py", description="Build a standalone executable using PyInstaller")

@@ -43,6 +43,15 @@ jobs:
       - name: Build .app bundle
         run: make build
 
+      - name: Verify build contents
+        run: |
+          echo "Checking VoxKit.app structure..."
+          ls -la dist/VoxKit.app/Contents/
+          echo "Checking for Qt plugins..."
+          ls -la dist/VoxKit.app/Contents/MacOS/_internal/PyQt6/Qt6/plugins/ || echo "Qt plugins not found!"
+          echo "Checking for Qt platform plugin..."
+          ls -la dist/VoxKit.app/Contents/MacOS/_internal/PyQt6/Qt6/plugins/platforms/ || echo "Platform plugin not found!"
+
       - name: Get version from tag
         id: get_version
         run: |

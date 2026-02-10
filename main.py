@@ -33,20 +33,20 @@ if getattr(sys, 'frozen', False):
     home = os.path.expanduser('~')
     conda_locations = [
         os.path.join(home, 'miniforge3', 'bin'),
-        os.path.join(home, 'mambaforge', 'bin'), 
+        os.path.join(home, 'mambaforge', 'bin'),
         os.path.join(home, 'anaconda3', 'bin'),
         os.path.join(home, 'miniconda3', 'bin'),
         os.path.join(home, 'opt', 'anaconda3', 'bin'),
         os.path.join(home, 'opt', 'miniconda3', 'bin'),
     ]
-    
+
     # Find first available conda installation
     conda_bin = None
     for location in conda_locations:
         if os.path.exists(os.path.join(location, 'conda')):
             conda_bin = location
             break
-    
+
     # Build PATH with conda if found
     if conda_bin:
         existing_path = os.environ.get('PATH', '/usr/bin:/bin:/usr/sbin:/sbin')
@@ -62,18 +62,22 @@ if getattr(sys, 'frozen', False):
         qt_plugins = os.path.join(bundle_dir, 'PyQt6', 'Qt6', 'plugins')
         if os.path.exists(qt_plugins):
             minimal_env['QT_PLUGIN_PATH'] = qt_plugins
+            minimal_env['QT_QPA_PLATFORM_PLUGIN_PATH'] = os.path.join(qt_plugins, 'platforms')
+        
+        # Additional Qt environment for frozen apps
+        minimal_env['QT_AUTO_SCREEN_SCALE_FACTOR'] = '1'
+        minimal_env['QT_LOGGING_RULES'] = '*.debug=false;qt.qpa.*=false'
+        
+        print(f"[FROZEN] Qt plugins directory: {qt_plugins}")
+        print(f"[FROZEN] Bundle directory: {bundle_dir}")
 
-        platform_plugins = os.path.join(bundle_dir, 'PyQt6', 'Qt6', 'plugins', 'platforms')
-        if os.path.exists(platform_plugins):
-            minimal_env['QT_QPA_PLATFORM_PLUGIN_PATH'] = platform_plugins
-
-    # # Clear all environment variables
-    # os.environ.clear()
-
-    # Set the minimal required ones
+    # IMPORTANT: Don't clear os.environ - preserve system environment
+    # Just add/override our minimal required variables
     for key, value in minimal_env.items():
         if value:
             os.environ[key] = value
+            
+    print("[FROZEN] Environment configured for frozen app")
 
 
 
@@ -93,7 +97,7 @@ def main():
 
     app_config = None
     pipeline_config = None
-    
+
     # Handle special '_MEIPASS' argument for frozen builds
     if getattr(sys, '_MEIPASS', None):
         app_config = AppConfig.from_yaml(
