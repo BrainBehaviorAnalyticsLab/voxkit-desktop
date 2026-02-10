@@ -9,7 +9,7 @@
 [![Tests](https://img.shields.io/github/actions/workflow/status/BrainBehaviorAnalyticsLab/PyPLLR_GUI/tests.yml?branch=main&label=Tests&style=flat-square)](https://github.com/BrainBehaviorAnalyticsLab/PyPLLR_GUI/actions/workflows/tests.yml)
 [![Code Quality](https://img.shields.io/github/actions/workflow/status/BrainBehaviorAnalyticsLab/PyPLLR_GUI/code-quality.yml?branch=main&label=Code%20Quality&style=flat-square)](https://github.com/BrainBehaviorAnalyticsLab/PyPLLR_GUI/actions/workflows/code-quality.yml)
 
-> ![IMPORTANT]
+> [!IMPORTANT]
 > VoxKit is currently in active development. Versions below **1.0.0** are considered **early preview releases** and should be treated as experimental. Your feedback during this development phase is invaluable! Please report issues, suggest improvements, and share your use cases. Thanks.
 
 ## 🔎 Quick Links
