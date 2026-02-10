@@ -1,12 +1,44 @@
 """Pipeline Module.
 
-Pipeline page management with dynamically configurable stackers.
+Pipeline page management with dynamically configurable stackers. This module
+provides the infrastructure for building multi-step speech processing workflows
+in VoxKit.
+
+Architecture
+------------
+The pipeline uses a stacker-based architecture where each step in the workflow
+is represented by a stacker widget. Stackers are displayed in a navigation-based
+container (``PipelineFormStack``) with a sidebar menu for switching between steps.
 
 API
 ---
 - **PipelineFormStack**: Container widget with sidebar navigation and stacked pages
 - **BaseStacker**: Abstract base class for pipeline pages
 - **STACKER_REGISTRY**: Mapping of stacker names to classes
+
+Available Stackers
+------------------
+**TrainingStacker** (``training_stacker.py``)
+    Model training workflow. Allows users to train custom alignment models using
+    a dataset and existing alignment as training data. Supports engine selection
+    and custom model naming.
+
+**PredictionStacker** (``prediction_stacker.py``)
+    Alignment prediction workflow. Runs forced alignment on datasets using
+    selected engine and model combinations. Produces TextGrid alignment files.
+
+**PLLRStacker** (``pllr_stacker.py``)
+    GOP (Goodness of Pronunciation) extraction workflow. Computes pronunciation
+    scores from existing alignments using the PLLR (Probabilistic Linear
+    Likelihood Ratio) method. Outputs phonewise and framewise probability CSVs.
+
+**TranscriptionStacker** (``transcription_stacker.py``)
+    Audio transcription workflow. Transcribes .wav files in a dataset using a
+    registered transcription engine, producing .lab files next to each audio file.
+
+**MarkdownStacker** (``markdown_stacker.py``)
+    Static content display. Renders markdown-formatted text for informational
+    pages, tutorials, or documentation within the pipeline.
 
 Adding New Stackers
 -------------------
@@ -263,4 +295,13 @@ class PipelineFormStack(QWidget):
         self.menu_list.setCurrentRow(index)
 
 
-__all__ = ["PipelineFormStack", "BaseStacker"]
+__all__ = [
+    "PipelineFormStack",
+    "BaseStacker",
+    "TrainingStacker",
+    "PredictionStacker",
+    "PLLRStacker",
+    "TranscriptionStacker",
+    "MarkdownStacker",
+    "STACKER_REGISTRY",
+]
