@@ -2,27 +2,17 @@
 
 PyQt6-based graphical user interface for the VoxKit desktop application.
 
-Structure
----------
-The GUI layer is organized as follows:
-
-    voxkit/gui/
-    ├── __init__.py           # Main window (AlignmentGUI)
-    ├── utils.py              # Path validation helpers
-    ├── styles/               # Centralized styling (Colors, Buttons, Labels)
-    ├── components/           # Reusable widgets (dropdowns, dialogs, toggles)
-    ├── workers/              # QThread background workers
-    ├── frameworks/           # UI pattern frameworks
-    │   ├── categorical_table/    # Table view for categorical data
-    │   └── settings_modal/       # Generic settings dialog builder
-    └── pages/                # Main application pages
-        ├── datasets/             # Dataset management
-        ├── models/               # Model management
-        └── pipeline/             # Pipeline workflows (train, predict, PLLR)
-
 API
 ---
 - **AlignmentGUI**: Main application window with toolbar navigation
+
+Submodules
+----------
+- **components/**: Reusable widgets (dropdowns, dialogs, toggles)
+- **frameworks/**: UI pattern frameworks (categorical_table, settings_modal)
+- **pages/**: Main application pages (datasets, models, pipeline)
+- **styles/**: Centralized styling (Colors, Buttons, Labels, Containers)
+- **workers/**: QThread background workers for long operations
 
 Notes
 -----
