@@ -1,28 +1,43 @@
 """VoxKit Engines Module.
 
-Engines are speech toolkit backends (MFA, W2TG, etc.) that perform alignment
-and training operations. Each engine provides one or more tools
-with configurable settings. Global tool types can be added to ToolType.
-
-Storage Structure
------------------
-Engine settings and models are stored under the engine's directory:
-
-    ~/.voxkit/{engine_id}/
-    ├── aligner/
-    │   └── aligner_settings.json     # Alignment tool settings
-    ├── train/
-    │   ├── trainer_settings.json     # Training tool settings
-    │   └── {model_id}/               # Trained models
-    │       ├── voxkit_model.json
-    │       └── entrypoint.model
-    └── ...
+Engines are speech toolkit backends that perform alignment, training, and
+transcription operations. Each engine provides one or more tools with
+configurable settings.
 
 API
 ---
-- **ManageEngines.list_engines**: List registered engine IDs
-- **ManageEngines.get_engine**: Retrieve engine instance by ID
-- **ManageEngines.get_tool_providers**: Get engines providing a specific tool type
+- **EngineManager.list_engines**: List registered engine IDs
+- **EngineManager.get_engine**: Retrieve engine instance by ID
+- **EngineManager.get_tool_providers**: Get engines providing a specific tool type
+- **AlignmentEngine**: Abstract base class for all engines
+- **ToolType**: Literal type for tool categories ("train", "align", "transcribe")
+
+Available Engines
+-----------------
+**MFAEngine** (``mfa_engine.py``)
+    Montreal Forced Aligner integration. Provides alignment using pretrained
+    acoustic models and training via model adaptation.
+
+**FasterWhisperEngine** (``faster_whisper_engine.py``)
+    Faster-Whisper integration for transcription. Produces .lab label files
+    from audio using CTranslate2 backend.
+
+**W2TGEngine** (``w2tg_engine.py``) [disabled]
+    Wav2TextGrid integration using Wav2Vec 2.0 models. Supports both
+    alignment and from-scratch training.
+
+Storage Structure
+-----------------
+Engine settings and models are stored under the engine's directory::
+
+    ~/.voxkit/{engine_id}/
+    ├── aligner/
+    │   └── aligner_settings.json
+    ├── train/
+    │   ├── trainer_settings.json
+    │   └── {model_id}/
+    └── transcribe/
+        └── transcriber_settings.json
 
 Notes
 -----
@@ -38,7 +53,8 @@ from typing import List
 from .base import AlignmentEngine, ToolType
 from .faster_whisper_engine import FasterWhisperEngine
 from .mfa_engine import MFAEngine
-from .w2tg_engine import W2TGEngine
+
+# from .w2tg_engine import W2TGEngine
 
 
 class EngineManager:
@@ -79,16 +95,16 @@ class EngineManager:
 
 
 # Singleton instance for unified export/interface
-w2tg = W2TGEngine(id="W2TGENGINE")
+# w2tg = W2TGEngine(id="W2TGENGINE")
 mfa = MFAEngine(id="MFAENGINE")
 faster_whisper = FasterWhisperEngine(id="FASTERWHISPERENGINE")
-engines = EngineManager({w2tg.id: w2tg, mfa.id: mfa, faster_whisper.id: faster_whisper})
+engines = EngineManager({ mfa.id: mfa, faster_whisper.id: faster_whisper})
 
 __all__ = [
     "engines",
-    "W2TGEngine",
-    "MFAEngine",
-    "FasterWhisperEngine",
+    "EngineManager",
     "AlignmentEngine",
     "ToolType",
+    "MFAEngine",
+    "FasterWhisperEngine",
 ]

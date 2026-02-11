@@ -16,9 +16,6 @@ venv/
 env/
 ENV/
 
-# Dependency/lock files
-uv.lock
-
 # Build/distribution artifacts
 build/
 dist/

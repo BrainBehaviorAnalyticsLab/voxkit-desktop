@@ -4,7 +4,7 @@
 app_name: "VoxKit"
 version: "0.1.0"
 description: "AI/ML Research -> Clinical Applications (Speech Pathology)"
-help_url: "http://localhost:3000/help"
+help_url: "https//voxkit-web.vercel.app/help"
 
 # Introduction text displayed to users
 introduction: |
@@ -26,7 +26,7 @@ introduction: |
   - Post-build configuration via YAML (no coding required for workflow changes)
 
 # Release information
-release_date: "2026-01-14"
+release_date: "2026-02-10"
 release_notes: |
   v0.1.0 - Initial Configurable Release
   - Declarative pipeline configuration via YAML
@@ -42,9 +42,9 @@ release_notes: |
 
 # Contact and support
 contact_info:
-  github_issues: "https://github.com/wisclab/voxkit/issues"
-  email_support: "support@voxkit.org"
-  documentation: "http://localhost:3000/help"
+  github_issues: "https://github.com/BrainBehaviorAnalyticsLab/voxkit-desktop/issues"
+  email_support: "bfrey6@wisc.edu"
+  documentation: "https//voxkit-web.vercel.app/help"
   
 # Research context
 research_context: |

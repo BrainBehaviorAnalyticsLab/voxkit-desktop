@@ -1,10 +1,10 @@
 import time
 from typing import Callable, Literal
 
-from voxkit.services.hf import download_and_copy_huggingface_model
 from voxkit.services.mfa import download_acoustic_model
 from voxkit.storage import models
 from voxkit.storage.config import MODELS_ROOT
+from voxkit.storage.models import download_and_copy_huggingface_model
 from voxkit.storage.utils import get_storage_root
 
 AppName = "VoxKit"
@@ -18,7 +18,7 @@ Defaults = {
 }
 
 Mode = Literal["MFAENGINE", "W2TGENGINE"]
-HELP_URL = "http://localhost:3000/help"
+HELP_URL = "https://voxkit-web.vercel.app/help"
 
 
 def startup_routine():
@@ -72,27 +72,35 @@ def startup_routine():
         except Exception as e:
             print(f"[STARTUP] Failed to download MFA model {model}. Error: {e}")
 
-    # Download W2TG model from HuggingFace
-    print("[STARTUP] Downloading W2TG model from HuggingFace...")
-    # Create folder for W2TG model
-    w2tg_path = storage_root / "W2TGENGINE" / MODELS_ROOT
-    w2tg_path.mkdir(parents=True, exist_ok=True)
-    success, metadata = models.create_model("W2TGENGINE", "prads_model")
-    if not success:
-        print(f"[STARTUP] Failed to create model metadata. {metadata}")
-        return
-    model_dest = metadata.get("model_path")
-    if not model_dest:
-        print("[STARTUP] Model path not found in metadata.")
-        return
-    result = download_and_copy_huggingface_model(
-        model_path="pkadambi/Wav2TextGrid",
-        destination=str(model_dest),
-    )
-    if result:
-        print(f"[STARTUP] W2TG model downloaded to: {result}")
-    else:
-        print("[STARTUP] Failed to download W2TG model.")
+    # # Download W2TG model from HuggingFace
+    # print("[STARTUP] Downloading W2TG model from HuggingFace...")
+    # # Create folder for W2TG model
+    # w2tg_path = storage_root / "W2TGENGINE" / MODELS_ROOT
+    # w2tg_path.mkdir(parents=True, exist_ok=True)
+    # success, metadata = models.create_model("W2TGENGINE", "prads_model")
+    # if not success:
+    #     print(f"[STARTUP] Failed to create model metadata. {metadata}")
+    #     return
+    # model_dest = metadata.get("model_path")
+    # if not model_dest:
+    #     print("[STARTUP] Model path not found in metadata.")
+    #     return
+    # result = download_and_copy_huggingface_model(
+    #     model_path="pkadambi/Wav2TextGrid",
+    #     destination=str(model_dest),
+    # )
+    # if result:
+    #     print(f"[STARTUP] W2TG model downloaded to: {result}")
+    # else:
+    #     print("[STARTUP] Failed to download W2TG model.")
+
+
+    try:
+        import nltk
+        nltk.download('averaged_perceptron_tagger_eng')
+
+    except Exception as e:
+        print(f"[STARTUP] Failed to download NLTK resources. Error: {e}")
 
     print("[STARTUP] Initialization complete!")
 

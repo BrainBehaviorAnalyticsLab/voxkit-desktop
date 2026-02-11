@@ -11,7 +11,7 @@ Settings
 --------
 Stored at ``~/.voxkit/MFAENGINE/{tool}/settings.json``:
 
-- **align**: use_speaker_adaptation, file_type
+- **align**: dictionary, file_type
 - **train**: epochs, use_gpu
 
 Notes
@@ -44,15 +44,15 @@ class MFAEngine(AlignmentEngine):
             settings_configurations={
                 "align": SettingsConfig(
                     title="MFA Aligner Settings",
-                    dimensions=(400, 300),
+                    dimensions=(400, 350),
                     apply_blur=True,
                     fields=[
                         FieldConfig(
-                            name="use_speaker_adaptation",
-                            label="Use Speaker Adaptation",
-                            field_type=FieldType.CHECKBOX,
-                            default_value=False,
-                            tooltip="Enable speaker adaptation for better alignment results.",
+                            name="dictionary",
+                            label="Dictionary",
+                            field_type=FieldType.LINEEDIT,
+                            default_value="english_us_arpa",
+                            tooltip="MFA dictionary name (e.g., english_us_arpa, english_mfa).",
                         ),
                         FieldConfig(
                             name="file_type",
@@ -62,21 +62,28 @@ class MFAEngine(AlignmentEngine):
                             tooltip="Specify the audio file type (e.g., wav, flac).",
                         ),
                     ],
-                    store_file="MFAENGINE/aligner/aligner_settings.json",
+                    store_file="MFAENGINE/align/settings.json",
                 ),
                 "train": SettingsConfig(
                     title="MFA Trainer Settings",
-                    dimensions=(400, 300),
+                    dimensions=(400, 350),
                     apply_blur=True,
                     fields=[
                         FieldConfig(
-                            name="epochs",
-                            label="Number of Epochs",
+                            name="dictionary",
+                            label="Dictionary",
+                            field_type=FieldType.LINEEDIT,
+                            default_value="english_us_arpa",
+                            tooltip="MFA dictionary name (e.g., english_us_arpa, english_mfa).",
+                        ),
+                        FieldConfig(
+                            name="num_iterations",
+                            label="Number of Iterations",
                             field_type=FieldType.SPINBOX,
-                            default_value=50,
+                            default_value=1,
                             min_value=1,
-                            max_value=1000,
-                            tooltip="The number of epochs to train the model for.",
+                            max_value=100,
+                            tooltip="Number of adaptation iterations.",
                         ),
                         FieldConfig(
                             name="use_gpu",
@@ -86,7 +93,7 @@ class MFAEngine(AlignmentEngine):
                             tooltip="Enable GPU acceleration for faster training.",
                         ),
                     ],
-                    store_file="MFAENGINE/train/trainer_settings.json",
+                    store_file="MFAENGINE/train/settings.json",
                 ),
             },
             reference_url="https://montreal-forced-aligner.readthedocs.io/en/latest/",
