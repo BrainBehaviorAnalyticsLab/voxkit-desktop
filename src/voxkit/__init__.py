@@ -16,4 +16,16 @@ Subpackages
 __version__ = "0.1.0"
 __author__ = "Beckett Frey @beckettfrey.com"
 
-__all__ = ["__version__", "__author__"]
+# Import subpackages for pdoc discoverability (not re-exported in __all__)
+from . import analyzers, config, engines, gui, storage
+
+__all__ = [
+    "__version__",
+    "__author__",
+    # Subpackages (for pdoc navigation, not deep re-exports)
+    "analyzers",
+    "config",
+    "engines",
+    "gui",
+    "storage",
+]
