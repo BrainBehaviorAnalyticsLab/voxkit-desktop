@@ -4,7 +4,7 @@
 app_name: "VoxKit"
 version: "0.1.0"
 description: "AI/ML Research -> Clinical Applications (Speech Pathology)"
-help_url: "https//voxkit-web.vercel.app/help"
+help_url: "https://voxkit-web.vercel.app/help"
 
 # Introduction text displayed to users
 introduction: |
@@ -44,7 +44,7 @@ release_notes: |
 contact_info:
   github_issues: "https://github.com/BrainBehaviorAnalyticsLab/voxkit-desktop/issues"
   email_support: "bfrey6@wisc.edu"
-  documentation: "https//voxkit-web.vercel.app/help"
+  documentation: "https://voxkit-web.vercel.app/help"
   
 # Research context
 research_context: |

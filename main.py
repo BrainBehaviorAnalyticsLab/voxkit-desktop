@@ -3,6 +3,10 @@ import faulthandler
 import os
 import multiprocessing
 
+# Apply patches for frozen (PyInstaller) environment BEFORE other imports
+if getattr(sys, 'frozen', False):
+    import _frozen_patch
+
 from voxkit.config.pipeline_config import PipelineConfig
 from voxkit.config.app_config import AppConfig
 
@@ -16,10 +20,8 @@ if __name__ == "__main__":
 # Enable detailed crash reports
 faulthandler.enable()
 
-# Apply patches for frozen (PyInstaller) environment
+# Apply environment patches for frozen (PyInstaller) environment
 if getattr(sys, 'frozen', False):
-    import _frozen_patch
-
     # Define the minimal required environment
     minimal_env = {
         'HOME': os.environ.get('HOME') or os.path.expanduser('~'),
