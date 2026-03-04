@@ -28,7 +28,7 @@ Available Stackers
     selected engine and model combinations. Produces TextGrid alignment files.
 
 **PLLRStacker** (``pllr_stacker.py``)
-    GOP (Goodness of Pronunciation) extraction workflow. Computes pronunciation
+    PLLR (Goodness of Pronunciation) extraction workflow. Computes pronunciation
     scores from existing alignments using the PLLR (Probabilistic Linear
     Likelihood Ratio) method. Outputs phonewise and framewise probability CSVs.
 

@@ -38,7 +38,7 @@ pipeline:
       - **TranscriptionStacker**: Transcribe audio files using speech-to-text engines
       - **TrainingStacker**: Train acoustic models on labeled datasets
       - **PredictionStacker**: Generate forced alignments using trained/pretrained models
-      - **PLLRStacker**: Extract Goodness of Pronunciation (GOP) scores from alignments
+      - **PLLRStacker**: Extract Goodness of Pronunciation (PLLR) scores from alignments
       - **MarkdownStacker**: Display informational markdown content (this step)
 
       ###
@@ -121,10 +121,10 @@ pipeline:
 
 
   # ======
-  # PIPELINE STEP D: GOP EXTRACTION
+  # PIPELINE STEP D: PLLR EXTRACTION
   # ======
   - id: "pllr"
-    label: "Ⓓ Extract GOP Scoring"
+    label: "Ⓓ Extract PLLR Scoring"
     stacker_class: "PLLRStacker"
     enabled: true
     collapsible_sections:
