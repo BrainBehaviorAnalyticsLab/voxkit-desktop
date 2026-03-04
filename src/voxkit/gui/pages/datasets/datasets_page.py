@@ -48,9 +48,16 @@ class DatasetsPage(QWidget):
         self.refresh_datasets()
 
     def get_engines(self) -> list:
+        """Return engines that have the 'align' tool available."""
         from voxkit.engines import engines
 
-        return engines.list_engines()
+        all_engine_ids = engines.list_engines()
+        filtered_engines = []
+        for engine_id in all_engine_ids:
+            engine = engines.get_engine(engine_id)
+            if engine.has_tool("align"):
+                filtered_engines.append(engine_id)
+        return filtered_engines
 
     def init_ui(self):
         """Initialize the UI components"""
