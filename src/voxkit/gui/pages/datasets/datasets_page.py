@@ -654,10 +654,10 @@ class DatasetsPage(QWidget):
                 ),
                 FieldConfig(
                     name="anonymize",
-                    label="De-identify",
+                    label="De-identified",
                     field_type=FieldType.CHECKBOX,
                     default_value=False,
-                    tooltip="Mark dataset for anonymization during inference/training",
+                    tooltip="Has the dataset been de-identified to remove personally identifiable information?",
                 ),
                 FieldConfig(
                     name="transcribed",
