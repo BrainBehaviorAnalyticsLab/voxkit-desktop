@@ -88,9 +88,16 @@ class ManageAlignersWidget(CategoricalTableWidget):
         self.layout().addWidget(credit)
 
     def get_engines(self) -> list:
+        """Return engines that have 'align' or 'train' tools available."""
         from voxkit.engines import engines
 
-        return engines.list_engines()
+        all_engine_ids = engines.list_engines()
+        filtered_engines = []
+        for engine_id in all_engine_ids:
+            engine = engines.get_engine(engine_id)
+            if engine.has_tool("align") or engine.has_tool("train"):
+                filtered_engines.append(engine_id)
+        return filtered_engines
     def showEvent(self, event):
         """Refresh models when the widget is shown.
 
