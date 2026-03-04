@@ -29,7 +29,7 @@ from PyQt6.QtWidgets import (
 )
 
 from voxkit.analyzers import ManageAnalyzers
-from voxkit.gui.components import HuggingFaceButton
+from voxkit.gui.components import GripSplitter, HuggingFaceButton
 from voxkit.gui.components.csv_viewer_dialog import CSVViewerDialog
 from voxkit.gui.styles import Buttons, Containers, Labels
 from voxkit.gui.workers import DatasetRegistrationWorker
@@ -84,12 +84,23 @@ class DatasetsPage(QWidget):
         # Load available analysis methods
         self.analysis_methods = list(ManageAnalyzers.list_analyzers())
 
-        # Add sections
-        main_layout.addWidget(self._create_list_section())
+        # Create splitter for resizable sections with custom grip handle
+        self.splitter = GripSplitter(Qt.Orientation.Vertical)
+        self.splitter.setHandleWidth(14)
+        self.splitter.setChildrenCollapsible(False)
 
-        # Add alignments panel
+        # Add datasets section to splitter
+        self.datasets_section = self._create_list_section()
+        self.splitter.addWidget(self.datasets_section)
+
+        # Add alignments panel to splitter
         self.alignments_panel = self._create_alignments_panel()
-        main_layout.addWidget(self.alignments_panel)
+        self.splitter.addWidget(self.alignments_panel)
+
+        # Set initial sizes (60% datasets, 40% alignments)
+        self.splitter.setSizes([600, 400])
+
+        main_layout.addWidget(self.splitter, stretch=1)
 
         # Apply initial blur to alignments panel
         self._set_alignments_blur(True)
@@ -367,7 +378,6 @@ class DatasetsPage(QWidget):
         self.alignments_table.setFocusPolicy(Qt.FocusPolicy.NoFocus)
 
         self.alignments_table.setAlternatingRowColors(True)
-        self.alignments_table.setMaximumHeight(300)
         self.alignments_table.setStyleSheet(Containers.TABLE_WIDGET)
 
         content_layout.addWidget(self.alignments_table)
