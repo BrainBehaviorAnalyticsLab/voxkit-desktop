@@ -4,6 +4,8 @@ speechbrain needs to be extracted to the filesystem because code tries to access
 the package directory directly. We force extraction by collecting as data files.
 """
 
+print("[HOOK] hook-speechbrain.py executing...")
+
 import os
 
 from PyInstaller.utils.hooks import get_package_paths
