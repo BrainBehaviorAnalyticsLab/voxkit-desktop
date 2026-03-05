@@ -2,6 +2,9 @@
 
 This module provides functionality for loading and accessing pipeline
 configuration from the pipeline_definitions.yaml file.
+
+The config system supports multiple profiles stored in config/profiles/<name>/.
+The active profile is specified in config/profile.txt.
 """
 
 from dataclasses import dataclass
@@ -9,6 +12,8 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import yaml
+
+from voxkit.config.app_config import resolve_config_file
 
 
 @dataclass
@@ -129,17 +134,15 @@ class PipelineConfig:
 
     @classmethod
     def load_default(cls) -> "PipelineConfig":
-        """Load the default pipeline configuration.
+        """Load the pipeline configuration from the active profile.
 
-        Looks for config/pipeline_definitions.yaml relative to the project root.
+        Loads from config/profiles/<active_profile>/pipeline_definitions.yaml.
+        Falls back to default profile or config root if not found.
 
         Returns:
             PipelineConfig instance
         """
-        # Get the project root (3 levels up from this file)
-        project_root = Path(__file__).parent.parent.parent.parent
-        config_path = project_root / "config" / "pipeline_definitions.yaml"
-
+        config_path = resolve_config_file("pipeline_definitions.yaml")
         return cls.from_yaml(config_path)
 
 

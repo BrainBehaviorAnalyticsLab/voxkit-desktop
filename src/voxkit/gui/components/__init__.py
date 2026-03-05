@@ -7,6 +7,7 @@ API
 - **AnimatedStackedWidget**: QStackedWidget with slide transition animations
 - **CSVViewerDialog**: Modal dialog for displaying CSV data in a formatted table
 - **DNAStrandWidget**: Decorative audio waveform visualization for the toolbar
+- **GripSplitter**: QSplitter with visible grip handle for intuitive resizing
 - **HuggingFaceButton**: Branded button with HuggingFace logo
 - **LoadingDialog**: Splash screen / loading dialog with animated spinner
 - **ModelSelectionPanel**: Combined engine and model selection panel
@@ -25,6 +26,7 @@ from .animate_stack import AnimatedStackedWidget
 from .column_dropdown import MultiColumnComboBox
 from .csv_viewer_dialog import CSVViewerDialog
 from .dna_strand import DNAStrandWidget
+from .grip_splitter import GripSplitter
 from .huggingface_button import HuggingFaceButton
 from .loading_dialog import LoadingDialog
 from .model_selection_panel import ModelSelectionPanel
@@ -35,6 +37,7 @@ __all__ = [
     "AnimatedStackedWidget",
     "CSVViewerDialog",
     "DNAStrandWidget",
+    "GripSplitter",
     "HuggingFaceButton",
     "LoadingDialog",
     "ModelSelectionPanel",

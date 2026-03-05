@@ -53,8 +53,7 @@ from typing import List
 from .base import AlignmentEngine, ToolType
 from .faster_whisper_engine import FasterWhisperEngine
 from .mfa_engine import MFAEngine
-
-# from .w2tg_engine import W2TGEngine
+from .w2tg_engine import W2TGEngine
 
 
 class EngineManager:
@@ -95,10 +94,10 @@ class EngineManager:
 
 
 # Singleton instance for unified export/interface
-# w2tg = W2TGEngine(id="W2TGENGINE")
+w2tg = W2TGEngine(id="W2TGENGINE")
 mfa = MFAEngine(id="MFAENGINE")
 faster_whisper = FasterWhisperEngine(id="FASTERWHISPERENGINE")
-engines = EngineManager({ mfa.id: mfa, faster_whisper.id: faster_whisper})
+engines = EngineManager({ mfa.id: mfa, faster_whisper.id: faster_whisper, w2tg.id: w2tg })
 
 __all__ = [
     "engines",

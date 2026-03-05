@@ -29,7 +29,7 @@ from PyQt6.QtWidgets import (
 )
 
 from voxkit.analyzers import ManageAnalyzers
-from voxkit.gui.components import HuggingFaceButton
+from voxkit.gui.components import GripSplitter, HuggingFaceButton
 from voxkit.gui.components.csv_viewer_dialog import CSVViewerDialog
 from voxkit.gui.styles import Buttons, Containers, Labels
 from voxkit.gui.workers import DatasetRegistrationWorker
@@ -48,9 +48,16 @@ class DatasetsPage(QWidget):
         self.refresh_datasets()
 
     def get_engines(self) -> list:
+        """Return engines that have the 'align' tool available."""
         from voxkit.engines import engines
 
-        return engines.list_engines()
+        all_engine_ids = engines.list_engines()
+        filtered_engines = []
+        for engine_id in all_engine_ids:
+            engine = engines.get_engine(engine_id)
+            if engine.has_tool("align"):
+                filtered_engines.append(engine_id)
+        return filtered_engines
 
     def init_ui(self):
         """Initialize the UI components"""
@@ -77,12 +84,23 @@ class DatasetsPage(QWidget):
         # Load available analysis methods
         self.analysis_methods = list(ManageAnalyzers.list_analyzers())
 
-        # Add sections
-        main_layout.addWidget(self._create_list_section())
+        # Create splitter for resizable sections with custom grip handle
+        self.splitter = GripSplitter(Qt.Orientation.Vertical)
+        self.splitter.setHandleWidth(14)
+        self.splitter.setChildrenCollapsible(False)
 
-        # Add alignments panel
+        # Add datasets section to splitter
+        self.datasets_section = self._create_list_section()
+        self.splitter.addWidget(self.datasets_section)
+
+        # Add alignments panel to splitter
         self.alignments_panel = self._create_alignments_panel()
-        main_layout.addWidget(self.alignments_panel)
+        self.splitter.addWidget(self.alignments_panel)
+
+        # Set initial sizes (60% datasets, 40% alignments)
+        self.splitter.setSizes([600, 400])
+
+        main_layout.addWidget(self.splitter, stretch=1)
 
         # Apply initial blur to alignments panel
         self._set_alignments_blur(True)
@@ -360,7 +378,6 @@ class DatasetsPage(QWidget):
         self.alignments_table.setFocusPolicy(Qt.FocusPolicy.NoFocus)
 
         self.alignments_table.setAlternatingRowColors(True)
-        self.alignments_table.setMaximumHeight(300)
         self.alignments_table.setStyleSheet(Containers.TABLE_WIDGET)
 
         content_layout.addWidget(self.alignments_table)
@@ -637,10 +654,10 @@ class DatasetsPage(QWidget):
                 ),
                 FieldConfig(
                     name="anonymize",
-                    label="De-identify",
+                    label="De-identified",
                     field_type=FieldType.CHECKBOX,
                     default_value=False,
-                    tooltip="Mark dataset for anonymization during inference/training",
+                    tooltip="Has the dataset been de-identified to remove personally identifiable information?",
                 ),
                 FieldConfig(
                     name="transcribed",

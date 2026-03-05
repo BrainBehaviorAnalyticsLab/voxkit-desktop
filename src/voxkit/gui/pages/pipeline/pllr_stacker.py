@@ -1,10 +1,10 @@
 """PLLR Stacker Module.
 
-Pipeline page for extracting GOP (Goodness of Pronunciation) scores using PLLR.
+Pipeline page for extracting PLLR (Goodness of Pronunciation) scores using PLLR.
 
 API
 ---
-- **PLLRStacker**: GOP extraction workflow UI
+- **PLLRStacker**: PLLR extraction workflow UI
 - **get_pllr_settings_config**: Returns PLLR settings configuration
 
 Notes
@@ -108,7 +108,7 @@ def get_pllr_settings_config() -> SettingsConfig:
 
 
 class PLLRStacker(QWidget):
-    """GOP extraction pipeline page.
+    """PLLR extraction pipeline page.
 
     Allows users to extract Goodness of Pronunciation scores from
     existing alignments using the PLLR (Probabilistic Linear Likelihood Ratio) method.
@@ -214,7 +214,7 @@ class PLLRStacker(QWidget):
         header_layout = QHBoxLayout()
 
         # Title
-        title = QLabel("Ⓒ Extract GOP Scoring")
+        title = QLabel("Ⓒ Extract PLLR Scoring")
         title.setStyleSheet(Labels.PAGE_TITLE)
         header_layout.addWidget(title)
 
@@ -283,7 +283,7 @@ class PLLRStacker(QWidget):
         layout.addSpacing(15)
 
         # Extract PLLR Button
-        self.extract_btn = QPushButton("④ Start GOP Extraction")
+        self.extract_btn = QPushButton("④ Start PLLR Extraction")
         self.extract_btn.setMinimumHeight(45)
         self.extract_btn.setStyleSheet(Buttons.PRIMARY)
         self.extract_btn.clicked.connect(self.on_extract_pllr)
