@@ -16,7 +16,7 @@ introduction: |
   1. Register and analyze your speech datasets
   2. Train custom acoustic models or use pretrained engines (MFA, W2TG)
   3. Generate phoneme-level forced alignments with timing precision
-  4. Extract Goodness of Pronunciation (PLLR) scores for clinical assessment
+  4. Extract Goodness of Pronunciation (GOP) scores for clinical assessment
   5. Export results with full provenance tracking for reproducible research
   
   Key Capabilities:

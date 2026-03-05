@@ -17,7 +17,7 @@ dependencies = [
     "torch==2.8.0",
     "torchaudio==2.8.0",
     "pypllrcomputer @ git+https://github.com/BrainBehaviorAnalyticsLab/PyPLLRComputer.git@48a0c934e75f73235ba5a002538b8588fd6697e7",
-    "wav2textgrid @ git+https://github.com/pkadambi/Wav2TextGrid.git",
+    "wav2textgrid @ git+https://github.com/pkadambi/Wav2TextGrid.git@3862476185a7558d481f1ae1c9cbca2e48c825a0",
     "datasets>=4.3.0",
     "accelerate>=1.11.0",
     "keyring>=25.6.0",

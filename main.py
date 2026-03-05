@@ -8,7 +8,7 @@ if getattr(sys, 'frozen', False):
     import _frozen_patch
 
 from voxkit.config.pipeline_config import PipelineConfig
-from voxkit.config.app_config import AppConfig
+from voxkit.config.app_config import AppConfig, get_profile_config_path
 
 # Disable Qt emoji support to prevent crashes in frozen builds
 
@@ -101,13 +101,11 @@ def main():
     pipeline_config = None
 
     # Handle special '_MEIPASS' argument for frozen builds
+    # Uses profile system - reads from config/profile.txt to determine active profile
     if getattr(sys, '_MEIPASS', None):
-        app_config = AppConfig.from_yaml(
-            Path(sys._MEIPASS) / "config" / "app_info.yaml"
-        )
-        pipeline_config = PipelineConfig.from_yaml(
-            Path(sys._MEIPASS) / "config" / "pipeline_definitions.yaml"
-        )
+        profile_path = get_profile_config_path()
+        app_config = AppConfig.from_yaml(profile_path / "app_info.yaml")
+        pipeline_config = PipelineConfig.from_yaml(profile_path / "pipeline_definitions.yaml")
 
     window = AlignmentGUI(pipeline_config=pipeline_config, app_config=app_config)
     window.show()

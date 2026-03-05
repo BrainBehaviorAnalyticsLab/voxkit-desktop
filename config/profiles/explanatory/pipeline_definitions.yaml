@@ -1,0 +1,319 @@
+# Pipeline Configuration - Explanatory Profile
+# This profile provides detailed glossary-style explanations for each form element.
+#
+# Form Element Reference System:
+#   Letter = Pipeline step (Ⓐ Ⓑ Ⓒ Ⓓ)
+#   Number = Form element within that step (① ② ③ ④ ⑤ ⑥)
+#   Example: "B-3" refers to element ③ in the Training stacker (Ⓑ)
+
+pipeline:
+
+  # ======
+  # INTRODUCTION & ORIENTATION
+  # ======
+  - id: "introduction"
+    label: "Introduction"
+    stacker_class: "MarkdownStacker"
+    enabled: true
+    markdown_content: |
+      # VoxKit Pipeline Overview
+
+      This guide explains the complete speech analysis workflow. The pipeline consists of four main stages, each handling a specific part of the process.
+
+      ---
+
+      ## Pipeline Stages
+
+      ### Ⓐ Transcribe Audio
+      **Purpose**: Convert speech recordings into text transcriptions.
+
+      Takes `.wav` audio files and produces `.lab` text files containing the spoken words. This is typically the first step when working with untranscribed audio data. Uses speech-to-text engines like Faster Whisper.
+
+      *Skip this step if your dataset already has transcription files.*
+
+      ---
+
+      ### Ⓑ Train Aligners
+      **Purpose**: Create custom acoustic models tuned to your specific data.
+
+      Training improves alignment accuracy by adapting models to your speakers, recording conditions, or dialect. Requires a dataset that already has alignments (from a pretrained model) to use as training data.
+
+      *Skip this step if using pretrained models is sufficient for your needs.*
+
+      ---
+
+      ### Ⓒ Generate Alignments
+      **Purpose**: Produce time-aligned phoneme boundaries (TextGrids).
+
+      This is the core forced alignment step. It takes audio files and their transcriptions, then outputs TextGrid files showing exactly when each phoneme occurs. You can use either pretrained models or custom-trained models from step Ⓑ.
+
+      ---
+
+      ### Ⓓ Extract PLLR Scoring
+      **Purpose**: Calculate pronunciation quality scores from alignments.
+
+      PLLR (Probabilistic Linear Likelihood Ratio) scores indicate how well each phoneme was pronounced. Outputs CSV files with per-phoneme and per-frame probability scores for clinical or research analysis.
+
+      ---
+
+      ## Typical Workflows
+
+      **Basic alignment workflow**: Ⓐ → Ⓒ
+      *Transcribe audio, then generate alignments with a pretrained model.*
+
+      **Custom model workflow**: Ⓐ → Ⓒ → Ⓑ → Ⓒ
+      *Transcribe, align with pretrained model, train custom model, re-align with custom model.*
+
+      **Full analysis workflow**: Ⓐ → Ⓒ → Ⓓ
+      *Transcribe, align, then extract pronunciation scores.*
+
+    collapsible_sections:
+      "Element Reference Notation": |
+        Throughout this guide, form elements are referenced using Letter-Number notation.
+
+        The letter identifies the pipeline step (Ⓐ, Ⓑ, Ⓒ, or Ⓓ). The number identifies the specific form element (①, ②, ③, etc.).
+
+        For example, B-3 refers to the third element (③ Choose a Training Dataset) in the Training stacker (Ⓑ).
+
+        Elements are numbered top-to-bottom as they appear in each stacker's interface.
+
+      "Understanding Dependencies": |
+        Some form elements depend on selections made in previous elements.
+
+        Ⓑ-④ (Choose an Alignment) only populates after selecting a dataset in Ⓑ-③.
+        Ⓓ-② (Choose an Alignment) only populates after selecting a dataset in Ⓓ-①.
+
+        If a dropdown shows "Select a dataset first", complete the previous selection.
+
+  # ======
+  # PIPELINE STEP A: TRANSCRIPTION
+  # ======
+  - id: "transcription"
+    label: "Ⓐ Transcribe Audio"
+    stacker_class: "TranscriptionStacker"
+    enabled: true
+    collapsible_sections:
+      "About This Step": |
+        Transcription converts speech audio into text. This step processes .wav files and creates adjacent .lab files containing the transcribed words.
+
+        When to use: Your dataset has audio files but no transcription files.
+        When to skip: Your dataset already includes .lab or .txt transcription files.
+
+      "A-① Engine Selection": |
+        What it does: Selects which speech-to-text engine performs the transcription.
+
+        Available engines: Typically Faster Whisper or similar ASR models.
+
+        How to choose: Different engines have trade-offs between speed and accuracy. Faster Whisper is recommended for most use cases.
+
+      "A-② Dataset Selection": |
+        What it does: Chooses which registered dataset to transcribe.
+
+        Shows: Dataset name, registration date, and description.
+
+        Note: Only datasets without existing transcriptions will be fully processed. Files that already have .lab files will be skipped.
+
+      "A-③ Start Transcription Button": |
+        What it does: Begins the transcription process for the selected dataset.
+
+        During processing: The button is disabled and status shows "Processing..."
+
+        On completion: New .lab files are created next to each .wav file. The dataset's transcription status is updated.
+
+  # ======
+  # PIPELINE STEP B: MODEL TRAINING
+  # ======
+  - id: "training"
+    label: "Ⓑ Train Aligners"
+    stacker_class: "TrainingStacker"
+    enabled: true
+    collapsible_sections:
+      "About This Step": |
+        Training creates custom acoustic models adapted to your specific data. This can improve alignment accuracy for particular speakers, accents, or recording conditions.
+
+        Prerequisites: You need a dataset with existing alignments (TextGrids) to use as training data. Generate these first using step Ⓒ with a pretrained model.
+
+        Output: A new model registered under the engine you selected, available for use in step Ⓒ.
+
+      "B-① Choose an Alignment Method": |
+        What it does: Selects which alignment engine's training system to use.
+
+        Options typically include:
+        MFA (Montreal Forced Aligner): Industry-standard, HMM-based
+        W2TG (Wav2TextGrid): Neural network-based, may handle edge cases differently
+
+        How to choose: Use the same engine you plan to use for alignment in step Ⓒ. Models are engine-specific and cannot be used across different engines.
+
+      "B-② Select a Model (Base Model)": |
+        What it does: Chooses the starting point for training (transfer learning).
+
+        What it shows: Model name, download date, and model ID.
+
+        How it works: Training adapts an existing model rather than starting from scratch. This requires less data and produces better results than training from zero.
+
+        Recommendation: Select a pretrained model for your target language.
+
+      "B-③ Choose a Training Dataset": |
+        What it does: Selects which dataset provides the audio files for training.
+
+        Requirements: The dataset must have registered alignments (from step Ⓒ).
+
+        What happens next: After selection, element ④ will populate with available alignments for this dataset.
+
+      "B-④ Choose an Alignment": |
+        What it does: Selects which alignment provides the TextGrid training data.
+
+        Depends on: Your selection in B-③ (dataset). This dropdown only populates after selecting a dataset.
+
+        Shows: Engine ID, model name, alignment date, and status.
+
+        Quality matters: Training quality depends on alignment quality. Use alignments that have been reviewed or corrected for best results.
+
+      "B-⑤ Name Your Model": |
+        What it does: Sets the identifier for your newly trained model.
+
+        Requirements: Must be unique within the selected engine. Cannot duplicate existing model names.
+
+        Best practices: Use descriptive names like child_speech_v1 or clinic_recording_model. Include version numbers if you'll iterate. Avoid spaces and special characters.
+
+      "B-⑥ Start Training Button": |
+        What it does: Begins the model training process.
+
+        Duration: Training can take several minutes to hours depending on dataset size and your hardware.
+
+        During training: The button is disabled and status shows "Training..."
+
+        On completion: The new model appears in model dropdowns throughout the app and can be selected in step Ⓒ for alignment.
+
+  # ======
+  # PIPELINE STEP C: FORCED ALIGNMENT
+  # ======
+  - id: "prediction"
+    label: "Ⓒ Generate Alignments"
+    stacker_class: "PredictionStacker"
+    enabled: true
+    collapsible_sections:
+      "About This Step": |
+        Forced alignment produces time-aligned phoneme boundaries. Given audio and its transcription, the aligner determines exactly when each sound occurs.
+
+        Input: Audio files (.wav) with matching transcription files (.lab)
+        Output: TextGrid files with phoneme-level timing information
+
+        This is typically the core step in any speech analysis workflow.
+
+      "C-① Choose an Alignment Method": |
+        What it does: Selects which alignment engine performs the forced alignment.
+
+        Options typically include:
+        MFA (Montreal Forced Aligner): Established, HMM-based approach
+        W2TG (Wav2TextGrid): Neural network-based alternative
+
+        Considerations: Different engines may produce slightly different boundary placements. Engine choice affects which models are available in C-②. For consistency, use the same engine throughout a project.
+
+      "C-② Select a Model": |
+        What it does: Chooses the acoustic model for alignment.
+
+        Model types:
+        Pretrained models: Downloaded during startup, ready to use
+        Custom models: Created in step Ⓑ, tuned to your data
+
+        How to choose: Start with a pretrained model for your language. Use custom models when you need improved accuracy for specific conditions.
+
+        Note: Only models compatible with the selected engine (C-①) are shown.
+
+      "C-③ Choose a Speech Dataset": |
+        What it does: Selects which dataset to align.
+
+        Requirements: The dataset must have transcription files. If your dataset only has audio, complete step Ⓐ first.
+
+        Shows: Dataset name, registration date, and description.
+
+      "C-④ Start Predicting Button": |
+        What it does: Begins the forced alignment process.
+
+        What happens:
+        1. Each audio file is processed with its transcription
+        2. The model determines phoneme boundaries
+        3. TextGrid files are generated and saved
+        4. An alignment record is registered in the system
+
+        On completion: The alignments become available for use in steps Ⓑ and Ⓓ, and can be viewed in the Models page.
+
+      "Settings (⚙️ Button)": |
+        What it does: Opens engine-specific configuration options.
+
+        Common settings may include: Beam width (affects accuracy vs. speed trade-off), cleanup options for temporary files, output format preferences.
+
+        When to adjust: Default settings work for most cases. Adjust if you experience issues or have specific requirements.
+
+  # ======
+  # PIPELINE STEP D: PLLR EXTRACTION
+  # ======
+  - id: "pllr"
+    label: "Ⓓ Extract PLLR Scoring"
+    stacker_class: "PLLRStacker"
+    enabled: true
+    collapsible_sections:
+      "About This Step": |
+        PLLR (Probabilistic Linear Likelihood Ratio) extraction calculates pronunciation quality scores for each phoneme in your alignments.
+
+        Input: Existing alignments (TextGrids) from step Ⓒ
+        Output: CSV files with phoneme-level and frame-level probability scores
+
+        These scores can be used for clinical assessment, research analysis, or identifying pronunciation patterns.
+
+      "D-① Choose a PLLR Dataset": |
+        What it does: Selects which dataset to analyze for pronunciation scoring.
+
+        Requirements: The dataset must have completed alignments from step Ⓒ.
+
+        What happens next: After selection, element ② will populate with available alignments for this dataset.
+
+      "D-② Choose an Alignment": |
+        What it does: Selects which alignment provides the TextGrids for scoring.
+
+        Depends on: Your selection in D-① (dataset). This dropdown only populates after selecting a dataset.
+
+        Shows: Engine ID, model name, alignment date, and status.
+
+        Multiple alignments: If you've aligned the same dataset with different models, you can extract PLLR scores from each to compare results.
+
+      "D-③ Output Path": |
+        What it does: Specifies where to save the extracted score files.
+
+        Output files created:
+        phonewise_proba.csv: One score per phoneme instance
+        framewise_proba.csv: Frame-by-frame probability values
+
+        Browse button: Opens a directory picker to select the output location.
+
+        Recommendation: Use a dedicated output folder to keep results organized.
+
+      "D-④ Start PLLR Extraction Button": |
+        What it does: Begins the PLLR score computation.
+
+        Processing: Each audio file is analyzed against its TextGrid alignment using a pronunciation scoring model (typically wav2vec2-based).
+
+        Duration: Processing time depends on dataset size and whether probability caches exist from previous runs.
+
+        On completion: CSV files are written to the specified output path.
+
+      "Settings (⚙️ Button)": |
+        What it does: Opens PLLR-specific configuration options.
+
+        Available settings:
+        Acoustic Model: HuggingFace model for probability computation
+        Phone Key: Key name for phone labels in model config
+        Recompute Probabilities: Whether to recalculate or use cached values
+        Likelihood Dict Path: Location for caching computed likelihoods
+        Aggregation Function: Method for combining frame scores into phoneme scores
+
+        When to adjust: Default settings work for standard English analysis. Adjust for different languages or specialized scoring needs.
+
+# ======
+# UI CONFIGURATION
+# ======
+ui:
+  menu_max_width: 500
+  animation_duration: 300
+  content_spacing: 20
