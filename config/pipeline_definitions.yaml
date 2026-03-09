@@ -39,6 +39,7 @@ pipeline:
       - **TrainingStacker**: Train acoustic models on labeled datasets
       - **PredictionStacker**: Generate forced alignments using trained/pretrained models
       - **PLLRStacker**: Extract Goodness of Pronunciation (PLLR) scores from alignments
+      - **ViewerStacker**: Browse alignments by speaker/file; view TextGrid tiers, transcripts, and audio
       - **MarkdownStacker**: Display informational markdown content (this step)
 
       ###
@@ -119,6 +120,20 @@ pipeline:
         2. Numbered item two
         3. Numbered item three
 
+
+  # ======
+  # PIPELINE STEP E: ALIGNMENT VIEWER
+  # ======
+  - id: "viewer"
+    label: "Ⓔ View Alignments"
+    stacker_class: "ViewerStacker"
+    enabled: true
+    collapsible_sections:
+      "About the Alignment Viewer": |
+        Use this step to inspect alignment results. Select a dataset and one of its
+        completed alignments, then browse by speaker and audio file to view the
+        transcript (.lab), the TextGrid tier intervals (phones, words, etc.), and
+        play back the original audio side-by-side.
 
   # ======
   # PIPELINE STEP D: PLLR EXTRACTION

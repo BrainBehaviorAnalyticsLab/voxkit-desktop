@@ -97,6 +97,7 @@ from .pllr_stacker import PLLRStacker
 from .prediction_stacker import PredictionStacker
 from .training_stacker import TrainingStacker
 from .transcription_stacker import TranscriptionStacker
+from .viewer_stacker import ViewerStacker
 
 # Mapping of stacker class names to actual classes
 STACKER_REGISTRY = {
@@ -105,6 +106,7 @@ STACKER_REGISTRY = {
     "PLLRStacker": PLLRStacker,
     "MarkdownStacker": MarkdownStacker,
     "TranscriptionStacker": TranscriptionStacker,
+    "ViewerStacker": ViewerStacker,
 }
 
 
@@ -280,6 +282,10 @@ class PipelineFormStack(QWidget):
                 if hasattr(stacker_widget, "reload_datasets"):
                     stacker_widget.reload_datasets()
 
+            elif stacker_class == "ViewerStacker":
+                if hasattr(stacker_widget, "reload_datasets"):
+                    stacker_widget.reload_datasets()
+
     def change_page(self, index):
         """Change the displayed page based on menu selection with animation"""
         if index >= 0:  # Valid index
@@ -303,5 +309,6 @@ __all__ = [
     "PLLRStacker",
     "TranscriptionStacker",
     "MarkdownStacker",
+    "ViewerStacker",
     "STACKER_REGISTRY",
 ]

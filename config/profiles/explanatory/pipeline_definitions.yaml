@@ -310,6 +310,20 @@ pipeline:
 
         When to adjust: Default settings work for standard English analysis. Adjust for different languages or specialized scoring needs.
 
+  # ======
+  # PIPELINE STEP E: ALIGNMENT VIEWER
+  # ======
+  - id: "viewer"
+    label: "Ⓔ View Alignments"
+    stacker_class: "ViewerStacker"
+    enabled: true
+    collapsible_sections:
+      "About the Alignment Viewer": |
+        Use this step to inspect alignment results. Select a dataset and one of its
+        completed alignments, then browse by speaker and audio file to view the
+        transcript (.lab), the TextGrid tier intervals (phones, words, etc.), and
+        play back the original audio side-by-side.
+
 # ======
 # UI CONFIGURATION
 # ======
