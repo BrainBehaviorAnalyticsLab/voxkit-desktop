@@ -25,7 +25,6 @@ from PyQt6.QtWidgets import (
     QLineEdit,
     QListWidget,
     QPushButton,
-    QScrollArea,
     QSizePolicy,
     QSlider,
     QTextEdit,
@@ -557,21 +556,12 @@ class ViewerStacker(BaseStacker):
         tg_header.addStretch()
         view_col.addLayout(tg_header)
 
-        # Wrap timeline in a scroll area so very tall tier stacks don't clip
         self._timeline = TextGridTimeline()
         self._timeline.seek_requested.connect(self._seek_to_seconds)
-
-        tl_scroll = QScrollArea()
-        tl_scroll.setWidgetResizable(True)
-        tl_scroll.setFrameShape(QScrollArea.Shape.NoFrame)
-        tl_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        tl_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        tl_scroll.setStyleSheet(
-            f"QScrollArea {{ border: 1px solid {Colors.BORDER}; border-radius: 4px; }}"
+        self._timeline.setStyleSheet(
+            f"border: 1px solid {Colors.BORDER}; border-radius: 4px;"
         )
-        tl_scroll.setWidget(self._timeline)
-        tl_scroll.setMinimumHeight(TextGridTimeline.RULER_HEIGHT + TextGridTimeline.TIER_HEIGHT)
-        view_col.addWidget(tl_scroll)
+        view_col.addWidget(self._timeline)
 
         # Active-segment indicator ────────────────────────────────────────────
         self._active_label = QLabel("")
