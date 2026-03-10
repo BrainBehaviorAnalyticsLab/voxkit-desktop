@@ -40,6 +40,7 @@ pipeline:
       - **PredictionStacker**: Generate forced alignments using trained/pretrained models
       - **PLLRStacker**: Extract Goodness of Pronunciation (PLLR) scores from alignments
       - **ViewerStacker**: Browse alignments by speaker/file; view TextGrid tiers, transcripts, and audio
+      - **ComparisonStacker**: Compare two alignments with four phoneme-level plots; export as PNGs
       - **MarkdownStacker**: Display informational markdown content (this step)
 
       ###
@@ -134,6 +135,21 @@ pipeline:
         completed alignments, then browse by speaker and audio file to view the
         transcript (.lab), the TextGrid tier intervals (phones, words, etc.), and
         play back the original audio side-by-side.
+
+  # ======
+  # PIPELINE STEP F: ALIGNMENT COMPARISON
+  # ======
+  - id: "comparison"
+    label: "Ⓕ Compare Alignments"
+    stacker_class: "ComparisonStacker"
+    enabled: true
+    collapsible_sections:
+      "About Alignment Comparison": |
+        Use this step to compare two forced alignments side-by-side. Select a
+        dataset and one of its alignments for each side (A and B), then click
+        Compare to view four phoneme-level plots: Phoneme Counts, Overlap (IoU),
+        Overlap Rate, and Substitution Scatter. Any subset of plots can be
+        exported as PNGs to a folder you choose.
 
   # ======
   # PIPELINE STEP D: PLLR EXTRACTION

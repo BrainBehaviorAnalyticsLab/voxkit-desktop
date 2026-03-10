@@ -324,6 +324,22 @@ pipeline:
         transcript (.lab), the TextGrid tier intervals (phones, words, etc.), and
         play back the original audio side-by-side.
 
+  # ======
+  # PIPELINE STEP F: ALIGNMENT COMPARISON
+  # ======
+  - id: "comparison"
+    label: "Ⓕ Compare Alignments"
+    stacker_class: "ComparisonStacker"
+    enabled: true
+    collapsible_sections:
+      "About Alignment Comparison": |
+        Use this step to compare two forced alignments from the same dataset.
+        Select a dataset, then pick two of its alignments (A and B), and click
+        Compare to view four phoneme-level plots: Phoneme Counts, Overlap (IoU),
+        Overlap Rate, and Substitution Scatter. Any subset of plots can be
+        exported as PNGs to a folder you choose.
+
+
 # ======
 # UI CONFIGURATION
 # ======
