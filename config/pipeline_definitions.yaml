@@ -38,9 +38,9 @@ pipeline:
       - **TranscriptionStacker**: Transcribe audio files using speech-to-text engines
       - **TrainingStacker**: Train acoustic models on labeled datasets
       - **PredictionStacker**: Generate forced alignments using trained/pretrained models
-      - **PLLRStacker**: Extract Goodness of Pronunciation (PLLR) scores from alignments
       - **ViewerStacker**: Browse alignments by speaker/file; view TextGrid tiers, transcripts, and audio
       - **ComparisonStacker**: Compare two alignments with four phoneme-level plots; export as PNGs
+      - **PLLRStacker**: Extract Goodness of Pronunciation (PLLR) scores from alignments
       - **MarkdownStacker**: Display informational markdown content (this step)
 
       ###
@@ -123,10 +123,10 @@ pipeline:
 
 
   # ======
-  # PIPELINE STEP E: ALIGNMENT VIEWER
+  # PIPELINE STEP D: ALIGNMENT VIEWER
   # ======
   - id: "viewer"
-    label: "Ⓔ View Alignments"
+    label: "Ⓓ View Alignments"
     stacker_class: "ViewerStacker"
     enabled: true
     collapsible_sections:
@@ -137,10 +137,10 @@ pipeline:
         play back the original audio side-by-side.
 
   # ======
-  # PIPELINE STEP F: ALIGNMENT COMPARISON
+  # PIPELINE STEP E: ALIGNMENT COMPARISON
   # ======
   - id: "comparison"
-    label: "Ⓕ Compare Alignments"
+    label: "Ⓔ Compare Alignments"
     stacker_class: "ComparisonStacker"
     enabled: true
     collapsible_sections:
@@ -152,10 +152,10 @@ pipeline:
         exported as PNGs to a folder you choose.
 
   # ======
-  # PIPELINE STEP D: PLLR EXTRACTION
+  # PIPELINE STEP F: PLLR EXTRACTION
   # ======
   - id: "pllr"
-    label: "Ⓓ Extract PLLR Scoring"
+    label: "Ⓕ Extract PLLR Scoring"
     stacker_class: "PLLRStacker"
     enabled: true
     collapsible_sections:
