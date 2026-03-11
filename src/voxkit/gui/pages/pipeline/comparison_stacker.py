@@ -167,7 +167,7 @@ class ComparisonStacker(BaseStacker):
         self._threshold_spin.setFixedWidth(70)
         self._threshold_spin.setStyleSheet(
             "QDoubleSpinBox { border: 1px solid #d0d0d0; border-radius: 4px; "
-            "padding: 4px; font-size: 12px; }"
+            "padding: 4px; font-size: 12px; color: black; background: white; selection-color: black; selection-background-color: #cce5ff; }"
         )
         opts.addWidget(self._threshold_spin)
 
