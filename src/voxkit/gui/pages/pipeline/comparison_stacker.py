@@ -228,7 +228,7 @@ class ComparisonStacker(BaseStacker):
         folder_row.addWidget(browse_btn)
 
         self._download_btn = QPushButton("Download")
-        self._download_btn.setStyleSheet(Buttons.SUCCESS)
+        self._download_btn.setStyleSheet(Buttons.SUCCESS_SMALL)
         self._download_btn.setFixedWidth(100)
         self._download_btn.setEnabled(False)
         self._download_btn.clicked.connect(self._download_plots)
@@ -481,8 +481,7 @@ class ComparisonStacker(BaseStacker):
         )
 
         self._results_widget.setVisible(True)
-        if self._dl_folder:
-            self._download_btn.setEnabled(True)
+        self._download_btn.setEnabled(True)
 
         self.set_status(
             f"Compared {len(paths_a)} + {len(paths_b)} TextGrids  ·  tier: {tier}",
@@ -496,12 +495,15 @@ class ComparisonStacker(BaseStacker):
         if folder:
             self._dl_folder = folder
             self._dl_folder_label.setText(folder)
-            if self._last_comparison is not None:
-                self._download_btn.setEnabled(True)
 
     def _download_plots(self) -> None:
-        if not self._dl_folder or self._last_comparison is None:
+        if self._last_comparison is None:
             return
+        if not self._dl_folder:
+            self.set_status("Select an output folder first.", "ready")
+            self._browse_output_folder()
+            if not self._dl_folder:
+                return
 
         from alignment_comparison_plots import (
             plot_phoneme_counts,

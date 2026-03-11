@@ -162,9 +162,14 @@ class TextGridTimeline(QWidget):
     LEFT_MARGIN = 92   # space reserved for tier name labels
     RIGHT_MARGIN = 8
 
+    # Fixed colors for well-known tier names (case-insensitive match)
+    _TIER_COLOR_MAP: dict[str, QColor] = {
+        "words": QColor("#3498db"),   # blue
+        "phones": QColor("#27ae60"),  # green
+    }
+
+    # Fallback palette for unknown tiers (indexed by position after known tiers)
     _TIER_COLORS = [
-        QColor("#3498db"),  # blue
-        QColor("#27ae60"),  # green
         QColor("#e67e22"),  # orange
         QColor("#9b59b6"),  # purple
         QColor("#16a085"),  # teal
@@ -182,8 +187,13 @@ class TextGridTimeline(QWidget):
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.setFixedHeight(self.RULER_HEIGHT)
 
+    _TIER_ORDER = {"phones": 0, "words": 1}
+
     def set_data(self, tiers: list[dict], duration: float) -> None:
-        self._tiers = tiers
+        self._tiers = sorted(
+            tiers,
+            key=lambda t: self._TIER_ORDER.get(t["name"].lower(), 2),
+        )
         self._duration = duration
         self._current_time = 0.0
         self.setFixedHeight(self.RULER_HEIGHT + max(1, len(tiers)) * self.TIER_HEIGHT)
@@ -277,9 +287,15 @@ class TextGridTimeline(QWidget):
         iv_font = QFont()
         iv_font.setPointSize(8)
 
+        fallback_idx = 0
         for idx, tier in enumerate(self._tiers):
             y = self.RULER_HEIGHT + idx * self.TIER_HEIGHT
-            color = self._TIER_COLORS[idx % len(self._TIER_COLORS)]
+            tier_key = tier["name"].lower()
+            if tier_key in self._TIER_COLOR_MAP:
+                color = self._TIER_COLOR_MAP[tier_key]
+            else:
+                color = self._TIER_COLORS[fallback_idx % len(self._TIER_COLORS)]
+                fallback_idx += 1
             is_interval = tier["class"] == "IntervalTier"
 
             # Alternating row background
