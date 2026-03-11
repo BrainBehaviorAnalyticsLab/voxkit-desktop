@@ -50,7 +50,7 @@ class TrainingStacker(BaseStacker):
 
     def get_title(self) -> str:
         """Return the stacker's title."""
-        return "Ⓐ Train Aligners"
+        return "Train Aligners"
     
     def has_settings(self) -> bool:
         """This stacker has settings."""

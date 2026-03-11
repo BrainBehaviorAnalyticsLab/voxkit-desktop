@@ -38,6 +38,8 @@ pipeline:
       - **TranscriptionStacker**: Transcribe audio files using speech-to-text engines
       - **TrainingStacker**: Train acoustic models on labeled datasets
       - **PredictionStacker**: Generate forced alignments using trained/pretrained models
+      - **ViewerStacker**: Browse alignments by speaker/file; view TextGrid tiers, transcripts, and audio
+      - **ComparisonStacker**: Compare two alignments with four phoneme-level plots; export as PNGs
       - **PLLRStacker**: Extract Goodness of Pronunciation (PLLR) scores from alignments
       - **MarkdownStacker**: Display informational markdown content (this step)
 
@@ -121,10 +123,39 @@ pipeline:
 
 
   # ======
-  # PIPELINE STEP D: PLLR EXTRACTION
+  # PIPELINE STEP D: ALIGNMENT VIEWER
+  # ======
+  - id: "viewer"
+    label: "Ⓓ View Alignments"
+    stacker_class: "ViewerStacker"
+    enabled: true
+    collapsible_sections:
+      "About the Alignment Viewer": |
+        Use this step to inspect alignment results. Select a dataset and one of its
+        completed alignments, then browse by speaker and audio file to view the
+        transcript (.lab), the TextGrid tier intervals (phones, words, etc.), and
+        play back the original audio side-by-side.
+
+  # ======
+  # PIPELINE STEP E: ALIGNMENT COMPARISON
+  # ======
+  - id: "comparison"
+    label: "Ⓔ Compare Alignments"
+    stacker_class: "ComparisonStacker"
+    enabled: true
+    collapsible_sections:
+      "About Alignment Comparison": |
+        Use this step to compare two forced alignments side-by-side. Select a
+        dataset and one of its alignments for each side (A and B), then click
+        Compare to view four phoneme-level plots: Phoneme Counts, Overlap (IoU),
+        Overlap Rate, and Substitution Scatter. Any subset of plots can be
+        exported as PNGs to a folder you choose.
+
+  # ======
+  # PIPELINE STEP F: PLLR EXTRACTION
   # ======
   - id: "pllr"
-    label: "Ⓓ Extract PLLR Scoring"
+    label: "Ⓕ Extract PLLR Scoring"
     stacker_class: "PLLRStacker"
     enabled: true
     collapsible_sections:

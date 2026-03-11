@@ -2,7 +2,7 @@
 # This profile provides detailed glossary-style explanations for each form element.
 #
 # Form Element Reference System:
-#   Letter = Pipeline step (Ⓐ Ⓑ Ⓒ Ⓓ)
+#   Letter = Pipeline step (Ⓐ Ⓑ Ⓒ Ⓓ Ⓔ Ⓕ)
 #   Number = Form element within that step (① ② ③ ④ ⑤ ⑥)
 #   Example: "B-3" refers to element ③ in the Training stacker (Ⓑ)
 
@@ -49,7 +49,21 @@ pipeline:
 
       ---
 
-      ### Ⓓ Extract PLLR Scoring
+      ### Ⓓ View Alignments
+      **Purpose**: Inspect alignment results file-by-file.
+
+      Browse completed alignments by speaker and audio file. View the transcript (.lab), TextGrid tier intervals (phones, words, etc.), and play back the original audio side-by-side. Useful for quality-checking alignments before downstream analysis.
+
+      ---
+
+      ### Ⓔ Compare Alignments
+      **Purpose**: Visualize differences between two forced alignments of the same dataset.
+
+      Select two alignments (A and B) and click Compare to view four phoneme-level plots: Phoneme Counts, Overlap (IoU), Overlap Rate, and Substitution Scatter. Any subset of plots can be exported as PNGs. Useful for comparing pretrained vs. custom-trained model outputs.
+
+      ---
+
+      ### Ⓕ Extract PLLR Scoring
       **Purpose**: Calculate pronunciation quality scores from alignments.
 
       PLLR (Probabilistic Linear Likelihood Ratio) scores indicate how well each phoneme was pronounced. Outputs CSV files with per-phoneme and per-frame probability scores for clinical or research analysis.
@@ -64,8 +78,11 @@ pipeline:
       **Custom model workflow**: Ⓐ → Ⓒ → Ⓑ → Ⓒ
       *Transcribe, align with pretrained model, train custom model, re-align with custom model.*
 
-      **Full analysis workflow**: Ⓐ → Ⓒ → Ⓓ
-      *Transcribe, align, then extract pronunciation scores.*
+      **Alignment review workflow**: Ⓐ → Ⓒ → Ⓓ → Ⓔ
+      *Transcribe, align, inspect results, then compare two alignment runs side-by-side.*
+
+      **Full analysis workflow**: Ⓐ → Ⓒ → Ⓓ → Ⓕ
+      *Transcribe, align, review alignments, then extract pronunciation scores.*
 
     collapsible_sections:
       "Element Reference Notation": |
@@ -81,7 +98,7 @@ pipeline:
         Some form elements depend on selections made in previous elements.
 
         Ⓑ-④ (Choose an Alignment) only populates after selecting a dataset in Ⓑ-③.
-        Ⓓ-② (Choose an Alignment) only populates after selecting a dataset in Ⓓ-①.
+        Ⓕ-② (Choose an Alignment) only populates after selecting a dataset in Ⓕ-①.
 
         If a dropdown shows "Select a dataset first", complete the previous selection.
 
@@ -247,10 +264,100 @@ pipeline:
         When to adjust: Default settings work for most cases. Adjust if you experience issues or have specific requirements.
 
   # ======
-  # PIPELINE STEP D: PLLR EXTRACTION
+  # PIPELINE STEP D: ALIGNMENT VIEWER
+  # ======
+  - id: "viewer"
+    label: "Ⓓ View Alignments"
+    stacker_class: "ViewerStacker"
+    enabled: true
+    collapsible_sections:
+      "About This Step": |
+        The Alignment Viewer lets you inspect forced alignment results file-by-file.
+        Select a dataset and one of its completed alignments, then browse by speaker
+        and audio file to view the transcript (.lab), TextGrid tier intervals
+        (phones, words, etc.), and play back the original audio side-by-side.
+
+        Use this step to quality-check alignments before running PLLR extraction or
+        comparing two alignment runs.
+
+      "D-① Choose a Dataset": |
+        What it does: Selects which registered dataset to browse.
+
+        Requirements: The dataset must have at least one completed alignment from step Ⓒ.
+
+        What happens next: After selection, the alignment dropdown (D-②) will populate
+        with all completed alignments for this dataset.
+
+      "D-② Choose an Alignment": |
+        What it does: Selects which alignment run to inspect.
+
+        Depends on: Your selection in D-① (dataset). This dropdown only populates after
+        selecting a dataset.
+
+        Shows: Engine ID, model name, alignment date, and status.
+
+      "D-③ Speaker and File Navigation": |
+        What it does: Lets you drill down from dataset → speaker → audio file.
+
+        Speaker list: Populated from the directory structure within the alignment.
+        File list: Shows all audio files for the selected speaker.
+
+        Selecting a file loads the transcript and TextGrid tiers in the viewer panel.
+
+  # ======
+  # PIPELINE STEP E: ALIGNMENT COMPARISON
+  # ======
+  - id: "comparison"
+    label: "Ⓔ Compare Alignments"
+    stacker_class: "ComparisonStacker"
+    enabled: true
+    collapsible_sections:
+      "About This Step": |
+        The Alignment Comparison step visualizes phoneme-level differences between two
+        forced alignments of the same dataset. Select a dataset and two of its alignments
+        (A and B), then click Compare to generate four diagnostic plots.
+
+        Use this step to compare pretrained vs. custom-trained model outputs, or to
+        evaluate alignment quality across different engine configurations.
+
+      "Ⓔ-① Choose a Dataset": |
+        What it does: Selects which dataset to compare alignments within.
+
+        Requirements: The dataset must have at least two completed alignments from step Ⓒ.
+
+        What happens next: After selection, both alignment dropdowns (A and B) will
+        populate with all completed alignments for this dataset.
+
+      "Ⓔ-② Alignment A and Alignment B": |
+        What they do: Select the two alignment runs to compare side-by-side.
+
+        Depends on: Your dataset selection in Ⓔ-①.
+
+        Shows: Engine ID, model name, alignment date, and status for each alignment.
+
+        Note: A and B can reference the same alignment — useful for verifying the
+        comparison tool itself, but typically you will choose two different runs.
+
+      "Ⓔ-③ Compare Button": |
+        What it does: Runs the comparison and generates four phoneme-level plots.
+
+        Plots generated:
+        Phoneme Counts: Bar chart of how many times each phoneme appears in A vs. B.
+        Overlap (IoU): Intersection-over-union for each phoneme boundary pair.
+        Overlap Rate: Fraction of phoneme intervals that overlap between A and B.
+        Substitution Scatter: Phoneme-by-phoneme substitution frequency matrix.
+
+      "Ⓔ-④ Export Button": |
+        What it does: Saves a selected subset of the four plots as PNG files.
+
+        How to use: Check the plots you want to export, then click Export and choose
+        an output directory. Files are named by plot type.
+
+  # ======
+  # PIPELINE STEP F: PLLR EXTRACTION
   # ======
   - id: "pllr"
-    label: "Ⓓ Extract PLLR Scoring"
+    label: "Ⓕ Extract PLLR Scoring"
     stacker_class: "PLLRStacker"
     enabled: true
     collapsible_sections:
@@ -262,23 +369,23 @@ pipeline:
 
         These scores can be used for clinical assessment, research analysis, or identifying pronunciation patterns.
 
-      "D-① Choose a PLLR Dataset": |
+      "Ⓕ-① Choose a PLLR Dataset": |
         What it does: Selects which dataset to analyze for pronunciation scoring.
 
         Requirements: The dataset must have completed alignments from step Ⓒ.
 
         What happens next: After selection, element ② will populate with available alignments for this dataset.
 
-      "D-② Choose an Alignment": |
+      "Ⓕ-② Choose an Alignment": |
         What it does: Selects which alignment provides the TextGrids for scoring.
 
-        Depends on: Your selection in D-① (dataset). This dropdown only populates after selecting a dataset.
+        Depends on: Your selection in Ⓕ-① (dataset). This dropdown only populates after selecting a dataset.
 
         Shows: Engine ID, model name, alignment date, and status.
 
         Multiple alignments: If you've aligned the same dataset with different models, you can extract PLLR scores from each to compare results.
 
-      "D-③ Output Path": |
+      "Ⓕ-③ Output Path": |
         What it does: Specifies where to save the extracted score files.
 
         Output files created:
@@ -289,7 +396,7 @@ pipeline:
 
         Recommendation: Use a dedicated output folder to keep results organized.
 
-      "D-④ Start PLLR Extraction Button": |
+      "Ⓕ-④ Start PLLR Extraction Button": |
         What it does: Begins the PLLR score computation.
 
         Processing: Each audio file is analyzed against its TextGrid alignment using a pronunciation scoring model (typically wav2vec2-based).
@@ -309,6 +416,7 @@ pipeline:
         Aggregation Function: Method for combining frame scores into phoneme scores
 
         When to adjust: Default settings work for standard English analysis. Adjust for different languages or specialized scoring needs.
+
 
 # ======
 # UI CONFIGURATION

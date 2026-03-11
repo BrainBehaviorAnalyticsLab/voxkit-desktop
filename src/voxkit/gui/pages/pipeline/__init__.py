@@ -92,11 +92,13 @@ if TYPE_CHECKING:
     from voxkit.config.pipeline_config import PipelineConfig
 
 from .base_stacker import BaseStacker
+from .comparison_stacker import ComparisonStacker
 from .markdown_stacker import MarkdownStacker
 from .pllr_stacker import PLLRStacker
 from .prediction_stacker import PredictionStacker
 from .training_stacker import TrainingStacker
 from .transcription_stacker import TranscriptionStacker
+from .viewer_stacker import ViewerStacker
 
 # Mapping of stacker class names to actual classes
 STACKER_REGISTRY = {
@@ -105,6 +107,8 @@ STACKER_REGISTRY = {
     "PLLRStacker": PLLRStacker,
     "MarkdownStacker": MarkdownStacker,
     "TranscriptionStacker": TranscriptionStacker,
+    "ViewerStacker": ViewerStacker,
+    "ComparisonStacker": ComparisonStacker,
 }
 
 
@@ -280,6 +284,14 @@ class PipelineFormStack(QWidget):
                 if hasattr(stacker_widget, "reload_datasets"):
                     stacker_widget.reload_datasets()
 
+            elif stacker_class == "ViewerStacker":
+                if hasattr(stacker_widget, "reload_datasets"):
+                    stacker_widget.reload_datasets()
+
+            elif stacker_class == "ComparisonStacker":
+                if hasattr(stacker_widget, "reload_datasets"):
+                    stacker_widget.reload_datasets()
+
     def change_page(self, index):
         """Change the displayed page based on menu selection with animation"""
         if index >= 0:  # Valid index
@@ -303,5 +315,7 @@ __all__ = [
     "PLLRStacker",
     "TranscriptionStacker",
     "MarkdownStacker",
+    "ViewerStacker",
+    "ComparisonStacker",
     "STACKER_REGISTRY",
 ]

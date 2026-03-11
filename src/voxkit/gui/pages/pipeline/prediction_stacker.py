@@ -41,7 +41,7 @@ class PredictionStacker(BaseStacker):
 
     def get_title(self) -> str:
         """Return the stacker's title."""
-        return "Ⓑ Predict Alignments"
+        return "Predict Alignments"
 
     def has_settings(self) -> bool:
         """This stacker has settings."""

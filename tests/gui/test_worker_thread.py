@@ -7,6 +7,7 @@ class TestWorkerThread:
 
         with qtbot.waitSignal(worker.finished, timeout=2000) as blocker:
             worker.start()
+        worker.wait()
 
         success, message = blocker.args
         assert success is True
@@ -17,6 +18,7 @@ class TestWorkerThread:
 
         with qtbot.waitSignal(worker.finished, timeout=2000) as blocker:
             worker.start()
+        worker.wait()
 
         success, message = blocker.args
         assert success is True
@@ -30,6 +32,7 @@ class TestWorkerThread:
 
         with qtbot.waitSignal(worker.finished, timeout=2000) as blocker:
             worker.start()
+        worker.wait()
 
         success, message = blocker.args
         assert success is False
@@ -43,6 +46,7 @@ class TestWorkerThread:
 
         with qtbot.waitSignal(worker.finished, timeout=2000) as blocker:
             worker.start()
+        worker.wait()
 
         success, message = blocker.args
         assert success is False
