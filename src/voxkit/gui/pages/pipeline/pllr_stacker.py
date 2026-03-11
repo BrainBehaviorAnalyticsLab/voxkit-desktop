@@ -214,7 +214,7 @@ class PLLRStacker(QWidget):
         header_layout = QHBoxLayout()
 
         # Title
-        title = QLabel("Ⓒ Extract PLLR Scoring")
+        title = QLabel("Extract PLLR Scoring")
         title.setStyleSheet(Labels.PAGE_TITLE)
         header_layout.addWidget(title)
 
