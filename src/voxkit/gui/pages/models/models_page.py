@@ -173,9 +173,8 @@ class ManageAlignersWidget(CategoricalTableWidget):
 
     def reload_models(self):
         """Reload models in the dropdowns"""
-
-        w2tg_models = models.list_models("W2TGENGINE")
-        self.set_items("W2TGENGINE", w2tg_models)
+        for engine in self.get_engines():
+            self.set_items(engine, models.list_models(engine))
 
     def open_import_dialog(self, category):
         print(f"Opening import dialog for category: {category}")
