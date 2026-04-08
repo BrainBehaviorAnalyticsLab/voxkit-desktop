@@ -313,7 +313,6 @@ def update_dataset_metadata(
         Tuple of (True, success_message) on success or (False, error_message) on failure
 
     Raises:
-        KeyError: If an invalid metadata field is specified
         FileNotFoundError: If the dataset is not found
         Exception: If metadata file cannot be written
     """
@@ -323,14 +322,9 @@ def update_dataset_metadata(
         if not metadata:
             return False, f"Dataset {dataset_id} not found"
 
-        if updates["description"] is not None:
-            metadata["description"] = updates["description"]
-        if updates["cached"] is not None:
-            metadata["cached"] = updates["cached"]
-        if updates["anonymize"] is not None:
-            metadata["anonymize"] = updates["anonymize"]
-        if updates["transcribed"] is not None:
-            metadata["transcribed"] = updates["transcribed"]
+        for field in ("description", "cached", "anonymize", "transcribed"):
+            if field in updates and updates[field] is not None:
+                metadata[field] = updates[field]
 
         # Save the updated metadata
         metadata_path = _get_datasets_root() / dataset_id / "voxkit_dataset.json"
