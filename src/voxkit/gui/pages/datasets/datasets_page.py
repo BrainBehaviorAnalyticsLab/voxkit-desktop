@@ -545,6 +545,7 @@ class DatasetsPage(QWidget):
         view_btn = QPushButton("View")
         view_btn.setStyleSheet(button_style)
         view_btn.clicked.connect(lambda: self._view_alignment(alignment))
+        layout.addWidget(view_btn)
 
         return widget
 
