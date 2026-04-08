@@ -545,6 +545,7 @@ class DatasetsPage(QWidget):
         view_btn = QPushButton("View")
         view_btn.setStyleSheet(button_style)
         view_btn.clicked.connect(lambda: self._view_alignment(alignment))
+        layout.addWidget(view_btn)
 
         return widget
 
@@ -559,9 +560,9 @@ class DatasetsPage(QWidget):
         QMessageBox.information(
             self,
             "Alignment Details",
-            f"Engine: {alignment['engine']}\n"
-            f"Model: {alignment['model']}\n"
-            f"Date: {alignment['date_aligned']}\n"
+            f"Engine: {alignment['engine_id']}\n"
+            f"Model: {alignment['model_metadata']['id']}\n"
+            f"Date: {alignment['alignment_date']}\n"
             f"Status: {alignment['status']}",
         )
 
