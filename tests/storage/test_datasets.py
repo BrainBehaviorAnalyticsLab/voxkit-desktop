@@ -594,6 +594,41 @@ class TestDatasets:
             assert metadata["anonymize"] is True
             assert metadata["transcribed"] is True
 
+        def test_update_dataset_metadata_missing_keys(self, monkeypatch):
+            from voxkit.storage import datasets
+            from voxkit.storage.datasets import (
+                create_dataset,
+                get_dataset_metadata,
+                update_dataset_metadata,
+            )
+
+            monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
+
+            # Create a dataset
+            success, message = create_dataset(
+                name="dataset_missing_keys_test",
+                description="Original description",
+                original_path=valid_dataset_path,
+                cached=True,
+                anonymize=True,
+                transcribed=True,
+            )
+            assert success is True
+            dataset_id = message["id"]
+
+            # Pass a partial dict with only one key — no KeyError should be raised
+            update_success, update_msg = update_dataset_metadata(
+                dataset_id, {"description": "Partial update"}
+            )
+            assert update_success is True
+
+            # Only description should change; other fields stay untouched
+            metadata = get_dataset_metadata(dataset_id)
+            assert metadata["description"] == "Partial update"
+            assert metadata["cached"] is True
+            assert metadata["anonymize"] is True
+            assert metadata["transcribed"] is True
+
     class TestCreateDatasetWithAnalysis:
         def test_create_dataset_with_analysis_data(self, monkeypatch):
             from voxkit.storage import datasets
