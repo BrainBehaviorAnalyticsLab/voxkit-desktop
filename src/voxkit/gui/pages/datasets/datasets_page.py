@@ -741,17 +741,16 @@ class DatasetsPage(QWidget):
     def refresh_datasets(self):
         """Refresh the dataset list"""
 
-        # Show empty label if no datasets, otherwise show table
-        if not datasets:
+        metadata_list = datasets.list_datasets_metadata()
+
+        if not metadata_list:
             self.dataset_table.hide()
             self.empty_label.show()
             self.empty_label.raise_()
             return
-        else:
-            self.empty_label.hide()
-            self.dataset_table.show()
 
-        metadata_list = datasets.list_datasets_metadata()
+        self.empty_label.hide()
+        self.dataset_table.show()
 
         self.dataset_table.setRowCount(len(metadata_list))
 
