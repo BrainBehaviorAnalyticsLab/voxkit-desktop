@@ -21,6 +21,7 @@ from voxkit.gui.frameworks.settings_modal import (
 )
 from voxkit.gui.workers import ModelRegistrationWorker
 from voxkit.storage import models
+from voxkit.storage.models import ModelMetadata
 
 from .import_dialog import ImportModelDialog
 from .utils import handle_delete, handle_export, handle_import
@@ -34,11 +35,11 @@ class ManageAlignersWidget(CategoricalTableWidget):
     """
 
     def __init__(self, parent=None):
-        self.parent = parent
+        self._parent_widget = parent
         self.data = {}
         self.registration_worker = None
 
-        def refresh_models_function() -> dict[str, list[dict[Any, Any]]]:
+        def refresh_models_function() -> dict[str, list[ModelMetadata]]:
             try:
                 model_dict = {}
                 for engine in self.get_engines():
@@ -70,7 +71,7 @@ class ManageAlignersWidget(CategoricalTableWidget):
             delete_function=delete_models_function,
             columns_shown=["name", "download_date", "id"],
             huggingface_callback=self.on_huggingface_browse,
-            parent=self.parent,
+            parent=self._parent_widget,
         )
 
         self.setWindowTitle("Model Manager")
@@ -98,6 +99,7 @@ class ManageAlignersWidget(CategoricalTableWidget):
             if engine.has_tool("align") or engine.has_tool("train"):
                 filtered_engines.append(engine_id)
         return filtered_engines
+
     def showEvent(self, event):
         """Refresh models when the widget is shown.
 
@@ -173,9 +175,8 @@ class ManageAlignersWidget(CategoricalTableWidget):
 
     def reload_models(self):
         """Reload models in the dropdowns"""
-
-        w2tg_models = models.list_models("W2TGENGINE")
-        self.set_items("W2TGENGINE", w2tg_models)
+        for engine in self.get_engines():
+            self.set_items(engine, models.list_models(engine))
 
     def open_import_dialog(self, category):
         print(f"Opening import dialog for category: {category}")
@@ -185,7 +186,7 @@ class ManageAlignersWidget(CategoricalTableWidget):
             print(f"Importing {category} Model from {path}")
             self.reload_models()
         # Clean up
-        self.parent.setGraphicsEffect(None)
+        self._parent_widget.setGraphicsEffect(None)
 
     def open_registration_dialog(self):
         """Open the model registration settings dialog"""

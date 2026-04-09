@@ -155,6 +155,7 @@ ToolBarStyle = """
     }
     """
 
+
 class AlignmentGUI(QMainWindow):
     def __init__(
         self,

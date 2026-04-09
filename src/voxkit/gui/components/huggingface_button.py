@@ -9,7 +9,8 @@ API
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QWidget
-from voxkit.gui.styles import Labels, Buttons
+
+from voxkit.gui.styles import Buttons, Labels
 
 
 class HuggingFaceButton(QPushButton):
@@ -41,7 +42,6 @@ class HuggingFaceButton(QPushButton):
         self.setStyleSheet(Buttons.HUGGINGFACE)
 
         self.setCursor(Qt.CursorShape.PointingHandCursor)
-
 
 
 # Example usage

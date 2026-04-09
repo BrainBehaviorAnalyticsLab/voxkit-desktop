@@ -9,7 +9,6 @@ API
 
 from pathlib import Path
 
-from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QDialog,
     QFileDialog,
@@ -22,10 +21,10 @@ from PyQt6.QtWidgets import (
 from voxkit.config import Defaults
 from voxkit.gui.components import ModelSelectionPanel, MultiColumnComboBox
 from voxkit.gui.frameworks.settings_modal import GenericDialog
+from voxkit.gui.styles import Buttons, Containers, Labels
 from voxkit.gui.utils import validate_path, validate_paths
 from voxkit.gui.workers.worker_thread import WorkerThread
 from voxkit.storage import alignments, datasets, models
-from voxkit.gui.styles import Buttons, Containers, Labels
 
 from .base_stacker import BaseStacker
 
@@ -36,8 +35,10 @@ class TrainingStacker(BaseStacker):
     Allows users to train custom alignment models using a dataset and
     existing alignment as training data.
     """
+
     def __init__(self, parent):
         from voxkit.engines import engines
+
         self.engines = engines
         self.train_dataset_dropdown = None
         self.train_alignment_dropdown = None
@@ -51,18 +52,18 @@ class TrainingStacker(BaseStacker):
     def get_title(self) -> str:
         """Return the stacker's title."""
         return "Train Aligners"
-    
+
     def has_settings(self) -> bool:
         """This stacker has settings."""
         return True
-    
+
     def on_settings(self):
         """Handle settings button click on training page."""
         self.settings_dialog = GenericDialog(
             parent=self,
-            config=self.engines.get_tool_providers("train")[self.model_panel.get_selected_engine()].get_settings_config(
-                "train"
-            ),
+            config=self.engines.get_tool_providers("train")[
+                self.model_panel.get_selected_engine()
+            ].get_settings_config("train"),
         )
         result = self.settings_dialog.exec()
 
@@ -72,8 +73,8 @@ class TrainingStacker(BaseStacker):
             except Exception as e:
                 print("Error syncing training settings:", e)
         # Clean up
-        if self.parent:
-            self.parent.setGraphicsEffect(None)
+        if self.parent():
+            self.parent().setGraphicsEffect(None)
 
     def on_dataset_selected(self):
         """Handle dataset selection change and load corresponding alignments"""
@@ -288,7 +289,10 @@ class TrainingStacker(BaseStacker):
     def build_ui(self):
         """Build the training UI."""
         # Model Selection Panel
-        engines_dict = {engine_id: engine for engine_id, engine in self.engines.get_tool_providers("train").items()}
+        engines_dict = {
+            engine_id: engine
+            for engine_id, engine in self.engines.get_tool_providers("train").items()
+        }
 
         self.model_panel = ModelSelectionPanel(engines_dict)
         self.content_layout.addWidget(self.model_panel)

@@ -49,6 +49,7 @@ def startup_routine():
         if not success:
             print(f"[STARTUP] Failed to create model metadata for {model}. {metadata}")
             continue
+        assert not isinstance(metadata, str)
         model_dest = metadata.get("model_path")
         if not model_dest:
             print(f"[STARTUP] Model path not found in metadata for {model}.")
@@ -81,6 +82,7 @@ def startup_routine():
     if not success:
         print(f"[STARTUP] Failed to create model metadata. {metadata}")
         return
+    assert not isinstance(metadata, str)
     model_dest = metadata.get("model_path")
     if not model_dest:
         print("[STARTUP] Model path not found in metadata.")
@@ -94,10 +96,10 @@ def startup_routine():
     else:
         print("[STARTUP] Failed to download W2TG model.")
 
-
     try:
         import nltk
-        nltk.download('averaged_perceptron_tagger_eng')
+
+        nltk.download("averaged_perceptron_tagger_eng")
 
     except Exception as e:
         print(f"[STARTUP] Failed to download NLTK resources. Error: {e}")

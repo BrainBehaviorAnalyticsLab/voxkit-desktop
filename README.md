@@ -9,7 +9,9 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/BrainBehaviorAnalyticsLab/PyPLLR_GUI/actions/workflows/tests.yml"><img src="https://img.shields.io/github/actions/workflow/status/BrainBehaviorAnalyticsLab/PyPLLR_GUI/tests.yml?branch=main&label=Tests&style=flat-square" alt="Tests"></a>
+  <a href="https://github.com/BrainBehaviorAnalyticsLab/PyPLLR_GUI/actions/workflows/tests-ubuntu.yml"><img src="https://img.shields.io/github/actions/workflow/status/BrainBehaviorAnalyticsLab/PyPLLR_GUI/tests-ubuntu.yml?branch=main&label=Ubuntu&logo=ubuntu&style=flat-square" alt="Ubuntu Tests"></a>
+  <a href="https://github.com/BrainBehaviorAnalyticsLab/PyPLLR_GUI/actions/workflows/tests-macos.yml"><img src="https://img.shields.io/github/actions/workflow/status/BrainBehaviorAnalyticsLab/PyPLLR_GUI/tests-macos.yml?branch=main&label=macOS&logo=apple&style=flat-square" alt="macOS Tests"></a>
+  <a href="https://github.com/BrainBehaviorAnalyticsLab/PyPLLR_GUI/actions/workflows/tests-windows.yml"><img src="https://img.shields.io/github/actions/workflow/status/BrainBehaviorAnalyticsLab/PyPLLR_GUI/tests-windows.yml?branch=main&label=Windows&logo=windows&style=flat-square" alt="Windows Tests"></a>
   <a href="https://github.com/BrainBehaviorAnalyticsLab/PyPLLR_GUI/actions/workflows/code-quality.yml"><img src="https://img.shields.io/github/actions/workflow/status/BrainBehaviorAnalyticsLab/PyPLLR_GUI/code-quality.yml?branch=main&label=Code%20Quality&style=flat-square" alt="Code Quality"></a>
   <a href="https://voxkit.atlassian.net/jira/software/projects/VOX/boards/2/"><img src="https://img.shields.io/badge/Project-Jira-0052CC?logo=jira&style=flat-square" alt="Jira"></a>
 </p>

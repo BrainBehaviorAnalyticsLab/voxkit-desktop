@@ -4,7 +4,6 @@ from typing import Callable, Literal
 from voxkit.services.mfa import download_acoustic_model
 from voxkit.storage import models
 from voxkit.storage.config import MODELS_ROOT
-from voxkit.storage.models import download_and_copy_huggingface_model
 from voxkit.storage.utils import get_storage_root
 
 AppName = "VoxKit"
@@ -94,10 +93,10 @@ def startup_routine():
     # else:
     #     print("[STARTUP] Failed to download W2TG model.")
 
-
     try:
         import nltk
-        nltk.download('averaged_perceptron_tagger_eng')
+
+        nltk.download("averaged_perceptron_tagger_eng")
 
     except Exception as e:
         print(f"[STARTUP] Failed to download NLTK resources. Error: {e}")

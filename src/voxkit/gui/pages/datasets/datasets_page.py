@@ -34,6 +34,8 @@ from voxkit.gui.components.csv_viewer_dialog import CSVViewerDialog
 from voxkit.gui.styles import Buttons, Containers, Labels
 from voxkit.gui.workers import DatasetRegistrationWorker
 from voxkit.storage import alignments, datasets
+from voxkit.storage.alignments import AlignmentMetadata
+from voxkit.storage.datasets import DatasetMetadata
 
 
 class DatasetsPage(QWidget):
@@ -42,8 +44,8 @@ class DatasetsPage(QWidget):
     def __init__(self, parent: QWidget | None = None):
         super().__init__(parent)
         self.parent_window = parent
-        self.registration_worker = None
-        self.selected_dataset: dict | None = None
+        self.registration_worker: DatasetRegistrationWorker | None = None
+        self.selected_dataset: str | None = None
         self.init_ui()
         self.refresh_datasets()
 
@@ -179,7 +181,7 @@ class DatasetsPage(QWidget):
             QMessageBox.warning(self, "No Destination Selected", "Please select a destination.")
             return
 
-        success, message = datasets.import_dataset(dir_path)
+        success, message = datasets.import_dataset(Path(dir_path))
 
         if success:
             QMessageBox.information(self, "Success", message)
@@ -275,11 +277,12 @@ class DatasetsPage(QWidget):
 
         # Configure table
         header = self.dataset_table.horizontalHeader()
-        header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
-        header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
-        for i in range(2, 6):
-            header.setSectionResizeMode(i, QHeaderView.ResizeMode.ResizeToContents)
-        header.setSectionResizeMode(6, QHeaderView.ResizeMode.Fixed)
+        if header is not None:
+            header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
+            header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+            for i in range(2, 6):
+                header.setSectionResizeMode(i, QHeaderView.ResizeMode.ResizeToContents)
+            header.setSectionResizeMode(6, QHeaderView.ResizeMode.Fixed)
         self.dataset_table.setColumnWidth(6, 100)
 
         self.dataset_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
@@ -365,11 +368,12 @@ class DatasetsPage(QWidget):
 
         # Configure alignments table
         align_header = self.alignments_table.horizontalHeader()
-        align_header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
-        align_header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
-        align_header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
-        align_header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
-        align_header.setSectionResizeMode(4, QHeaderView.ResizeMode.Fixed)
+        if align_header is not None:
+            align_header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
+            align_header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+            align_header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
+            align_header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
+            align_header.setSectionResizeMode(4, QHeaderView.ResizeMode.Fixed)
         self.alignments_table.setColumnWidth(4, 150)
 
         # Disable selection and editing
@@ -429,7 +433,7 @@ class DatasetsPage(QWidget):
             self.alignments_content.setGraphicsEffect(None)
             self.alignments_content.setEnabled(True)
 
-    def _load_alignments(self, dataset_id: datasets.DatasetMetadata["id"]):
+    def _load_alignments(self, dataset_id: str) -> None:
         """Load alignments for the selected dataset"""
 
         print(f"Loading alignments for dataset ID: {dataset_id}")
@@ -525,7 +529,7 @@ class DatasetsPage(QWidget):
                 f"Model clicked: {model_name}\n\nModel details will be shown here.",
             )
 
-    def _create_alignment_action_buttons(self, alignment: dict):
+    def _create_alignment_action_buttons(self, alignment: alignments.AlignmentMetadata) -> QWidget:
         """Create action buttons for an alignment row"""
         widget = QWidget()
         layout = QHBoxLayout(widget)
@@ -545,6 +549,7 @@ class DatasetsPage(QWidget):
         view_btn = QPushButton("View")
         view_btn.setStyleSheet(button_style)
         view_btn.clicked.connect(lambda: self._view_alignment(alignment))
+        layout.addWidget(view_btn)
 
         return widget
 
@@ -553,15 +558,15 @@ class DatasetsPage(QWidget):
         data_set_alignments = alignments.list_alignments(dataset_name)
         return data_set_alignments
 
-    def _view_alignment(self, alignment: dict):
+    def _view_alignment(self, alignment: AlignmentMetadata):
         """View alignment details"""
         # TODO: Implement alignment details view
         QMessageBox.information(
             self,
             "Alignment Details",
-            f"Engine: {alignment['engine']}\n"
-            f"Model: {alignment['model']}\n"
-            f"Date: {alignment['date_aligned']}\n"
+            f"Engine: {alignment['engine_id']}\n"
+            f"Model: {alignment['model_metadata']['id']}\n"
+            f"Date: {alignment['alignment_date']}\n"
             f"Status: {alignment['status']}",
         )
 
@@ -574,7 +579,7 @@ class DatasetsPage(QWidget):
             f"Export functionality for alignment '{alignment['model']}' will be implemented.",
         )
 
-    def _delete_alignment(self, alignment: dict):
+    def _delete_alignment(self, alignment: AlignmentMetadata):
         """Delete an alignment"""
         reply = QMessageBox.question(
             self,
@@ -585,6 +590,8 @@ class DatasetsPage(QWidget):
         )
 
         if reply == QMessageBox.StandardButton.Yes:
+            if self.selected_dataset is None:
+                return
             success, msg = alignments.delete_alignment(
                 dataset_id=self.selected_dataset, alignment_id=alignment["id"]
             )
@@ -657,7 +664,7 @@ class DatasetsPage(QWidget):
                     label="De-identified",
                     field_type=FieldType.CHECKBOX,
                     default_value=False,
-                    tooltip="Has the dataset been de-identified to remove personally identifiable information?",
+                    tooltip="Has personally identifiable information been removed?",
                 ),
                 FieldConfig(
                     name="transcribed",
@@ -741,17 +748,16 @@ class DatasetsPage(QWidget):
     def refresh_datasets(self):
         """Refresh the dataset list"""
 
-        # Show empty label if no datasets, otherwise show table
-        if not datasets:
+        metadata_list = datasets.list_datasets_metadata()
+
+        if not metadata_list:
             self.dataset_table.hide()
             self.empty_label.show()
             self.empty_label.raise_()
             return
-        else:
-            self.empty_label.hide()
-            self.dataset_table.show()
 
-        metadata_list = datasets.list_datasets_metadata()
+        self.empty_label.hide()
+        self.dataset_table.show()
 
         self.dataset_table.setRowCount(len(metadata_list))
 
@@ -790,7 +796,7 @@ class DatasetsPage(QWidget):
             actions_widget = self._create_dataset_action_buttons(meta)
             self.dataset_table.setCellWidget(index, 6, actions_widget)
 
-    def _create_dataset_action_buttons(self, dataset_meta: dict):
+    def _create_dataset_action_buttons(self, dataset_meta: DatasetMetadata):
         """Create action buttons for a dataset row.
 
         Args:
@@ -815,7 +821,7 @@ class DatasetsPage(QWidget):
 
         return widget
 
-    def _view_dataset_details(self, dataset_meta: dict):
+    def _view_dataset_details(self, dataset_meta: DatasetMetadata | dict):
         """View dataset analysis CSV details.
 
         Args:
