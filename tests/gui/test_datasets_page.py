@@ -8,7 +8,9 @@ from voxkit.gui.pages.datasets.datasets_page import DatasetsPage
 @pytest.fixture
 def datasets_page(qtbot):
     """DatasetsPage instance with no real datasets loaded."""
-    with patch("voxkit.gui.pages.datasets.datasets_page.datasets.list_datasets_metadata", return_value=[]):
+    with patch(
+        "voxkit.gui.pages.datasets.datasets_page.datasets.list_datasets_metadata", return_value=[]
+    ):
         page = DatasetsPage()
         qtbot.addWidget(page)
         return page

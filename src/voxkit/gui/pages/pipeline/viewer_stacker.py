@@ -99,9 +99,7 @@ def _parse_textgrid(filepath: str) -> list[dict]:
                 time = re.search(r"time\s*=\s*([0-9.e+\-]+)", pb)
                 mark = re.search(r'mark\s*=\s*"([^"]*)"', pb)
                 if time and mark:
-                    tier["intervals"].append(
-                        {"time": float(time.group(1)), "label": mark.group(1)}
-                    )
+                    tier["intervals"].append({"time": float(time.group(1)), "label": mark.group(1)})
 
         tiers.append(tier)
 
@@ -159,12 +157,12 @@ class TextGridTimeline(QWidget):
 
     TIER_HEIGHT = 36
     RULER_HEIGHT = 26
-    LEFT_MARGIN = 92   # space reserved for tier name labels
+    LEFT_MARGIN = 92  # space reserved for tier name labels
     RIGHT_MARGIN = 8
 
     # Fixed colors for well-known tier names (case-insensitive match)
     _TIER_COLOR_MAP: dict[str, QColor] = {
-        "words": QColor("#3498db"),   # blue
+        "words": QColor("#3498db"),  # blue
         "phones": QColor("#27ae60"),  # green
     }
 
@@ -259,11 +257,16 @@ class TextGridTimeline(QWidget):
             while t <= self._duration + step * 0.01:
                 x = self._time_to_x(t)
                 painter.drawLine(x, self.RULER_HEIGHT - 5, x, self.RULER_HEIGHT)
-                lbl = f"{t:.2f}s" if t < 1 else (
-                    f"{t:.1f}s" if t < 60 else f"{int(t // 60)}:{int(t % 60):02d}"
+                lbl = (
+                    f"{t:.2f}s"
+                    if t < 1
+                    else (f"{t:.1f}s" if t < 60 else f"{int(t // 60)}:{int(t % 60):02d}")
                 )
                 painter.drawText(
-                    x - 26, 1, 52, self.RULER_HEIGHT - 6,
+                    x - 26,
+                    1,
+                    52,
+                    self.RULER_HEIGHT - 6,
                     Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter,
                     lbl,
                 )
@@ -273,8 +276,10 @@ class TextGridTimeline(QWidget):
 
         # Left margin background
         painter.fillRect(
-            0, self.RULER_HEIGHT,
-            self.LEFT_MARGIN, h - self.RULER_HEIGHT,
+            0,
+            self.RULER_HEIGHT,
+            self.LEFT_MARGIN,
+            h - self.RULER_HEIGHT,
             QColor("#ecf0f1"),
         )
         painter.setPen(QPen(QColor("#bdc3c7"), 1))
@@ -306,7 +311,10 @@ class TextGridTimeline(QWidget):
             painter.setFont(name_font)
             painter.setPen(color.darker(150))
             painter.drawText(
-                4, y, self.LEFT_MARGIN - 6, self.TIER_HEIGHT,
+                4,
+                y,
+                self.LEFT_MARGIN - 6,
+                self.TIER_HEIGHT,
                 Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft,
                 tier["name"],
             )
@@ -344,13 +352,13 @@ class TextGridTimeline(QWidget):
 
                 # Label inside block
                 if bw > 10 and iv_label:
-                    text_color = (
-                        QColor("white") if (active or not silent)
-                        else color.darker(140)
-                    )
+                    text_color = QColor("white") if (active or not silent) else color.darker(140)
                     painter.setPen(text_color)
                     painter.drawText(
-                        x1 + 2, y + pad, bw - 4, self.TIER_HEIGHT - pad * 2,
+                        x1 + 2,
+                        y + pad,
+                        bw - 4,
+                        self.TIER_HEIGHT - pad * 2,
                         Qt.AlignmentFlag.AlignCenter,
                         iv_label,
                     )
@@ -403,7 +411,7 @@ class ViewerStacker(BaseStacker):
         self._alignment_dropdown: MultiColumnComboBox | None = None
         self._speaker_dropdown: QComboBox | None = None
         self._file_list: QListWidget | None = None
-        self._file_search = None          # QLineEdit, set in build_ui
+        self._file_search = None  # QLineEdit, set in build_ui
         self._all_audio_files: list[str] = []
         self._selection_section: QWidget | None = None
         self._viewer_section: QWidget | None = None
@@ -574,9 +582,7 @@ class ViewerStacker(BaseStacker):
 
         self._timeline = TextGridTimeline()
         self._timeline.seek_requested.connect(self._seek_to_seconds)
-        self._timeline.setStyleSheet(
-            f"border: 1px solid {Colors.BORDER}; border-radius: 4px;"
-        )
+        self._timeline.setStyleSheet(f"border: 1px solid {Colors.BORDER}; border-radius: 4px;")
         view_col.addWidget(self._timeline)
 
         # Active-segment indicator ────────────────────────────────────────────
@@ -717,9 +723,7 @@ class ViewerStacker(BaseStacker):
         if not alignment_id or not self._current_dataset_meta:
             return
 
-        meta = alignments.get_alignment_metadata(
-            self._current_dataset_meta["id"], alignment_id
-        )
+        meta = alignments.get_alignment_metadata(self._current_dataset_meta["id"], alignment_id)
         if not meta:
             return
 
@@ -764,7 +768,9 @@ class ViewerStacker(BaseStacker):
         """Show only files whose names contain the search query (case-insensitive)."""
         self._file_list.clear()
         q = query.strip().lower()
-        matches = [f for f in self._all_audio_files if q in f.lower()] if q else self._all_audio_files
+        matches = (
+            [f for f in self._all_audio_files if q in f.lower()] if q else self._all_audio_files
+        )
         self._file_list.addItems(matches)
         # Hide viewer if the previously selected file is no longer visible
         if self._viewer_section and self._viewer_section.isVisible():

@@ -27,7 +27,7 @@ class MarkdownStacker(BaseStacker):
         self.markdown_content = markdown_content
         self.text_browser = None
         super().__init__(parent)
-        
+
         # Remove the stretch at the end added by BaseStacker to allow
         # the text browser to expand and fill all available vertical space
         if self.main_layout.count() > 0:
@@ -42,12 +42,9 @@ class MarkdownStacker(BaseStacker):
         self.text_browser.setObjectName("markdownDisplay")
         self.text_browser.setOpenExternalLinks(True)  # Allow clickable links
         self.text_browser.setStyleSheet(Containers.MARKDOWN_DISPLAY)
-        
+
         # Set size policy to expand and fill available space
-        self.text_browser.setSizePolicy(
-            QSizePolicy.Policy.Expanding,
-            QSizePolicy.Policy.Expanding
-        )
+        self.text_browser.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
 
         # Set markdown content
         self.set_markdown(self.markdown_content)

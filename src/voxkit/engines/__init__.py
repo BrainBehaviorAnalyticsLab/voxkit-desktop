@@ -97,7 +97,7 @@ class EngineManager:
 w2tg = W2TGEngine(id="W2TGENGINE")
 mfa = MFAEngine(id="MFAENGINE")
 faster_whisper = FasterWhisperEngine(id="FASTERWHISPERENGINE")
-engines = EngineManager({ mfa.id: mfa, faster_whisper.id: faster_whisper, w2tg.id: w2tg })
+engines = EngineManager({mfa.id: mfa, faster_whisper.id: faster_whisper, w2tg.id: w2tg})
 
 __all__ = [
     "engines",

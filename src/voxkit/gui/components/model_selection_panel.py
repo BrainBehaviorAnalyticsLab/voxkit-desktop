@@ -200,7 +200,6 @@ class ModelSelectionPanel(QGroupBox):
         """
 
         if self.selected_engine is not None and self.selected_engine in self.engine_dropdowns:
-
             return self.engine_dropdowns[self.selected_engine].current_id()
         return None
 

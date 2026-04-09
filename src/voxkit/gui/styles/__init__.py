@@ -348,7 +348,6 @@ class Buttons:
             border: 2px solid #e0e0e0;
         }
     """
-    
 
 
 class Inputs:
@@ -777,6 +776,7 @@ class Containers:
             line-height: 1.6;
         }
     """
+
 
 __all__ = [
     "Colors",

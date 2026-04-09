@@ -98,6 +98,7 @@ class ManageAlignersWidget(CategoricalTableWidget):
             if engine.has_tool("align") or engine.has_tool("train"):
                 filtered_engines.append(engine_id)
         return filtered_engines
+
     def showEvent(self, event):
         """Refresh models when the widget is shown.
 

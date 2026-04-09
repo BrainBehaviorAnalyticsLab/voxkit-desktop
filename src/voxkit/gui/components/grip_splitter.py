@@ -67,9 +67,7 @@ class GripSplitterHandle(QSplitterHandle):
             else:
                 x = center_x
                 y = center_y + (i * dot_spacing)
-            painter.drawEllipse(
-                x - dot_radius, y - dot_radius, dot_radius * 2, dot_radius * 2
-            )
+            painter.drawEllipse(x - dot_radius, y - dot_radius, dot_radius * 2, dot_radius * 2)
 
         painter.end()
 

@@ -188,9 +188,7 @@ class ComparisonStacker(BaseStacker):
 
         self._tab_widget = QTabWidget()
         self._tab_widget.setFixedHeight(520)
-        self._tab_widget.setSizePolicy(
-            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
-        )
+        self._tab_widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         results_col.addWidget(self._tab_widget)
 
         # Download group ──────────────────────────────────────────────────────
@@ -381,9 +379,7 @@ class ComparisonStacker(BaseStacker):
 
     def _update_compare_btn(self) -> None:
         if self._compare_btn:
-            self._compare_btn.setEnabled(
-                bool(self._a_alignment_meta and self._b_alignment_meta)
-            )
+            self._compare_btn.setEnabled(bool(self._a_alignment_meta and self._b_alignment_meta))
 
     # ── Comparison ───────────────────────────────────────────────────────────
 
@@ -436,9 +432,7 @@ class ComparisonStacker(BaseStacker):
         try:
             counts_a = count_phonemes(paths_a, tier_name=tier, normalize=aggregate)
             counts_b = count_phonemes(paths_b, tier_name=tier, normalize=aggregate)
-            overlap = compute_phoneme_overlap(
-                paths_a, paths_b, tier_name=tier, normalize=aggregate
-            )
+            overlap = compute_phoneme_overlap(paths_a, paths_b, tier_name=tier, normalize=aggregate)
             rates = compute_phoneme_overlap_rate(
                 paths_a, paths_b, tier_name=tier, normalize=aggregate, threshold=threshold
             )
@@ -549,9 +543,7 @@ class ComparisonStacker(BaseStacker):
                 errors.append(f"{filename}: {exc}")
 
         if errors:
-            self.set_status(
-                f"Saved {len(saved)} plot(s); errors: {'; '.join(errors)}", "error"
-            )
+            self.set_status(f"Saved {len(saved)} plot(s); errors: {'; '.join(errors)}", "error")
         elif saved:
             self.set_status(f"Saved {len(saved)} plot(s) to {self._dl_folder}", "success")
         else:

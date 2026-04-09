@@ -44,7 +44,6 @@ class HuggingFaceButton(QPushButton):
         self.setCursor(Qt.CursorShape.PointingHandCursor)
 
 
-
 # Example usage
 if __name__ == "__main__":
     import sys
