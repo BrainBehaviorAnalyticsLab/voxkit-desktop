@@ -45,16 +45,16 @@ jobs:
       
       - name: Run tests
         run: |
-          uv run pytest src/voxkit/storage/test/ -v --tb=short
+          make run-tests
       
       - name: Run linting (Ubuntu only)
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
         run: |
-          uv run ruff check src/
+          make lint-check
         continue-on-error: true
       
       - name: Run type checking (Ubuntu only)
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
         run: |
-          uv run mypy src/
+          make mypy-check
         continue-on-error: true
