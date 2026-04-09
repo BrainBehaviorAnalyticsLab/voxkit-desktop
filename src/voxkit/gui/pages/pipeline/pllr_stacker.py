@@ -38,11 +38,11 @@ from voxkit.gui.frameworks.settings_modal import (
     GenericDialog,
     SettingsConfig,
 )
+from voxkit.gui.styles import Buttons, Containers, Labels
 from voxkit.gui.utils import validate_path, validate_paths
 from voxkit.gui.workers.worker_thread import WorkerThread
 from voxkit.storage import alignments, datasets
 from voxkit.storage.utils import get_storage_root
-from voxkit.gui.styles import Buttons, Containers, Labels
 
 FIELDS: list[FieldConfig] = [
     FieldConfig(

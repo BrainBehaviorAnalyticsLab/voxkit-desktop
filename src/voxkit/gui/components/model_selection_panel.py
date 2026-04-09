@@ -18,8 +18,8 @@ from PyQt6.QtWidgets import (
 )
 
 from voxkit.gui.components import MultiColumnComboBox
+from voxkit.gui.styles import Containers, Labels
 from voxkit.storage import models
-from voxkit.gui.styles import Labels, Containers
 
 
 class ModelSelectionPanel(QGroupBox):

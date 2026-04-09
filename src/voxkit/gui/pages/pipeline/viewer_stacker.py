@@ -16,7 +16,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from PyQt6.QtCore import Qt, QPoint, QUrl, pyqtSignal
+from PyQt6.QtCore import QPoint, Qt, QUrl, pyqtSignal
 from PyQt6.QtGui import QColor, QFont, QPainter, QPen, QPolygon
 from PyQt6.QtWidgets import (
     QComboBox,

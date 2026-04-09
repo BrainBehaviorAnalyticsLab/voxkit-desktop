@@ -9,7 +9,6 @@ API
 
 from pathlib import Path
 
-from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QDialog,
     QFileDialog,
@@ -22,10 +21,10 @@ from PyQt6.QtWidgets import (
 from voxkit.config import Defaults
 from voxkit.gui.components import ModelSelectionPanel, MultiColumnComboBox
 from voxkit.gui.frameworks.settings_modal import GenericDialog
+from voxkit.gui.styles import Buttons, Containers, Labels
 from voxkit.gui.utils import validate_path, validate_paths
 from voxkit.gui.workers.worker_thread import WorkerThread
 from voxkit.storage import alignments, datasets, models
-from voxkit.gui.styles import Buttons, Containers, Labels
 
 from .base_stacker import BaseStacker
 

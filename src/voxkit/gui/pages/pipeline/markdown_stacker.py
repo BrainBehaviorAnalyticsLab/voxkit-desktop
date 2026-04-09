@@ -9,8 +9,9 @@ API
 
 from PyQt6.QtWidgets import QSizePolicy, QTextBrowser
 
-from .base_stacker import BaseStacker
 from voxkit.gui.styles import Containers
+
+from .base_stacker import BaseStacker
 
 
 class MarkdownStacker(BaseStacker):

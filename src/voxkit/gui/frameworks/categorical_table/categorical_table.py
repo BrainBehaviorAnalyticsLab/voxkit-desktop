@@ -25,7 +25,7 @@ from PyQt6.QtWidgets import (
 )
 
 from voxkit.gui.components import HuggingFaceButton
-from voxkit.gui.styles import Buttons, Colors, Containers, Labels
+from voxkit.gui.styles import Buttons, Containers, Labels
 
 
 class CategoricalTableWidget(QWidget):
