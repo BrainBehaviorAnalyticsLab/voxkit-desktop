@@ -73,8 +73,8 @@ class TrainingStacker(BaseStacker):
             except Exception as e:
                 print("Error syncing training settings:", e)
         # Clean up
-        if self.parent:
-            self.parent.setGraphicsEffect(None)
+        if self.parent():
+            self.parent().setGraphicsEffect(None)
 
     def on_dataset_selected(self):
         """Handle dataset selection change and load corresponding alignments"""

@@ -57,8 +57,8 @@ class PredictionStacker(BaseStacker):
             if settings_dialog.result() == QDialog.DialogCode.Accepted:
                 settings_dialog.save()
 
-        if self.parent:
-            self.parent.setGraphicsEffect(None)
+        if self.parent():
+            self.parent().setGraphicsEffect(None)
 
     def reload_models(self):
         """Reload models in all engine dropdowns."""

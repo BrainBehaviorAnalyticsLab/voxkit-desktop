@@ -126,9 +126,9 @@ class PLLRStacker(QWidget):
 
         result = settings_dialog.exec()
 
-        # Clean up
-        if self._parent_widget:
-            self._parent_widget.setGraphicsEffect(None)
+        # Clean up blur applied by GenericDialog to self.parent()
+        if self.parent():
+            self.parent().setGraphicsEffect(None)
 
         if result == QDialog.DialogCode.Accepted:
             settings_dialog.save()
