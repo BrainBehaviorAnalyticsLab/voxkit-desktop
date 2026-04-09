@@ -3,9 +3,11 @@ name: Code Quality
 on:
   push:
     branches:
+      - main
       - release
   pull_request:
     branches:
+      - main
       - release
 
 permissions:
