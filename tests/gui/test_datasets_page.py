@@ -24,8 +24,8 @@ class TestRefreshDatasets:
         ):
             datasets_page.refresh_datasets()
 
-        assert datasets_page.empty_label.isVisible()
-        assert not datasets_page.dataset_table.isVisible()
+        assert not datasets_page.empty_label.isHidden()
+        assert datasets_page.dataset_table.isHidden()
 
     def test_populated_state_shows_table_and_hides_label(self, qtbot, datasets_page):
         sample_metadata = [
@@ -45,6 +45,6 @@ class TestRefreshDatasets:
         ):
             datasets_page.refresh_datasets()
 
-        assert not datasets_page.empty_label.isVisible()
-        assert datasets_page.dataset_table.isVisible()
+        assert datasets_page.empty_label.isHidden()
+        assert not datasets_page.dataset_table.isHidden()
         assert datasets_page.dataset_table.rowCount() == 1
