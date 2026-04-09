@@ -1,4 +1,4 @@
-name: Tests
+name: Tests (macOS)
 
 on:
   push:
@@ -13,48 +13,31 @@ permissions:
 
 jobs:
   test:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: ['3.11']
-    
+    runs-on: macos-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
-      - name: Set up Python ${{ matrix.python-version }}
+
+      - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
-      
+          python-version: '3.11'
+
       - name: Install uv
         run: |
           curl -LsSf https://astral.sh/uv/install.sh | sh
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
         shell: bash
-      
+
       - name: Configure Git for private repos
         run: |
           git config --global url."https://x-access-token:${{ secrets.PRIVATE_REPO_TOKEN }}@github.com/".insteadOf "https://github.com/"
-      
+
       - name: Install dependencies
         run: |
           uv sync
-      
+
       - name: Run tests
         run: |
           make run-tests
-      
-      - name: Run linting (Ubuntu only)
-        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
-        run: |
-          make lint-check
-        continue-on-error: true
-      
-      - name: Run type checking (Ubuntu only)
-        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
-        run: |
-          make mypy-check
-        continue-on-error: true
