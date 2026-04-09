@@ -22,14 +22,20 @@ class MultiColumnComboBox(QComboBox):
         table_view = QTableView()
         table_view.setSelectionBehavior(QTableView.SelectionBehavior.SelectRows)
         table_view.setSelectionMode(QTableView.SelectionMode.SingleSelection)
-        table_view.verticalHeader().hide()
-        table_view.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        vertical_header = table_view.verticalHeader()
+        if vertical_header is not None:
+            vertical_header.hide()
+        horizontal_header = table_view.horizontalHeader()
+        if horizontal_header is not None:
+            horizontal_header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         table_view.setShowGrid(False)
 
         self.setView(table_view)
 
         # Optional: make the popup wider
-        self.view().setMinimumWidth(400)
+        view = self.view()
+        if view is not None:
+            view.setMinimumWidth(400)
 
     def set_data(self, rows, headers=None, placeholder=None):
         """
@@ -71,12 +77,15 @@ class MultiColumnComboBox(QComboBox):
 
     def current_id(self):
         """Get the ID of the currently selected row."""
-        index = self.model().index(self.currentIndex(), 0)
+        model = self.model()
+        if model is None:
+            return None
+        index = model.index(self.currentIndex(), 0)
 
         if not index.isValid():
             return None
 
-        return self.model().data(index, Qt.ItemDataRole.UserRole)
+        return model.data(index, Qt.ItemDataRole.UserRole)
 
 
 if __name__ == "__main__":

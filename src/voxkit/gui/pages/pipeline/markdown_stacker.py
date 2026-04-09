@@ -25,7 +25,7 @@ class MarkdownStacker(BaseStacker):
             markdown_content: Markdown text to display
         """
         self.markdown_content = markdown_content
-        self.text_browser = None
+        self.text_browser: QTextBrowser | None = None
         super().__init__(parent)
 
         # Remove the stretch at the end added by BaseStacker to allow
@@ -35,7 +35,7 @@ class MarkdownStacker(BaseStacker):
             if last_item and last_item.spacerItem():
                 self.main_layout.removeItem(last_item)
 
-    def build_ui(self):
+    def build_ui(self) -> None:
         """Build the markdown display UI."""
         # Create text browser for markdown rendering
         self.text_browser = QTextBrowser()

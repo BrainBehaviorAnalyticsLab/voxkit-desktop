@@ -115,7 +115,8 @@ def _get_dataset_metadata(dataset_root: Path) -> DatasetMetadata | None:
         if not metadata_path.exists():
             return None
         with open(metadata_path, "r") as f:
-            return json.load(f)
+            result: DatasetMetadata = json.load(f)
+            return result
     except Exception:
         return None
 

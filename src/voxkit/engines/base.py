@@ -203,7 +203,8 @@ class AlignmentEngine(ABC):
             return {}
 
         with open(path, "r", encoding="utf-8") as f:
-            return json.load(f)
+            result: dict = json.load(f)
+            return result
 
     def _get_default_settings(self, cfg: Any) -> dict:
         """

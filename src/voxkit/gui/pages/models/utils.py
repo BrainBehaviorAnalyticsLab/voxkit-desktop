@@ -20,7 +20,7 @@ from PyQt6.QtWidgets import QFileDialog, QMessageBox
 from voxkit.storage import models
 
 
-def handle_import(parent_widget, current_category: str):
+def handle_import(parent_widget, current_category: str) -> tuple[bool, str]:
     """
     Handle importing models into the storage.
 
@@ -110,9 +110,10 @@ def handle_export(
                 source_path = models._get_model_root(current_category, item["id"])
             else:
                 failed_items.append(f"{item} (invalid item format)")
+                continue
 
-            if not source_path.exists():
-                failed_items.append(f"{str(source_path)} (source path does not exist)")
+            if source_path is None or not source_path.exists():
+                failed_items.append(f"{source_path} (source path does not exist)")
                 continue
 
             # Determine destination
@@ -193,9 +194,7 @@ def create_export_handler(widget, data):
     """
     return lambda folder_name, selected_items: handle_export(
         widget,
-        folder_name,
         selected_items,
-        data,
         widget.category_keys[widget.current_category_index],
     )
 

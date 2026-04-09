@@ -49,6 +49,7 @@ def startup_routine():
         if not success:
             print(f"[STARTUP] Failed to create model metadata for {model}. {metadata}")
             continue
+        assert not isinstance(metadata, str)
         model_dest = metadata.get("model_path")
         if not model_dest:
             print(f"[STARTUP] Model path not found in metadata for {model}.")
@@ -81,6 +82,7 @@ def startup_routine():
     if not success:
         print(f"[STARTUP] Failed to create model metadata. {metadata}")
         return
+    assert not isinstance(metadata, str)
     model_dest = metadata.get("model_path")
     if not model_dest:
         print("[STARTUP] Model path not found in metadata.")

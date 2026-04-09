@@ -281,7 +281,7 @@ class GenericDialog(QDialog):
         Raises:
             ValueError: If field_type is not recognized.
         """
-        widget: Union[QSpinBox, QDoubleSpinBox, QLineEdit, QComboBox]
+        widget: Union[QSpinBox, QDoubleSpinBox, QLineEdit, QComboBox, ToggleSwitch]
         if config.field_type == FieldType.SPINBOX:
             widget = self._create_spinbox(config)
         elif config.field_type == FieldType.DOUBLE_SPINBOX:

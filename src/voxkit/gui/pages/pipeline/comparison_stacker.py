@@ -9,6 +9,8 @@ API
 - **ComparisonStacker**: Alignment comparison workflow UI
 """
 
+from __future__ import annotations
+
 import glob
 from pathlib import Path
 
@@ -32,9 +34,11 @@ from voxkit.gui.components import MultiColumnComboBox
 from voxkit.gui.pages.pipeline.base_stacker import BaseStacker
 from voxkit.gui.styles import Buttons, Colors, Containers, Labels
 from voxkit.storage import alignments, datasets
+from voxkit.storage.alignments import AlignmentMetadata
+from voxkit.storage.datasets import DatasetMetadata
 
 
-def _get_tg_paths(alignment_meta: dict) -> list[str]:
+def _get_tg_paths(alignment_meta: AlignmentMetadata) -> list[str]:
     """Glob all TextGrid files under an alignment's tg_path directory."""
     tg_root = Path(alignment_meta["tg_path"])
     return glob.glob(str(tg_root / "**" / "*.TextGrid"), recursive=True)
@@ -64,37 +68,37 @@ class ComparisonStacker(BaseStacker):
     as PNGs to a folder you choose.
     """
 
-    def __init__(self, parent=None):
-        # Shared dataset state
-        self._dataset_dropdown: MultiColumnComboBox | None = None
-        self._dataset_meta: dict | None = None
+    def __init__(self, parent: QWidget | None = None) -> None:
+        # Widgets set in build_ui() (called by super().__init__)
+        self._dataset_dropdown: MultiColumnComboBox
+        self._dataset_meta: DatasetMetadata | None = None
 
         # A-side alignment state
-        self._a_alignment_dropdown: MultiColumnComboBox | None = None
-        self._a_alignment_meta: dict | None = None
+        self._a_alignment_dropdown: MultiColumnComboBox
+        self._a_alignment_meta: AlignmentMetadata | None = None
 
         # B-side alignment state
-        self._b_alignment_dropdown: MultiColumnComboBox | None = None
-        self._b_alignment_meta: dict | None = None
+        self._b_alignment_dropdown: MultiColumnComboBox
+        self._b_alignment_meta: AlignmentMetadata | None = None
 
         # Options
-        self._tier_input: QLineEdit | None = None
-        self._aggregate_cb: QCheckBox | None = None
-        self._threshold_spin: QDoubleSpinBox | None = None
-        self._compare_btn: QPushButton | None = None
+        self._tier_input: QLineEdit
+        self._aggregate_cb: QCheckBox
+        self._threshold_spin: QDoubleSpinBox
+        self._compare_btn: QPushButton
 
         # Results
-        self._results_widget: QWidget | None = None
-        self._tab_widget: QTabWidget | None = None
+        self._results_widget: QWidget
+        self._tab_widget: QTabWidget
 
         # Download
         self._dl_folder: str = ""
-        self._dl_folder_label: QLabel | None = None
-        self._dl_counts_cb: QCheckBox | None = None
-        self._dl_overlap_cb: QCheckBox | None = None
-        self._dl_rate_cb: QCheckBox | None = None
-        self._dl_scatter_cb: QCheckBox | None = None
-        self._download_btn: QPushButton | None = None
+        self._dl_folder_label: QLabel
+        self._dl_counts_cb: QCheckBox
+        self._dl_overlap_cb: QCheckBox
+        self._dl_rate_cb: QCheckBox
+        self._dl_scatter_cb: QCheckBox
+        self._download_btn: QPushButton
 
         # Last comparison parameters (populated on successful compare)
         self._last_comparison: dict | None = None
@@ -167,7 +171,8 @@ class ComparisonStacker(BaseStacker):
         self._threshold_spin.setFixedWidth(70)
         self._threshold_spin.setStyleSheet(
             "QDoubleSpinBox { border: 1px solid #d0d0d0; border-radius: 4px; "
-            "padding: 4px; font-size: 12px; color: black; background: white; selection-color: black; selection-background-color: #cce5ff; }"
+            "padding: 4px; font-size: 12px; color: black; background: white; "
+            "selection-color: black; selection-background-color: #cce5ff; }"
         )
         opts.addWidget(self._threshold_spin)
 
@@ -270,11 +275,8 @@ class ComparisonStacker(BaseStacker):
 
     # ── Reload hook ──────────────────────────────────────────────────────────
 
-    def reload_datasets(self):
+    def reload_datasets(self) -> None:
         """Refresh the dataset dropdown from storage."""
-        if self._dataset_dropdown is None:
-            return
-
         self._dataset_meta = None
         self._a_alignment_meta = None
         self._b_alignment_meta = None

@@ -259,7 +259,7 @@ class CategoricalTableWidget(QWidget):
         # Determine columns to show
         if not self.columns_shown:
             # Auto-detect columns from first few items
-            all_keys = set()
+            all_keys: set[str] = set()
             for item in category_data[:5]:  # Sample first 5 items
                 if isinstance(item, dict):
                     all_keys.update(item.keys())
@@ -299,16 +299,17 @@ class CategoricalTableWidget(QWidget):
 
         # Configure column widths for optimal stretching
         header = self.table_widget.horizontalHeader()
-        # Make data columns resize to contents or stretch
-        for i in range(len(self.columns_shown)):
-            if i == 0:
-                # First column: resize to contents
-                header.setSectionResizeMode(i, QHeaderView.ResizeMode.ResizeToContents)
-            else:
-                # Other data columns: stretch
-                header.setSectionResizeMode(i, QHeaderView.ResizeMode.Stretch)
-        # Actions column: fixed width
-        header.setSectionResizeMode(len(self.columns_shown), QHeaderView.ResizeMode.Fixed)
+        if header is not None:
+            # Make data columns resize to contents or stretch
+            for i in range(len(self.columns_shown)):
+                if i == 0:
+                    # First column: resize to contents
+                    header.setSectionResizeMode(i, QHeaderView.ResizeMode.ResizeToContents)
+                else:
+                    # Other data columns: stretch
+                    header.setSectionResizeMode(i, QHeaderView.ResizeMode.Stretch)
+            # Actions column: fixed width
+            header.setSectionResizeMode(len(self.columns_shown), QHeaderView.ResizeMode.Fixed)
         self.table_widget.setColumnWidth(len(self.columns_shown), 80)
 
     def view_item_details(self, row_index):
@@ -406,7 +407,7 @@ class CategoricalTableWidget(QWidget):
 
     def get_selected_items(self):
         """Get list of selected items"""
-        selected = []
+        selected: list[dict] = []
         if not self.category_keys:
             return selected
 
@@ -414,11 +415,13 @@ class CategoricalTableWidget(QWidget):
         category_data = self.data[current_category]
 
         # Get selected rows from table
-        selected_rows = self.table_widget.selectionModel().selectedRows()
-        for index in selected_rows:
-            row = index.row()
-            if row < len(category_data):
-                selected.append(category_data[row])
+        selection_model = self.table_widget.selectionModel()
+        if selection_model is not None:
+            selected_rows = selection_model.selectedRows()
+            for index in selected_rows:
+                row = index.row()
+                if row < len(category_data):
+                    selected.append(category_data[row])
 
         return selected
 

@@ -21,7 +21,7 @@ if getattr(sys, "frozen", False):
             # Called without arguments: @typechecked
             return func
 
-        typeguard.typechecked = _noop_decorator
+        typeguard.typechecked = _noop_decorator  # type: ignore[assignment]
         print("[PATCH] Disabled typeguard runtime checking")
     except ImportError:
         pass

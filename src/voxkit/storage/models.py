@@ -305,7 +305,7 @@ def get_model_metadata(engine_id: str, model_id: str) -> ModelMetadata:
     if not metadata_path.exists():
         raise FileNotFoundError(f"Metadata file not found for model '{model_id}'")
     with open(metadata_path, "r") as f:
-        metadata = json.load(f)
+        metadata: ModelMetadata = json.load(f)
         return metadata
 
 
@@ -336,7 +336,6 @@ def download_and_copy_huggingface_model(
         # Download to HF cache (returns path to snapshot with symlinks)
         cache_snapshot_path = snapshot_download(
             repo_id=model_path,
-            resume_download=True,
         )
 
         print(f"Downloaded to cache: {cache_snapshot_path}")

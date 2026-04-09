@@ -41,7 +41,7 @@ class ImportModelDialog(GenericDialog):
         """
         self.on_import_callback = on_import or self._placeholder_import
         self.engine_id = engine_id
-        self.parent = parent
+        self._parent_widget = parent
 
         # Define fields
         fields = [
@@ -70,7 +70,7 @@ class ImportModelDialog(GenericDialog):
         )
 
         super().__init__(
-            parent=self.parent,
+            parent=self._parent_widget,
             config=config,
         )
 
@@ -98,8 +98,11 @@ class ImportModelDialog(GenericDialog):
         )
         if not success:
             QMessageBox.critical(self, "Import Failed", f"Failed to create model entry: {message}")
+            return
+        if isinstance(message, dict):
+            dest_model_path = str(message["model_path"])
         else:
-            dest_model_path = message["model_path"]
+            return
         result = download_and_copy_huggingface_model(model_path, destination=dest_model_path)
 
         if result is None:

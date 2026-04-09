@@ -112,8 +112,10 @@ class MFAEngine(AlignmentEngine):
         model_metadata = models.get_model_metadata(self.id, model_id)
 
         dataset_metadata = datasets.get_dataset_metadata(dataset_id)
+        if dataset_metadata is None:
+            raise ValueError(f"Dataset '{dataset_id}' not found.")
 
-        corpus_path = None
+        corpus_path: Path | None = None
 
         if bool(dataset_metadata["cached"]):
             corpus_path = datasets._get_dataset_root(dataset_id)
@@ -129,6 +131,10 @@ class MFAEngine(AlignmentEngine):
             dataset_id=dataset_id,
         )
 
+        if not result:
+            raise ValueError(f"Alignment creation failed: {msg}")
+
+        assert not isinstance(msg, str)
         alignment_output_path = msg["tg_path"]
 
         print(
@@ -171,6 +177,11 @@ class MFAEngine(AlignmentEngine):
             model_name=new_model_id,
         )
 
+        if not success:
+            raise ValueError(f"Failed to create model entry: {msg}")
+
+        assert not isinstance(msg, str)
+
         # ========= TEMP FIX FOR MFA MODEL EXTENSION ========
         # MFA models use .model extension, so we need to adjust the model path accordingly
         # This should ideally be handled in the storage/models.py create_model function
@@ -181,7 +192,7 @@ class MFAEngine(AlignmentEngine):
         new_metadata = msg
         new_model_path = new_metadata["model_path"]
         if str(new_model_path).endswith(".model"):
-            new_model_path = str(new_model_path).split(".model")[0] + ".zip"
+            new_model_path = Path(str(new_model_path).split(".model")[0] + ".zip")
             new_metadata["model_path"] = new_model_path
         # ==================================================
 
@@ -189,13 +200,14 @@ class MFAEngine(AlignmentEngine):
         model_metadata_path = Path(new_metadata["model_path"]).parent / "voxkit_model.json"
 
         # Make metadata dict serializable
-        for key in new_metadata:
-            if isinstance(new_metadata[key], Path):
-                new_metadata[key] = str(new_metadata[key])
+        serializable: dict[str, object] = dict(new_metadata)
+        for key in serializable:
+            if isinstance(serializable[key], Path):
+                serializable[key] = str(serializable[key])
         with open(model_metadata_path, "w") as f:
             import json
 
-            json.dump(new_metadata, f, indent=4)
+            json.dump(serializable, f, indent=4)
 
         # ==================================================
 
@@ -207,9 +219,6 @@ class MFAEngine(AlignmentEngine):
             new_path.touch()
 
         # ==================================================
-
-        if not success:
-            raise ValueError(f"Failed to create model entry: {msg}")
 
         new_model_path = new_metadata["model_path"]
 

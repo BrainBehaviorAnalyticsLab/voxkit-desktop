@@ -147,7 +147,8 @@ class TranscriptionStacker(BaseStacker):
         idx = self.engine_dropdown.currentIndex()
         if idx < 0:
             return None
-        return self.engine_dropdown.itemData(idx)
+        engine_id = self.engine_dropdown.itemData(idx)
+        return engine_id if isinstance(engine_id, str) or engine_id is None else None
 
     def on_transcribe(self):
         """Handle Transcribe button click."""

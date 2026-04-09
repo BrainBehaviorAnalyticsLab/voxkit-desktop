@@ -31,17 +31,17 @@ class BaseStacker(QWidget):
     - reload_datasets(): Reload dataset data (optional)
     """
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize the base stacker.
 
         Args:
             parent: Parent widget, typically the main window
         """
         super().__init__(parent)
-        self.parent = parent
-        self.status_label = None
-        self.main_layout = None
-        self.content_layout = None
+        self._parent_widget = parent
+        self.status_label: QLabel | None = None
+        self.main_layout: QVBoxLayout
+        self.content_layout: QVBoxLayout
         self.init_ui()
 
     def init_ui(self):

@@ -11,10 +11,14 @@ API
 - **ViewerStacker**: Alignment viewer workflow UI
 """
 
+from __future__ import annotations
+
+import os
 import re
 import subprocess
 import sys
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import QPoint, Qt, QUrl, pyqtSignal
 from PyQt6.QtGui import QColor, QFont, QPainter, QPen, QPolygon
@@ -38,8 +42,11 @@ from voxkit.gui.styles import Buttons, Colors, Containers, Labels
 from voxkit.storage import alignments, datasets
 from voxkit.storage.datasets import _get_dataset_root
 
-try:
+if TYPE_CHECKING:
     from PyQt6.QtMultimedia import QAudioOutput, QMediaPlayer
+
+try:
+    from PyQt6.QtMultimedia import QAudioOutput, QMediaPlayer  # noqa: F811
 
     MULTIMEDIA_AVAILABLE = True
 except ImportError:
@@ -111,7 +118,7 @@ def _parse_textgrid(filepath: str) -> list[dict]:
 # ---------------------------------------------------------------------------
 
 
-def _dataset_data_path(meta: dict) -> Path:
+def _dataset_data_path(meta: datasets.DatasetMetadata) -> Path:
     """Return the directory containing speaker subdirs (audio + .lab files)."""
     if meta.get("cached"):
         root = _get_dataset_root(meta["id"])
@@ -176,7 +183,7 @@ class TextGridTimeline(QWidget):
         QColor("#8e44ad"),  # dark purple
     ]
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self._tiers: list[dict] = []
         self._duration: float = 0.0
@@ -404,29 +411,30 @@ class ViewerStacker(BaseStacker):
     at once.
     """
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None) -> None:
         # Pre-declare all attributes so build_ui() (called by super().__init__)
         # can reference them safely.
-        self._dataset_dropdown: MultiColumnComboBox | None = None
-        self._alignment_dropdown: MultiColumnComboBox | None = None
-        self._speaker_dropdown: QComboBox | None = None
-        self._file_list: QListWidget | None = None
-        self._file_search = None  # QLineEdit, set in build_ui
+        # Widgets set in build_ui() (called by super().__init__)
+        self._dataset_dropdown: MultiColumnComboBox
+        self._alignment_dropdown: MultiColumnComboBox
+        self._speaker_dropdown: QComboBox
+        self._file_list: QListWidget
+        self._file_search: QLineEdit
         self._all_audio_files: list[str] = []
-        self._selection_section: QWidget | None = None
-        self._viewer_section: QWidget | None = None
-        self._timeline: TextGridTimeline | None = None
-        self._active_label: QLabel | None = None
-        self._transcript_edit: QTextEdit | None = None
-        self._audio_path_label: QLabel | None = None
-        self._current_dataset_meta: dict | None = None
-        self._current_alignment_meta: dict | None = None
+        self._selection_section: QWidget
+        self._viewer_section: QWidget
+        self._timeline: TextGridTimeline
+        self._active_label: QLabel
+        self._transcript_edit: QTextEdit
+        self._audio_path_label: QLabel
+        self._current_dataset_meta: datasets.DatasetMetadata | None = None
+        self._current_alignment_meta: alignments.AlignmentMetadata | None = None
         self._current_data_path: Path | None = None
         self._current_audio_path: Path | None = None
         self._loaded_tiers: list[dict] = []
         # Multimedia (may remain None if QtMultimedia is unavailable)
-        self._player = None
-        self._audio_output = None
+        self._player: QMediaPlayer | None = None
+        self._audio_output: QAudioOutput | None = None
         self._play_btn: QPushButton | None = None
         self._seek_slider: QSlider | None = None
         self._time_label: QLabel | None = None
@@ -853,6 +861,7 @@ class ViewerStacker(BaseStacker):
                     f"{self._audio_path_label.text()}  [TextGrid parse error: {exc}]"
                 )
         else:
+            assert self._current_alignment_meta is not None
             self._audio_path_label.setText(
                 self._audio_path_label.text()
                 + f"  [TextGrid not found in {Path(self._current_alignment_meta['tg_path'])}]"
@@ -942,12 +951,15 @@ class ViewerStacker(BaseStacker):
         path = self._current_audio_path
         if not path:
             return
-        if sys.platform == "darwin":
-            subprocess.Popen(["open", str(path)])
-        elif sys.platform == "win32":
-            subprocess.Popen(["start", "", str(path)], shell=True)
-        else:
-            subprocess.Popen(["xdg-open", str(path)])
+        try:
+            if sys.platform == "darwin":
+                subprocess.run(["open", str(path)], check=False)  # noqa: S603,S607
+            elif sys.platform == "win32":
+                os.startfile(str(path))  # noqa: S606
+            else:
+                subprocess.run(["xdg-open", str(path)], check=False)  # noqa: S603,S607
+        except (OSError, subprocess.SubprocessError):
+            pass
 
     # ── Helpers ───────────────────────────────────────────────────────────────
 

@@ -34,6 +34,7 @@ class TestModels:
                     model_name="test_model",
                 )
                 assert success is True
+                assert not isinstance(message, str)
                 assert message is not None
                 required_keys = set(ModelMetadata.__annotations__.keys())
                 missing = required_keys - set(message.keys())
@@ -71,6 +72,7 @@ class TestModels:
                     model_name=name,
                 )
                 assert success is True
+                assert not isinstance(message, str)
                 assert message["name"] == name
                 assert message["id"] not in created_ids, "Duplicate model ID generated"
                 created_ids.add(message["id"])
@@ -87,6 +89,7 @@ class TestModels:
                 model_name="path_test_model",
             )
             assert success is True
+            assert not isinstance(message, str)
 
             model_path = Path(message["model_path"])
             data_path = Path(message["data_path"])
@@ -111,6 +114,7 @@ class TestModels:
                 model_name="metadata_test_model",
             )
             assert success is True
+            assert not isinstance(message, str)
 
             # Check that the returned message fits the ModelMetadata TypedDict
             required_keys = set(ModelMetadata.__annotations__.keys())
@@ -202,6 +206,7 @@ class TestModels:
                     model_name="delete_test_model",
                 )
                 assert success is True
+                assert not isinstance(message, str)
                 model_id = message["id"]
 
                 # Now delete the model
@@ -250,6 +255,7 @@ class TestModels:
                     model_name=f"multi_delete_model_{i}",
                 )
                 assert success is True
+                assert not isinstance(message, str)
                 model_ids.append(message["id"])
 
             # Delete the models one by one
@@ -277,6 +283,7 @@ class TestModels:
                 model_name="invalid_engine_delete_model",
             )
             assert success is True
+            assert not isinstance(message, str)
             model_id = message["id"]
 
             # Attempt to delete with invalid engine_id
@@ -304,6 +311,7 @@ class TestModels:
                     model_name="metadata_test_model",
                 )
                 assert success is True
+                assert not isinstance(message, str)
                 model_id = message["id"]
 
                 # Retrieve metadata
@@ -346,6 +354,7 @@ class TestModels:
                     model_name=f"multi_metadata_model_{i}",
                 )
                 assert success is True
+                assert not isinstance(message, str)
                 model_ids.append(message["id"])
 
             # Retrieve and verify metadata for each model
@@ -370,6 +379,7 @@ class TestModels:
                 model_name="invalid_engine_metadata_model",
             )
             assert success is True
+            assert not isinstance(message, str)
             model_id = message["id"]
 
             # Attempt to get metadata with invalid engine_id
@@ -393,6 +403,7 @@ class TestModels:
                 model_name="format_metadata_model",
             )
             assert success is True
+            assert not isinstance(message, str)
             model_id = message["id"]
 
             # Retrieve metadata
@@ -422,6 +433,7 @@ class TestModels:
                 model_name="update_test_model",
             )
             assert success is True
+            assert not isinstance(message, str)
             model_id = message["id"]
 
             # Update the model metadata
@@ -466,6 +478,7 @@ class TestModels:
                 model_name="invalid_engine_update_model",
             )
             assert success is True
+            assert not isinstance(message, str)
             model_id = message["id"]
 
             # Try to update with invalid engine
@@ -494,6 +507,7 @@ class TestModels:
                 model_name="unknown_fields_model",
             )
             assert success is True
+            assert not isinstance(message, str)
             model_id = message["id"]
 
             # Update with unknown field
@@ -532,6 +546,7 @@ class TestModels:
             )
 
             assert success is True
+            assert not isinstance(message, str)
             assert message["name"] == "model_from_source"
 
             # Verify source files were copied
@@ -562,6 +577,7 @@ class TestModels:
             )
 
             assert success is True
+            assert not isinstance(message, str)
             assert message["name"] == "model_from_zip"
 
             # Verify zip was copied as entrypoint.zip

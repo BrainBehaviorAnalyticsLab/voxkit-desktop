@@ -137,10 +137,11 @@ class W2TGEngine(AlignmentEngine):
         )
         print(f"Alignment creation result: {result}, message: {msg}")
 
-        if result is False:
+        if not result:
             print(f"Alignment creation failed: {msg}")
             return
 
+        assert not isinstance(msg, str)
         alignment_meta = msg
         dataset_meta = datasets.get_dataset_metadata(dataset_id)
         model_meta = models.get_model_metadata(self.id, model_id)
@@ -191,6 +192,7 @@ class W2TGEngine(AlignmentEngine):
             if not success:
                 raise ValueError(f"Failed to create model entry: {message}")
 
+            assert not isinstance(message, str)
             model_meta = message
             model_path = Path(model_meta["model_path"])
             data_path = Path(model_meta["data_path"])
@@ -235,8 +237,9 @@ class W2TGEngine(AlignmentEngine):
             )
         except Exception as e:
             print(f"Training failed: {e}")
-            # CLean up model entry on failure
-            models.delete_model(engine_id=self.id, model_id=new_model_actual_id)
+            # Clean up model entry on failure
+            if new_model_actual_id is not None:
+                models.delete_model(engine_id=self.id, model_id=new_model_actual_id)
             raise e
 
     def _validate_align_settings(self, settings: dict) -> bool:

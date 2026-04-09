@@ -92,6 +92,7 @@ class TestDatasets:
             )
 
             assert success is True
+            assert isinstance(message, dict)
             for key in DatasetMetadata.__annotations__.keys():
                 assert key in message
 
@@ -117,6 +118,7 @@ class TestDatasets:
             )
 
             assert success is True
+            assert isinstance(message, dict)
             for key in DatasetMetadata.__annotations__.keys():
                 assert key in message
 
@@ -141,6 +143,7 @@ class TestDatasets:
             )
 
             assert success is False
+            assert isinstance(message, str)
             assert "No label files found" in message
             assert invalid_dataset_path.exists() is True
 
@@ -169,10 +172,10 @@ class TestDatasets:
                 transcribed=False,
             )
 
-            datasets = list_datasets_metadata()
-            assert len(datasets) >= 2  # At least the two we just created
+            dataset_list = list_datasets_metadata()
+            assert len(dataset_list) >= 2  # At least the two we just created
 
-            names = [ds["name"] for ds in datasets]
+            names = [ds["name"] for ds in dataset_list]
             assert "dataset_one" in names
             assert "dataset_two" in names
 
@@ -192,12 +195,12 @@ class TestDatasets:
                 transcribed=True,
             )
 
-            datasets = list_datasets_metadata()
+            dataset_list = list_datasets_metadata()
 
             # Check that each dataset has all required fields
-            for i in range(len(datasets)):
+            for i in range(len(dataset_list)):
                 for key in DatasetMetadata.__annotations__.keys():
-                    assert key in datasets[i].keys()
+                    assert key in dataset_list[i].keys()
 
         def test_list_datasets_empty(self, monkeypatch):
             from voxkit.storage import datasets
@@ -209,9 +212,9 @@ class TestDatasets:
             deactivate_test_environment(mock_get_storage_root())
             activate_test_environment(mock_get_storage_root())
 
-            datasets = list_datasets_metadata()
-            assert isinstance(datasets, list)
-            assert len(datasets) == 0
+            dataset_list = list_datasets_metadata()
+            assert isinstance(dataset_list, list)
+            assert len(dataset_list) == 0
 
     class TestGetDatasetMetadata:
         def test_get_dataset_metadata_success(self, monkeypatch):
@@ -229,10 +232,12 @@ class TestDatasets:
                 anonymize=False,
                 transcribed=True,
             )
+            assert success is True
+            assert isinstance(message, dict)
             dataset_id = message["id"]
 
             metadata = get_dataset_metadata(dataset_id)
-            assert success is not None
+            assert metadata is not None
 
             for key in DatasetMetadata.__annotations__.keys():
                 assert key in metadata
@@ -267,7 +272,7 @@ class TestDatasets:
             monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
 
             # Create a dataset
-            _, message = create_dataset(
+            success, message = create_dataset(
                 name="dataset_delete_test",
                 description="Testing delete_dataset",
                 original_path=valid_dataset_path,
@@ -275,6 +280,8 @@ class TestDatasets:
                 anonymize=False,
                 transcribed=True,
             )
+            assert success is True
+            assert isinstance(message, dict)
             dataset_id = message["id"]
 
             # Delete the dataset
@@ -314,7 +321,7 @@ class TestDatasets:
             monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
 
             # Create a dataset
-            _, message = create_dataset(
+            success, message = create_dataset(
                 name="dataset_delete_twice_test",
                 description="Testing delete_dataset twice",
                 original_path=valid_dataset_path,
@@ -322,6 +329,8 @@ class TestDatasets:
                 anonymize=False,
                 transcribed=True,
             )
+            assert success is True
+            assert isinstance(message, dict)
             dataset_id = message["id"]
 
             # First deletion
@@ -352,7 +361,7 @@ class TestDatasets:
             monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
 
             # Create a dataset
-            _, message = create_dataset(
+            success, message = create_dataset(
                 name="dataset_export_test",
                 description="Testing export_dataset",
                 original_path=valid_dataset_path,
@@ -360,6 +369,8 @@ class TestDatasets:
                 anonymize=False,
                 transcribed=True,
             )
+            assert success is True
+            assert isinstance(message, dict)
             dataset_id = message["id"]
 
             export_path = mock_get_storage_root()
@@ -375,7 +386,7 @@ class TestDatasets:
             monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
 
             # Create a dataset
-            _, message = create_dataset(
+            success, message = create_dataset(
                 name="dataset_export_equal_test",
                 description="Testing export_dataset equality",
                 original_path=valid_dataset_path,
@@ -383,6 +394,8 @@ class TestDatasets:
                 anonymize=False,
                 transcribed=True,
             )
+            assert success is True
+            assert isinstance(message, dict)
             dataset_id = message["id"]
 
             export_path = mock_get_storage_root()
@@ -393,6 +406,7 @@ class TestDatasets:
 
             # Dataset metadata
             original_metadata = datasets.get_dataset_metadata(dataset_id)
+            assert original_metadata is not None
 
             # Verify exported files match original files
             original_dataset_path = _get_datasets_root() / dataset_id
@@ -415,7 +429,7 @@ class TestDatasets:
             monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
 
             # Create a dataset to export and then import
-            _, message = create_dataset(
+            success, message = create_dataset(
                 name="dataset_import_test",
                 description="Testing import_dataset",
                 original_path=valid_dataset_path,
@@ -423,6 +437,8 @@ class TestDatasets:
                 anonymize=False,
                 transcribed=True,
             )
+            assert success is True
+            assert isinstance(message, dict)
             dataset_id = message["id"]
 
             export_path = mock_get_storage_root()
@@ -468,7 +484,7 @@ class TestDatasets:
             monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
 
             # Create a dataset to export and then import
-            _, message = create_dataset(
+            success, message = create_dataset(
                 name="dataset_import_test",
                 description="Testing import_dataset",
                 original_path=valid_dataset_path,
@@ -476,6 +492,8 @@ class TestDatasets:
                 anonymize=False,
                 transcribed=True,
             )
+            assert success is True
+            assert isinstance(message, dict)
 
             # empty cache directory
             dataset_id = message["id"]
@@ -516,6 +534,7 @@ class TestDatasets:
                 transcribed=False,
             )
             assert success is True
+            assert isinstance(message, dict)
             dataset_id = message["id"]
 
             # Update the dataset metadata
@@ -532,6 +551,7 @@ class TestDatasets:
 
             # Verify the updates
             metadata = get_dataset_metadata(dataset_id)
+            assert metadata is not None
             assert metadata["description"] == "Updated description"
             assert metadata["anonymize"] is True
             assert metadata["transcribed"] is True
@@ -575,6 +595,7 @@ class TestDatasets:
                 transcribed=True,
             )
             assert success is True
+            assert isinstance(message, dict)
             dataset_id = message["id"]
 
             # Update only description
@@ -589,6 +610,7 @@ class TestDatasets:
 
             # Verify only description changed
             metadata = get_dataset_metadata(dataset_id)
+            assert metadata is not None
             assert metadata["description"] == "Only description updated"
             assert metadata["cached"] is True
             assert metadata["anonymize"] is True
@@ -614,6 +636,7 @@ class TestDatasets:
                 transcribed=True,
             )
             assert success is True
+            assert isinstance(message, dict)
             dataset_id = message["id"]
 
             # Pass a partial dict with only one key — no KeyError should be raised
@@ -624,6 +647,7 @@ class TestDatasets:
 
             # Only description should change; other fields stay untouched
             metadata = get_dataset_metadata(dataset_id)
+            assert metadata is not None
             assert metadata["description"] == "Partial update"
             assert metadata["cached"] is True
             assert metadata["anonymize"] is True
@@ -653,6 +677,7 @@ class TestDatasets:
             )
 
             assert success is True
+            assert isinstance(message, dict)
             dataset_id = message["id"]
 
             # Verify CSV file was created
@@ -686,6 +711,7 @@ class TestDatasets:
             )
 
             assert success is True
+            assert isinstance(message, dict)
             dataset_id = message["id"]
 
             # Verify no CSV file was created

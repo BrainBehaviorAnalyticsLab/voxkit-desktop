@@ -8,7 +8,11 @@ class TestLoadingDialog:
         dialog = LoadingDialog()
         qtbot.addWidget(dialog)
 
-        label = dialog.layout().itemAt(0).widget()
+        layout = dialog.layout()
+        assert layout is not None
+        item = layout.itemAt(0)
+        assert item is not None
+        label = item.widget()
         assert isinstance(label, QLabel)
         assert label.text() == "Loading..."
 
@@ -16,7 +20,12 @@ class TestLoadingDialog:
         dialog = LoadingDialog(message="Please wait...")
         qtbot.addWidget(dialog)
 
-        label = dialog.layout().itemAt(0).widget()
+        layout = dialog.layout()
+        assert layout is not None
+        item = layout.itemAt(0)
+        assert item is not None
+        label = item.widget()
+        assert isinstance(label, QLabel)
         assert label.text() == "Please wait..."
 
     def test_update_message(self, qtbot):
@@ -25,7 +34,12 @@ class TestLoadingDialog:
 
         dialog.update_message("Step 2")
 
-        label = dialog.layout().itemAt(0).widget()
+        layout = dialog.layout()
+        assert layout is not None
+        item = layout.itemAt(0)
+        assert item is not None
+        label = item.widget()
+        assert isinstance(label, QLabel)
         assert label.text() == "Step 2"
 
     def test_spinner_frames_cycle(self, qtbot):

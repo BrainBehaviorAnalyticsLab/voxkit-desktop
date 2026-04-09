@@ -1,3 +1,5 @@
+from typing import cast
+
 from PyQt6.QtCore import Qt
 from PyQt6.QtTest import QTest
 
@@ -20,10 +22,12 @@ class TestToggleSwitch:
         qtbot.addWidget(switch)
         switch.show()
 
-        QTest.mouseClick(switch, Qt.MouseButton.LeftButton)
+        from PyQt6.QtWidgets import QWidget as QWidgetType
+
+        QTest.mouseClick(cast(QWidgetType, switch), Qt.MouseButton.LeftButton)
         assert switch.isChecked() is True
 
-        QTest.mouseClick(switch, Qt.MouseButton.LeftButton)
+        QTest.mouseClick(cast(QWidgetType, switch), Qt.MouseButton.LeftButton)
         assert switch.isChecked() is False
 
     def test_set_checked_programmatically(self, qtbot):

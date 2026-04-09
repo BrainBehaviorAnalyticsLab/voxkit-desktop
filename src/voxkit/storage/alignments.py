@@ -221,10 +221,12 @@ def get_alignment_metadata(dataset_id: str, alignment_id: str) -> AlignmentMetad
 
     try:
         with open(metadata_path, "r") as f:
-            metadata = json.load(f)
+            metadata: AlignmentMetadata = json.load(f)
             # Normalize status to lowercase for consistency
             if "status" in metadata:
-                metadata["status"] = metadata["status"].lower()
+                status_lower = metadata["status"].lower()
+                # Cast to the correct literal type
+                metadata["status"] = status_lower  # type: ignore[typeddict-item]
             return metadata
     except Exception as e:
         print(f"Failed to load alignment metadata from '{metadata_path}': {str(e)}")

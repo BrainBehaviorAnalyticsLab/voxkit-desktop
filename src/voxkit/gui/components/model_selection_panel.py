@@ -52,10 +52,10 @@ class ModelSelectionPanel(QGroupBox):
         self.engines_dict = engines_dict
         self.info_text = info_text
         self.placeholder = placeholder
-        self.selected_engine = None
+        self.selected_engine: str | None = None
         self.engine_dropdowns: dict[str, MultiColumnComboBox] = {}
         self.engine_radios: dict[str, QRadioButton] = {}
-        self.mode_button_group = None
+        self.mode_button_group: QButtonGroup
 
         if title:
             self.setTitle(title)
@@ -200,7 +200,8 @@ class ModelSelectionPanel(QGroupBox):
         """
 
         if self.selected_engine is not None and self.selected_engine in self.engine_dropdowns:
-            return self.engine_dropdowns[self.selected_engine].current_id()
+            model_id = self.engine_dropdowns[self.selected_engine].current_id()
+            return model_id if isinstance(model_id, str) or model_id is None else None
         return None
 
     def reload_models(self):
