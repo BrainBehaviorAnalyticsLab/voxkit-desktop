@@ -13,18 +13,26 @@ class TestCSVViewerDialog:
         dialog = CSVViewerDialog(csv_path=sample_csv)
         qtbot.addWidget(dialog)
 
-        headers = [
-            dialog.table.horizontalHeaderItem(i).text() for i in range(dialog.table.columnCount())
-        ]
+        headers = []
+        for i in range(dialog.table.columnCount()):
+            item = dialog.table.horizontalHeaderItem(i)
+            if item is not None:
+                headers.append(item.text())
         assert headers == ["name", "age", "city"]
 
     def test_cell_content(self, qtbot, sample_csv):
         dialog = CSVViewerDialog(csv_path=sample_csv)
         qtbot.addWidget(dialog)
 
-        assert dialog.table.item(0, 0).text() == "Alice"
-        assert dialog.table.item(1, 1).text() == "25"
-        assert dialog.table.item(2, 2).text() == "Chicago"
+        item1 = dialog.table.item(0, 0)
+        assert item1 is not None
+        assert item1.text() == "Alice"
+        item2 = dialog.table.item(1, 1)
+        assert item2 is not None
+        assert item2.text() == "25"
+        item3 = dialog.table.item(2, 2)
+        assert item3 is not None
+        assert item3.text() == "Chicago"
 
     def test_stats_label_shows_dimensions(self, qtbot, sample_csv):
         dialog = CSVViewerDialog(csv_path=sample_csv)
@@ -52,6 +60,7 @@ class TestCSVViewerDialog:
         qtbot.addWidget(dialog)
 
         item = dialog.table.item(0, 0)
+        assert item is not None
         assert not (item.flags() & Qt.ItemFlag.ItemIsEditable)
 
     def test_window_title(self, qtbot, sample_csv):

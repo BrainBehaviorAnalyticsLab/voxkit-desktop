@@ -38,11 +38,11 @@ from voxkit.gui.frameworks.settings_modal import (
     GenericDialog,
     SettingsConfig,
 )
+from voxkit.gui.styles import Buttons, Containers, Labels
 from voxkit.gui.utils import validate_path, validate_paths
 from voxkit.gui.workers.worker_thread import WorkerThread
 from voxkit.storage import alignments, datasets
 from voxkit.storage.utils import get_storage_root
-from voxkit.gui.styles import Buttons, Containers, Labels
 
 FIELDS: list[FieldConfig] = [
     FieldConfig(
@@ -114,11 +114,11 @@ class PLLRStacker(QWidget):
     existing alignments using the PLLR (Probabilistic Linear Likelihood Ratio) method.
     """
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__()
-        self.parent = parent
-        self.pllr_dataset_dropdown = None
-        self.pllr_alignment_dropdown = None
+        self._parent_widget = parent
+        self.pllr_dataset_dropdown: MultiColumnComboBox
+        self.pllr_alignment_dropdown: MultiColumnComboBox
         self.init_ui()
 
     def on_extract_settings(self):
@@ -126,8 +126,9 @@ class PLLRStacker(QWidget):
 
         result = settings_dialog.exec()
 
-        # Clean up
-        self.parent.setGraphicsEffect(None)
+        # Clean up blur applied by GenericDialog to self.parent()
+        if self.parent():
+            self.parent().setGraphicsEffect(None)
 
         if result == QDialog.DialogCode.Accepted:
             settings_dialog.save()
@@ -375,13 +376,18 @@ class PLLRStacker(QWidget):
 
         # Get dataset path
         dataset_meta = datasets.get_dataset_metadata(selected_dataset_id)
+        if not dataset_meta:
+            QMessageBox.warning(self, "Invalid Dataset", "Could not find dataset metadata.")
+            return
 
-        wavlab_path = None
+        wavlab_path: Path | str | None = None
         if not (dataset_meta["cached"] == "True" or dataset_meta["cached"] is True):
             wavlab_path = dataset_meta["original_path"]
 
         else:
-            wavlab_path = datasets._get_dataset_root(selected_dataset_id) / "cache"
+            dataset_root = datasets._get_dataset_root(selected_dataset_id)
+            if dataset_root:
+                wavlab_path = dataset_root / "cache"
 
         print(f"[DEBUG] Dataset root path: {wavlab_path}")
 

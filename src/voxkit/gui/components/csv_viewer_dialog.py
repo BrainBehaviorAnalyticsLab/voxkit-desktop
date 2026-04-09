@@ -49,7 +49,7 @@ class CSVViewerDialog(QDialog):
             self.blur_effect.setBlurRadius(10)
             parent.setGraphicsEffect(self.blur_effect)
 
-        self.parent = parent
+        self._parent_widget = parent
         self._init_ui()
         if not self.visualization:
             self._load_csv()
@@ -119,12 +119,15 @@ class CSVViewerDialog(QDialog):
 
                 # Auto-resize columns
                 header = self.table.horizontalHeader()
-                for i in range(len(headers)):
-                    header.setSectionResizeMode(i, QHeaderView.ResizeMode.ResizeToContents)
+                if header is not None:
+                    for i in range(len(headers)):
+                        header.setSectionResizeMode(i, QHeaderView.ResizeMode.ResizeToContents)
 
-                # Make last column stretch
-                if len(headers) > 0:
-                    header.setSectionResizeMode(len(headers) - 1, QHeaderView.ResizeMode.Stretch)
+                    # Make last column stretch
+                    if len(headers) > 0:
+                        header.setSectionResizeMode(
+                            len(headers) - 1, QHeaderView.ResizeMode.Stretch
+                        )
 
                 # Update stats
                 self.stats_label.setText(f"✅ {len(data)} rows × {len(headers)} columns")
@@ -135,14 +138,14 @@ class CSVViewerDialog(QDialog):
     def closeEvent(self, event):
         """Handle dialog close event to remove blur effect."""
         print("Dialog closed, removing blur effect from parent")
-        if self.parent:
+        if self._parent_widget:
             print("Removing blur effect from parent")
-            self.parent.setGraphicsEffect(None)
+            self._parent_widget.setGraphicsEffect(None)
         event.accept()
 
     def reject(self):
         """Handle dialog rejection to remove blur effect."""
-        if self.parent:
+        if self._parent_widget:
             print("Removing blur effect from parent")
-            self.parent.setGraphicsEffect(None)
+            self._parent_widget.setGraphicsEffect(None)
         super().reject()

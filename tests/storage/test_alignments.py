@@ -62,6 +62,7 @@ def sample_dataset(monkeypatch):
     )
 
     assert success is True
+    assert isinstance(dataset_metadata, dict)
     return dataset_metadata
 
 
@@ -80,6 +81,7 @@ def sample_model(monkeypatch):
     )
 
     assert success is True
+    assert isinstance(model_metadata, dict)
     return model_metadata
 
 
@@ -151,6 +153,7 @@ class TestAlignments:
         )
 
         assert msg is False
+        assert isinstance(result, str)
         assert "Dataset" in result
 
     def test_create_alignment_non_cached_dataset(self, monkeypatch, sample_model):
@@ -173,6 +176,7 @@ class TestAlignments:
         )
 
         assert success is True
+        assert isinstance(dataset_metadata, dict)
 
         dataset_id = dataset_metadata["id"]
         engine_id = sample_model["engine_id"]
@@ -221,6 +225,7 @@ class TestAlignments:
             )
 
             assert success is True
+            assert isinstance(alignment_metadata, dict)
 
             alignment_id = alignment_metadata["id"]
 
@@ -247,6 +252,7 @@ class TestAlignments:
             )
 
             assert success is True
+            assert isinstance(alignment_metadata, dict)
 
             invalid_alignment_id = "NON_EXISTENT_ALIGNMENT"
 
@@ -305,6 +311,7 @@ class TestAlignments:
                     model_id=model_id,
                 )
                 assert success is True
+                assert isinstance(alignment_metadata, dict)
                 created_alignment_ids.add(alignment_metadata["id"])
 
             alignments_list = list_alignments(dataset_id=dataset_id)
@@ -341,6 +348,7 @@ class TestAlignments:
             )
 
             assert success is True
+            assert isinstance(alignment_metadata, dict)
 
             alignment_id = alignment_metadata["id"]
 
@@ -410,6 +418,7 @@ class TestAlignments:
             )
 
             assert success is True
+            assert isinstance(alignment_metadata, dict)
 
             alignment_id = alignment_metadata["id"]
 
@@ -450,6 +459,7 @@ class TestAlignments:
             )
 
             assert success is True
+            assert isinstance(alignment_metadata, dict)
 
             alignment_id = alignment_metadata["id"]
 
@@ -508,6 +518,7 @@ class TestAlignments:
             )
 
             assert success is True
+            assert isinstance(alignment_metadata, dict)
 
             alignment_id = alignment_metadata["id"]
 
@@ -554,6 +565,7 @@ class TestAlignments:
             )
 
             assert success is True
+            assert isinstance(alignment_metadata, dict)
 
             alignment_id = alignment_metadata["id"]
 

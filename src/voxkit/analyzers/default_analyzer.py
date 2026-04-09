@@ -125,6 +125,9 @@ class DefaultAnalyzer(DatasetAnalyzer):
 
                     color = QColor("#3498db")
                     h, s, lightness, a = color.getHsl()
+                    assert (
+                        h is not None and s is not None and lightness is not None and a is not None
+                    )
                     ratio = count / max_count
                     new_l = int(lightness + (220 - lightness) * (1 - ratio))
                     color.setHsl(h, s, min(new_l, 240), a)

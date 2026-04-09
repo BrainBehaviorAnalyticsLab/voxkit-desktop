@@ -114,11 +114,13 @@ class LoadingDialog(QDialog):
         """Center the dialog on the primary screen."""
         from PyQt6.QtGui import QGuiApplication
 
-        screen = QGuiApplication.primaryScreen().geometry()
-        dialog_rect = self.frameGeometry()
-        center_point = screen.center()
-        dialog_rect.moveCenter(center_point)
-        self.move(dialog_rect.topLeft())
+        screen = QGuiApplication.primaryScreen()
+        if screen is not None:
+            screen_geometry = screen.geometry()
+            dialog_rect = self.frameGeometry()
+            center_point = screen_geometry.center()
+            dialog_rect.moveCenter(center_point)
+            self.move(dialog_rect.topLeft())
 
     def _update_spinner(self):
         """Update the spinner animation."""
@@ -136,10 +138,13 @@ class LoadingDialog(QDialog):
         Args:
             message: The new message to display
         """
-        if self.layout() and self.layout().itemAt(0):
-            label = self.layout().itemAt(0).widget()
-            if isinstance(label, QLabel):
-                label.setText(message)
+        layout = self.layout()
+        if layout and layout.itemAt(0):
+            item = layout.itemAt(0)
+            if item:
+                label = item.widget()
+                if isinstance(label, QLabel):
+                    label.setText(message)
 
     def close_gracefully(self):
         """Close the dialog with a fade-out animation."""

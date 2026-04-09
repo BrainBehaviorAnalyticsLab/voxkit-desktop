@@ -7,11 +7,11 @@ import sys
 if getattr(sys, "frozen", False):
     # We're running in a PyInstaller bundle
     print("[PATCH] Applying frozen app patches...")
-    
+
     # Patch 1: Disable typeguard runtime checking
     try:
         import typeguard
-        
+
         # Replace typechecked decorator with a no-op
         def _noop_decorator(func=None, **kwargs):
             """No-op decorator that just returns the function unchanged"""
@@ -20,12 +20,12 @@ if getattr(sys, "frozen", False):
                 return lambda f: f
             # Called without arguments: @typechecked
             return func
-        
-        typeguard.typechecked = _noop_decorator
+
+        typeguard.typechecked = _noop_decorator  # type: ignore[assignment]
         print("[PATCH] Disabled typeguard runtime checking")
     except ImportError:
         pass
-    
+
     # Patch 2: Fix inspect.getsource to not fail in frozen apps
     import inspect
 
@@ -70,7 +70,7 @@ if getattr(sys, "frozen", False):
         try:
             result = _original_getsourcefile(object)
             # Check if the file actually exists
-            if result and not __import__('os').path.exists(result):
+            if result and not __import__("os").path.exists(result):
                 return None
             return result
         except (OSError, TypeError):

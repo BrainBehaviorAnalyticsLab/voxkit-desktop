@@ -9,8 +9,9 @@ API
 
 from PyQt6.QtWidgets import QSizePolicy, QTextBrowser
 
-from .base_stacker import BaseStacker
 from voxkit.gui.styles import Containers
+
+from .base_stacker import BaseStacker
 
 
 class MarkdownStacker(BaseStacker):
@@ -24,9 +25,9 @@ class MarkdownStacker(BaseStacker):
             markdown_content: Markdown text to display
         """
         self.markdown_content = markdown_content
-        self.text_browser = None
+        self.text_browser: QTextBrowser | None = None
         super().__init__(parent)
-        
+
         # Remove the stretch at the end added by BaseStacker to allow
         # the text browser to expand and fill all available vertical space
         if self.main_layout.count() > 0:
@@ -34,19 +35,16 @@ class MarkdownStacker(BaseStacker):
             if last_item and last_item.spacerItem():
                 self.main_layout.removeItem(last_item)
 
-    def build_ui(self):
+    def build_ui(self) -> None:
         """Build the markdown display UI."""
         # Create text browser for markdown rendering
         self.text_browser = QTextBrowser()
         self.text_browser.setObjectName("markdownDisplay")
         self.text_browser.setOpenExternalLinks(True)  # Allow clickable links
         self.text_browser.setStyleSheet(Containers.MARKDOWN_DISPLAY)
-        
+
         # Set size policy to expand and fill available space
-        self.text_browser.setSizePolicy(
-            QSizePolicy.Policy.Expanding,
-            QSizePolicy.Policy.Expanding
-        )
+        self.text_browser.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
 
         # Set markdown content
         self.set_markdown(self.markdown_content)

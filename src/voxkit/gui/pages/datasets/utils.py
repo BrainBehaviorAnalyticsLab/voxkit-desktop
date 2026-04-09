@@ -8,6 +8,8 @@ API
 - **on_delete**: Handle delete button click for selected dataset
 """
 
+from pathlib import Path
+
 from PyQt6.QtWidgets import QFileDialog, QMessageBox
 
 from voxkit.storage import datasets
@@ -30,7 +32,7 @@ def on_export(self):
         QMessageBox.warning(self, "No Destination Selected", "Please select a destination.")
         return
 
-    success, message = datasets.export_dataset(self.selected_dataset["id"], dir_path)
+    success, message = datasets.export_dataset(self.selected_dataset["id"], Path(dir_path))
     if success:
         QMessageBox.information(self, "Success", message)
     else:

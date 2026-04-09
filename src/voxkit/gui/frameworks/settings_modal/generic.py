@@ -121,7 +121,7 @@ class GenericDialog(QDialog):
             parent: Parent widget to apply blur effect to.
         """
         try:
-            main_window = parent.parent
+            main_window = parent.parent()
             if main_window is None:
                 return
 
@@ -132,7 +132,7 @@ class GenericDialog(QDialog):
             # Apply blur effect
             blur_effect = QGraphicsBlurEffect()
             blur_effect.setBlurRadius(5)
-            parent.parent.setGraphicsEffect(blur_effect)
+            parent.parent().setGraphicsEffect(blur_effect)
 
             overlay.deleteLater()
         except (AttributeError, ImportError):
@@ -281,7 +281,7 @@ class GenericDialog(QDialog):
         Raises:
             ValueError: If field_type is not recognized.
         """
-        widget: Union[QSpinBox, QDoubleSpinBox, QLineEdit, QComboBox]
+        widget: Union[QSpinBox, QDoubleSpinBox, QLineEdit, QComboBox, ToggleSwitch]
         if config.field_type == FieldType.SPINBOX:
             widget = self._create_spinbox(config)
         elif config.field_type == FieldType.DOUBLE_SPINBOX:
