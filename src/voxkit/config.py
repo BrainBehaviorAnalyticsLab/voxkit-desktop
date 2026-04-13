@@ -17,7 +17,7 @@ Defaults = {
 }
 
 Mode = Literal["MFAENGINE", "W2TGENGINE"]
-HELP_URL = "http://localhost:3000/help"
+HELP_URL = "https://voxkit-web.vercel.app/help"
 
 
 def startup_routine():
