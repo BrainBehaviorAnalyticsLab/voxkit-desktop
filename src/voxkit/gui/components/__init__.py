@@ -29,6 +29,7 @@ from .dna_strand import DNAStrandWidget
 from .grip_splitter import GripSplitter
 from .huggingface_button import HuggingFaceButton
 from .loading_dialog import LoadingDialog
+from .log_viewer_dialog import LogViewerDialog
 from .model_selection_panel import ModelSelectionPanel
 from .overlay_effects import OverlayWidget
 from .toggle_switch import ToggleSwitch
@@ -40,6 +41,7 @@ __all__ = [
     "GripSplitter",
     "HuggingFaceButton",
     "LoadingDialog",
+    "LogViewerDialog",
     "ModelSelectionPanel",
     "MultiColumnComboBox",
     "OverlayWidget",
