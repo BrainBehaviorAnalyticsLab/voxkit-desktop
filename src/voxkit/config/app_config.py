@@ -128,7 +128,7 @@ class AppConfig:
     version: str
     description: str
     introduction: str
-    help_url: str = "http://localhost:3000/help"
+    help_url: str = "https://voxkit-web.vercel.app/help"
     release_date: Optional[str] = None
     release_notes: Optional[str] = None
     log_max_bytes: int = 5 * 1024 * 1024
@@ -159,7 +159,7 @@ class AppConfig:
             version=data.get("version", "0.0.0"),
             description=data.get("description", ""),
             introduction=data.get("introduction", ""),
-            help_url=data.get("help_url", "http://localhost:3000/help"),
+            help_url=data.get("help_url", "https://voxkit-web.vercel.app/help"),
             release_date=data.get("release_date"),
             release_notes=data.get("release_notes"),
             log_max_bytes=int(data.get("log_max_bytes", 5 * 1024 * 1024)),
