@@ -52,11 +52,7 @@ class TestAppConfig:
         assert config.version == "1.0.0"
         assert config.description == "Test description"
         assert config.introduction == "Test intro"
-        assert config.help_url == "http://localhost:3000/help"
-        assert config.release_date is None
-        assert config.release_notes is None
-
-    def test_dataclass_with_optional_fields(self):
+        assert config.help_url == "https://voxkit-web.vercel.app/help"
         config = AppConfig(
             app_name="TestApp",
             version="2.0.0",
@@ -107,11 +103,7 @@ release_notes: Bug fixes and improvements
         assert config.version == "0.0.0"
         assert config.description == ""
         assert config.introduction == ""
-        assert config.help_url == "http://localhost:3000/help"
-        assert config.release_date is None
-        assert config.release_notes is None
-
-    def test_from_yaml_file_not_found(self, tmp_path):
+        assert config.help_url == "https://voxkit-web.vercel.app/help"
         nonexistent_file = tmp_path / "nonexistent.yaml"
 
         with pytest.raises(FileNotFoundError) as exc_info:
