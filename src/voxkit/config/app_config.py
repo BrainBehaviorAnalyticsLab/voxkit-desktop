@@ -131,6 +131,8 @@ class AppConfig:
     help_url: str = "http://localhost:3000/help"
     release_date: Optional[str] = None
     release_notes: Optional[str] = None
+    log_max_bytes: int = 5 * 1024 * 1024
+    log_backup_count: int = 3
 
     @classmethod
     def from_yaml(cls, config_path: Path) -> "AppConfig":
@@ -160,6 +162,8 @@ class AppConfig:
             help_url=data.get("help_url", "http://localhost:3000/help"),
             release_date=data.get("release_date"),
             release_notes=data.get("release_notes"),
+            log_max_bytes=int(data.get("log_max_bytes", 5 * 1024 * 1024)),
+            log_backup_count=int(data.get("log_backup_count", 3)),
         )
 
     @classmethod

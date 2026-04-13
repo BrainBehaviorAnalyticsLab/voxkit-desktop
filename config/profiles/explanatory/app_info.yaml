@@ -6,6 +6,10 @@ version: "0.1.0"
 description: "AI/ML Research -> Clinical Applications (Speech Pathology)"
 help_url: "https://voxkit-web.vercel.app/help"
 
+# Logging: rolling file at ~/.voxkit/logs/voxkit.log
+log_max_bytes: 5242880   # 5 MB per file before rotation
+log_backup_count: 3      # number of rotated files to retain
+
 # Introduction text displayed to users
 introduction: |
   VoxKit bridges advanced ML alignment tools and clinical speech pathology research. 

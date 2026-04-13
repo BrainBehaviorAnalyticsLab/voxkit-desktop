@@ -1,5 +1,6 @@
 import sys
 import faulthandler
+import logging
 import os
 import multiprocessing
 
@@ -8,7 +9,8 @@ if getattr(sys, 'frozen', False):
     import _frozen_patch
 
 from voxkit.config.pipeline_config import PipelineConfig
-from voxkit.config.app_config import AppConfig, get_profile_config_path
+from voxkit.config.app_config import AppConfig, get_app_config, get_profile_config_path
+from voxkit.config.logging_config import setup_logging
 
 # Disable Qt emoji support to prevent crashes in frozen builds
 
@@ -91,10 +93,29 @@ from pathlib import Path
 
 
 def main():
+    # Initialize logging as early as possible so startup work is captured.
+    # Use config values when available; fall back to defaults otherwise.
+    try:
+        _cfg = get_app_config()
+        setup_logging(
+            max_bytes=_cfg.log_max_bytes,
+            backup_count=_cfg.log_backup_count,
+        )
+    except Exception:
+        setup_logging()
+
+    # Attach the Qt-aware log handler so live viewers can subscribe.
+    from voxkit.gui.components.log_handler import get_gui_log_handler
+    get_gui_log_handler()
+
+    log = logging.getLogger("voxkit.main")
+    log.info("VoxKit starting (frozen=%s)", bool(getattr(sys, "frozen", False)))
+
     app = QApplication(sys.argv)
     app.setStyle("Fusion")
 
     # Execute startup script on first launch (before GUI initialization)
+    log.info("Running startup script")
     execute_startup_script(STARTUP_SCRIPT, app)
 
     app_config = None
@@ -109,6 +130,7 @@ def main():
 
     window = AlignmentGUI(pipeline_config=pipeline_config, app_config=app_config)
     window.show()
+    log.info("Main window shown, entering Qt event loop")
     sys.exit(app.exec())
 
 
