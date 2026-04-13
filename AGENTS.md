@@ -36,20 +36,20 @@ Hybrid "unstructured state + signals" PyQt pattern. See `docs/ARCHITECTURE.md` f
 
 ## Setup & Common Commands
 
-Use `make` — do not invoke tools directly unless you need a flag `make` doesn't expose.
+Use `invoke` (pyinvoke, tasks defined in `tasks.py`) — do not invoke tools directly unless you need a flag the task doesn't expose.
 
 | Command | Purpose |
 |---|---|
-| `make setup` | Install deps + pre-commit hooks (run first) |
-| `make dev` | Launch the app in dev mode |
-| `make run-tests` | Unit + GUI tests |
-| `make test-coverage` | Coverage for core modules |
-| `make lint` / `make lint-check` | Ruff lint (fix / check) |
-| `make format` / `make format-check` | Ruff format |
-| `make mypy-check` | Type check |
-| `make build` | Standalone executable (PyInstaller) |
-| `make clean` | Remove build artifacts |
-| `make help` | Full list |
+| `invoke setup` | Install deps + pre-commit hooks (run first) |
+| `invoke dev` | Launch the app in dev mode |
+| `invoke run-tests` | Unit + GUI tests |
+| `invoke test-coverage` | Coverage for core modules |
+| `invoke lint` / `invoke lint-check` | Ruff lint (fix / check) |
+| `invoke format` / `invoke format-check` | Ruff format |
+| `invoke mypy-check` | Type check |
+| `invoke build` | Standalone executable (PyInstaller) |
+| `invoke clean` | Remove build artifacts |
+| `invoke --list` | Full list |
 
 ## Code Standards
 
@@ -62,7 +62,7 @@ Use `make` — do not invoke tools directly unless you need a flag `make` doesn'
 
 - Framework: `pytest`, with `pytest-qt` for GUI and `pytest-asyncio` for async.
 - Write tests for new business logic in `storage/`, `config/`, `analyzers/`. GUI components are excluded from coverage metrics but still testable with `pytest-qt` when useful.
-- Run `make run-tests` before reporting a task complete. For UI changes, also launch `make dev` and exercise the feature — type checks don't verify user-facing behavior.
+- Run `invoke run-tests` before reporting a task complete. For UI changes, also launch `invoke dev` and exercise the feature — type checks don't verify user-facing behavior.
 
 ## Commit & PR Conventions
 

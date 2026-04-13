@@ -40,14 +40,14 @@ jobs:
 
       - name: Run tests
         run: |
-          make run-tests
+          uv run invoke run-tests
 
       - name: Run linting
         run: |
-          make lint-check
+          uv run invoke lint-check
         continue-on-error: true
 
       - name: Run type checking
         run: |
-          make mypy-check
+          uv run invoke mypy-check
         continue-on-error: true

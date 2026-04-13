@@ -40,4 +40,4 @@ jobs:
 
       - name: Run tests
         run: |
-          make run-tests
+          uv run invoke run-tests

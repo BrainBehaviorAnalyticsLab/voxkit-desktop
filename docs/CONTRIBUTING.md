@@ -50,14 +50,14 @@ If you’re unsure which path applies, or you aren't part of the team on Jira, o
 1. Make your changes in small, logical commits
 2. Write clear, descriptive commit messages
 3. **Test your changes thoroughly** - see [TESTING.md](./TESTING.md) for guidelines
-4. Run `make test-coverage` to verify tests pass for core modules
+4. Run `invoke test-coverage` to verify tests pass for core modules
 5. Update documentation as needed
 
 ### Testing Guidelines
 
 - Write tests for new business logic in `storage/`, `config/`, and `analyzers/` modules
 - GUI components are excluded from coverage metrics
-- Run `make test-coverage` to see coverage for testable modules
+- Run `invoke test-coverage` to see coverage for testable modules
 - Aim for 70-80% coverage on new business logic
 
 ### Commit Message Format

@@ -41,7 +41,7 @@ jobs:
           uv sync
 
       - name: Build .app bundle
-        run: make build
+        run: uv run invoke build
 
       - name: Verify build contents
         run: |
