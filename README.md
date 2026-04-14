@@ -40,9 +40,9 @@ src/voxkit/
 ## Developers
 
 **Prerequisites:**
-- [python](https://www.python.org/downloads/release/python-31114/) code language
-- [uv](https://docs.astral.sh/uv/) package manager
-- [git](https://git-scm.com/install/) version tracking
+- [git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git) – Version control
+- [uv](https://docs.astral.sh/uv/getting-started/installation/) – Python package manager
+- [invoke](https://www.pyinvoke.org/installing.html) – Task runner (installed via `uv tool install invoke`)
 
 **Getting-started:**
 ```bash
@@ -53,13 +53,13 @@ cd voxkit-desktop
 # As easy as...
 
 # (1) Browse developer commands
-make help
+invoke --list
 
 # (2) Install precommit and initialize environment
-make setup
+invoke setup
 
 # (3) Start app (developer mode)
-make dev
+invoke dev
 ```
 
 ---
