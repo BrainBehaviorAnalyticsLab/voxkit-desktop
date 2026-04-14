@@ -98,11 +98,7 @@ def execute_startup_script(script: Callable[[], None] | None, app: QApplication)
         logger.error("Startup script failed: %s", error_msg)
         loading_dialog.update_message(f"Error: {error_msg}")
         app.processEvents()
-        # Still mark as complete to avoid running again
-        mark_first_launch_complete()
-        # Wait a bit to show error before closing
-        from PyQt6.QtCore import QTimer
-
+        # Do NOT mark first launch complete on error — allow retry on next launch
         QTimer.singleShot(2000, loading_dialog.close_gracefully)
 
     worker.finished.connect(on_finished)
