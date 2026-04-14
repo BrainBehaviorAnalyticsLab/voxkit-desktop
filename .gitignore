@@ -63,3 +63,6 @@ QUICKSTART_STARTUP_SCRIPT.md
 # OS files
 .DS_Store
 Thumbs.db
+
+# Robust
+.git/

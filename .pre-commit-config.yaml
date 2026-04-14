@@ -1,4 +1,12 @@
 repos:
+  - repo: local
+    hooks:
+      - id: shredguard-check
+        name: shredguard check
+        entry: shredguard check
+        language: system
+        types: [text]
+
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.14.10
     hooks:
