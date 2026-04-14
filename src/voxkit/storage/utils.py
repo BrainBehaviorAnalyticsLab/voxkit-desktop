@@ -77,6 +77,8 @@ def readable_from_unique_id(date_str: str) -> str:
         if len(part) == 8 and part.isdigit():
             date_str = "_".join(parts[i:])
             break
+    else:
+        raise ValueError(f"No valid timestamp found in unique ID: {date_str!r}")
     dt = datetime.strptime(date_str, "%Y%m%d_%H%M%S_%f")
     return dt.strftime("%B %d, %Y at %I:%M:%S %p")
 

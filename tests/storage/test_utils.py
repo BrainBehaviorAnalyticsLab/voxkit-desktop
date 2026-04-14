@@ -200,3 +200,8 @@ class TestUtils:
             prefixed_id = f"myprefix_{base_id}"
 
             assert readable_from_unique_id(base_id) == readable_from_unique_id(prefixed_id)
+
+        def test_readable_from_unique_id_invalid_raises(self):
+            """Test that an ID with no valid timestamp raises ValueError."""
+            with pytest.raises(ValueError, match="No valid timestamp found"):
+                readable_from_unique_id("not_a_timestamp")
