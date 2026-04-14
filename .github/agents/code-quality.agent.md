@@ -1,26 +1,26 @@
 ---
 name: code-quality-agent
-description: Fixes linting, formatting, and type checking issues by running make commands until all checks pass
+description: Fixes linting, formatting, and type checking issues by running invoke commands until all checks pass
 tools: ['execute/getTerminalOutput', 'execute/runInTerminal', 'execute/runTests', 'read', 'edit', 'search']
 ---
 
 # Code Quality Agent
 
-Fix all code quality issues by running make commands iteratively and addressing any remaining problems until all checks pass.
+Fix all code quality issues by running invoke commands iteratively and addressing any remaining problems until all checks pass.
 
 ## Workflow
 
-1. Run `make format` then `make lint` (auto-fixes 60-80% of issues)
-2. Run `make mypy-check` to find type errors
+1. Run `invoke format` then `invoke lint` (auto-fixes 60-80% of issues)
+2. Run `invoke mypy-check` to find type errors
 3. Fix remaining issues manually
 4. Verify: All checks must pass with exit code 0
 
 ## Commands
 
 ```bash
-make format       # Auto-format with Ruff
-make lint         # Auto-fix linting with Ruff
-make mypy-check   # Type check with mypy
+invoke format       # Auto-format with Ruff
+invoke lint         # Auto-fix linting with Ruff
+invoke mypy-check   # Type check with mypy
 ```
 
 ## Common Mypy Fixes
@@ -71,7 +71,7 @@ class Child(Parent):
 ## Success Criteria
 
 ```bash
-make format-check  # No changes needed
-make lint-check    # No issues found  
-make mypy-check    # No type errors
+invoke format-check  # No changes needed
+invoke lint-check    # No issues found
+invoke mypy-check    # No type errors
 ```

@@ -21,19 +21,30 @@ Notes
 - Styling is centralized in the styles module for consistency
 """
 
+import logging
 import webbrowser
 from typing import Optional
 
+from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QAction, QIcon
-from PyQt6.QtWidgets import QHBoxLayout, QMainWindow, QStackedWidget, QToolBar, QWidget
+from PyQt6.QtWidgets import (
+    QHBoxLayout,
+    QMainWindow,
+    QStackedWidget,
+    QToolBar,
+    QToolButton,
+    QWidget,
+)
 from rich import print as rprint
 
 from voxkit.config.app_config import AppConfig, get_app_config
 from voxkit.config.pipeline_config import PipelineConfig, get_pipeline_config
-from voxkit.gui.components import DNAStrandWidget
+from voxkit.gui.components import DNAStrandWidget, LogViewerDialog
 from voxkit.gui.pages.datasets import DatasetsPage
 from voxkit.gui.pages.models import ManageAlignersWidget
 from voxkit.gui.pages.pipeline import PipelineFormStack as PipelineContainer
+
+logger = logging.getLogger(__name__)
 
 GlobalStyleSheet = """
     QMainWindow {
@@ -174,6 +185,12 @@ class AlignmentGUI(QMainWindow):
         self.app_config = app_config or get_app_config()
         self.pipeline_config = pipeline_config or get_pipeline_config()
 
+        logger.info(
+            "AlignmentGUI initialized: app=%s version=%s",
+            self.app_config.app_name,
+            self.app_config.version,
+        )
+
         # DEBUG
         rprint("[bold green]App Configuration:[/bold green]")
         rprint(self.app_config)
@@ -295,7 +312,7 @@ class AlignmentGUI(QMainWindow):
 
     def open_datasets(self):
         """Switch to Datasets view"""
-        print("Open Datasets...")
+        logger.info("Navigate: Datasets page")
         # Remember current pipeline page
         self.last_pipeline_page = self.pipeline_container.get_current_page_index()
         self.pipeline_container.menu_list.setVisible(False)
@@ -307,7 +324,7 @@ class AlignmentGUI(QMainWindow):
 
     def open_models_dashboard(self):
         """Switch to Pipeline view with menu and stacked pages"""
-        print("Open Models Dashboard...")
+        logger.info("Navigate: Pipeline page")
         self.pipeline_container.reload()  # Ensure models are reloaded
         self.pipeline_container.menu_list.setVisible(True)
         self.content_stack.setCurrentIndex(0)  # Show pipeline stack
@@ -318,7 +335,7 @@ class AlignmentGUI(QMainWindow):
 
     def open_preferences(self):
         """Switch to Manage view with CategoricalListWidget"""
-        print("Open Preferences...")
+        logger.info("Navigate: Models page")
         self.pipeline_container.reload()  # Ensure models are reloaded
         # Remember current pipeline page
         self.last_pipeline_page = self.pipeline_container.get_current_page_index()
@@ -328,8 +345,8 @@ class AlignmentGUI(QMainWindow):
         self.update_active_tab_style("manage")
 
     def open_help(self):
+        logger.info("Opening help URL: %s", self.app_config.help_url)
         webbrowser.open(self.app_config.help_url)
-        print("Open Help...")
 
     def init_ui(self):
         self.setWindowTitle(self.app_config.app_name)
@@ -370,6 +387,67 @@ class AlignmentGUI(QMainWindow):
 
         # Set initial active tab style
         self.update_active_tab_style("pipeline")
+
+        # Subtle status-bar entry point for the log viewer
+        self._init_log_status_entry()
+
+    def _init_log_status_entry(self) -> None:
+        """Attach a low-visibility log viewer button floating in the bottom-right."""
+        central = self.centralWidget()
+        if central is None:
+            return
+
+        self._log_button = QToolButton(central)
+        self._log_button.setText("\u2630")  # trigram glyph — subtle, monochrome
+        self._log_button.setToolTip("View application log")
+        self._log_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        self._log_button.setStyleSheet(
+            "QToolButton {"
+            " background: transparent;"
+            " color: #9aa0a6;"
+            " border: none;"
+            " padding: 0 4px;"
+            " font-size: 12px;"
+            "}"
+            "QToolButton:hover { color: #5f6368; }"
+        )
+        self._log_button.clicked.connect(self._open_log_viewer)
+        self._log_button.adjustSize()
+        self._log_button.raise_()
+        self._log_viewer: Optional[LogViewerDialog] = None
+
+        central.installEventFilter(self)
+        self._reposition_log_button()
+
+    def _reposition_log_button(self) -> None:
+        central = self.centralWidget()
+        if central is None or not hasattr(self, "_log_button"):
+            return
+        btn = self._log_button
+        btn.adjustSize()
+        # Bottom-right, aligned to the existing 20px content margin.
+        x = central.width() - btn.width() - 4
+        y = central.height() - btn.height() - 4
+        btn.move(max(0, x), max(0, y))
+
+    def eventFilter(self, obj, event):  # noqa: N802 (Qt API)
+        from PyQt6.QtCore import QEvent
+
+        if obj is self.centralWidget() and event.type() in (
+            QEvent.Type.Resize,
+            QEvent.Type.Show,
+        ):
+            self._reposition_log_button()
+        return super().eventFilter(obj, event)
+
+    def _open_log_viewer(self) -> None:
+        logger.info("Opening log viewer")
+        if self._log_viewer is None or not self._log_viewer.isVisible():
+            self._log_viewer = LogViewerDialog(self)
+            self._log_viewer.show()
+        else:
+            self._log_viewer.raise_()
+            self._log_viewer.activateWindow()
 
 
 __all__ = ["AlignmentGUI"]

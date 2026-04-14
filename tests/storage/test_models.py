@@ -297,6 +297,29 @@ class TestModels:
             assert success is False
             assert "not found" in msg
 
+        def test_delete_model_empty_ids(self, monkeypatch):
+            from voxkit.storage import models
+            from voxkit.storage.models import delete_model
+
+            monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
+
+            engine_id = ENGINE_IDS[0]
+
+            # Empty model_id
+            success, msg = delete_model(engine_id=engine_id, model_id="")
+            assert success is False
+            assert "cannot be empty" in msg
+
+            # Empty engine_id
+            success, msg = delete_model(engine_id="", model_id="some_model_id")
+            assert success is False
+            assert "cannot be empty" in msg
+
+            # Both empty
+            success, msg = delete_model(engine_id="", model_id="")
+            assert success is False
+            assert "cannot be empty" in msg
+
     class TestGetModelMetadata:
         def test_get_model_metadata_success(self, monkeypatch):
             from voxkit.storage import models

@@ -22,6 +22,7 @@ from PyQt6.QtWidgets import (
     QLabel,
     QMessageBox,
     QPushButton,
+    QSizePolicy,
     QTableWidget,
     QTableWidgetItem,
     QVBoxLayout,
@@ -253,6 +254,7 @@ class DatasetsPage(QWidget):
         helper_label = QLabel("💡 Select a dataset to view its alignments below")
 
         helper_label.setStyleSheet(Containers.HELPER_TEXT)
+        helper_label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         layout.addWidget(helper_label)
 
         # Container for table and empty label
@@ -326,10 +328,11 @@ class DatasetsPage(QWidget):
         )
         self.empty_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.empty_label.setStyleSheet(Containers.EMPTY_STATE)
+        self.empty_label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.empty_label.hide()  # Hidden by default
         list_container_layout.addWidget(self.empty_label)
 
-        layout.addWidget(list_container)
+        layout.addWidget(list_container, 1)
 
         group.setLayout(layout)
         return group
@@ -536,18 +539,15 @@ class DatasetsPage(QWidget):
         layout.setContentsMargins(5, 2, 5, 2)
         layout.setSpacing(5)
 
-        button_style = Buttons.SUCCESS_SMALL
-
         # Delete button
         delete_btn = QPushButton("Delete")
-        delete_btn.setMaximumWidth(60)
         delete_btn.setStyleSheet(Buttons.DELETE_SMALL)
         delete_btn.clicked.connect(lambda: self._delete_alignment(alignment))
         layout.addWidget(delete_btn)
 
         # View button
         view_btn = QPushButton("View")
-        view_btn.setStyleSheet(button_style)
+        view_btn.setStyleSheet(Buttons.TABLE_VIEW)
         view_btn.clicked.connect(lambda: self._view_alignment(alignment))
         layout.addWidget(view_btn)
 
@@ -807,15 +807,13 @@ class DatasetsPage(QWidget):
         """
         widget = QWidget()
         layout = QHBoxLayout(widget)
-        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setContentsMargins(5, 2, 5, 2)
+        layout.setSpacing(5)
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        button_style = Buttons.TABLE_VIEW
 
         # Details button
         details_btn = QPushButton("Details")
-        details_btn.setFixedSize(80, 24)
-        details_btn.setStyleSheet(button_style)
+        details_btn.setStyleSheet(Buttons.TABLE_VIEW)
         details_btn.clicked.connect(lambda: self._view_dataset_details(dataset_meta))
         layout.addWidget(details_btn)
 

@@ -419,6 +419,45 @@ def export_dataset(dataset_id: str, output_root: Path) -> Tuple[bool, str]:
             return False, f"Failed to export dataset: {str(e)}"
 
 
+def _rewrite_imported_alignments(new_dataset_path: Path) -> None:
+    """Rewrite alignment metadata paths after importing a dataset to a new location.
+
+    When a dataset is imported, its directory is copied to a new location under a
+    new dataset id. Any ``local`` alignment has a ``tg_path`` that lives inside
+    the dataset directory and still references the source location. For each such
+    alignment, rewrite ``tg_path`` to ``<new_dataset>/alignments/<alignment_id>/
+    textgrids``. Non-local alignments (``local == False``) store TextGrids at the
+    dataset's ``original_path``, which is unchanged by import, so they are left
+    alone.
+    """
+    alignments_dir = new_dataset_path / ALIGNMENTS_ROOT
+    if not alignments_dir.is_dir():
+        return
+
+    for alignment_dir in alignments_dir.iterdir():
+        if not alignment_dir.is_dir():
+            continue
+        metadata_file = alignment_dir / "voxkit_alignment.json"
+        if not metadata_file.exists():
+            continue
+        try:
+            with open(metadata_file, "r") as f:
+                alignment_metadata = json.load(f)
+        except (OSError, json.JSONDecodeError) as e:
+            print(f"Skipping alignment metadata rewrite for '{metadata_file}': {e}")
+            continue
+
+        if not alignment_metadata.get("local"):
+            continue
+
+        alignment_metadata["tg_path"] = str(alignment_dir / "textgrids")
+        try:
+            with open(metadata_file, "w") as f:
+                json.dump(alignment_metadata, f, indent=4)
+        except OSError as e:
+            print(f"Failed to rewrite alignment metadata '{metadata_file}': {e}")
+
+
 def import_dataset(dataset_path: Path) -> Tuple[bool, str]:
     """Import an existing dataset into VoxKit storage.
 
@@ -489,6 +528,8 @@ def import_dataset(dataset_path: Path) -> Tuple[bool, str]:
         with open(metadata_path, "w") as f:
             json.dump(dataset_metadata, f, indent=2)
 
+        _rewrite_imported_alignments(dataset_dest)
+
         return True, "Dataset imported successfully."
 
     except Exception as e:
@@ -510,6 +551,7 @@ def validate_dataset(dataset_path: Path) -> Tuple[bool, str]:
     - Each speaker directory contains audio files (.wav, .flac, .mp3, .ogg, .m4a)
     - Each speaker directory contains label files (.lab, .txt)
     - Number of audio files matches number of label files per speaker
+    - Each audio file has a matching label file with the same stem name
 
     Expected structure:
 
@@ -562,15 +604,9 @@ def validate_dataset(dataset_path: Path) -> Tuple[bool, str]:
         audio_files = [
             f
             for f in os.listdir(speaker_path)
-            if f.endswith(".wav")
-            or f.endswith(".flac")
-            or f.endswith(".mp3")
-            or f.endswith(".ogg")
-            or f.endswith(".m4a")
+            if f.endswith((".wav", ".flac", ".mp3", ".ogg", ".m4a"))
         ]
-        label_files = [
-            f for f in os.listdir(speaker_path) if f.endswith(".lab") or f.endswith(".txt")
-        ]
+        label_files = [f for f in os.listdir(speaker_path) if f.endswith((".lab", ".txt"))]
 
         if not audio_files:
             return False, f"No audio files found in speaker directory '{speaker_path}'."
@@ -583,6 +619,16 @@ def validate_dataset(dataset_path: Path) -> Tuple[bool, str]:
                 False,
                 f"Mismatch between number of audio and label files in speaker "
                 f"directory '{speaker_path}'.",
+            )
+
+        audio_stems = {Path(f).stem for f in audio_files}
+        label_stems = {Path(f).stem for f in label_files}
+        unmatched = audio_stems.symmetric_difference(label_stems)
+        if unmatched:
+            return (
+                False,
+                f"Unpaired audio/label files in speaker directory '{speaker_path}': "
+                f"{', '.join(sorted(unmatched))}.",
             )
 
     return True, "Dataset is valid."

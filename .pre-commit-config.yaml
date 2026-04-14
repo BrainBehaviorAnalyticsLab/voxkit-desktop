@@ -1,4 +1,12 @@
 repos:
+  - repo: local
+    hooks:
+      - id: shredguard-check
+        name: shredguard check
+        entry: shredguard check
+        language: system
+        types: [text]
+
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.14.10
     hooks:
@@ -6,10 +14,14 @@ repos:
         args: [--fix]
       - id: ruff-format
 
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.19.1
+  - repo: local
     hooks:
       - id: mypy
+        name: mypy
+        entry: uv run --only-group dev mypy .
+        language: system
+        types: [python]
+        pass_filenames: false
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0

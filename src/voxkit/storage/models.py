@@ -401,7 +401,11 @@ def delete_model(engine_id: str, model_id: str) -> Tuple[bool, str]:
     Notes:
         - This operation is irreversible
         - Removes the entire model directory tree
+        - Validates that engine_id and model_id are not empty before proceeding
     """
+
+    if not engine_id or not model_id:
+        return False, "Engine ID and Model ID cannot be empty."
 
     print(f"Attempting to delete model: engine_id={engine_id}, model_id={model_id}")
     model_path = _get_model_root(engine_id, model_id)

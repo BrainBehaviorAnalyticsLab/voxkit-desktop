@@ -463,6 +463,74 @@ class TestDatasets:
             assert imp_success is True
             assert "imported successfully" in imp_message
 
+        def test_import_dataset_rewrites_alignment_paths(self, monkeypatch):
+            import json
+
+            from voxkit.storage import datasets
+            from voxkit.storage.datasets import (
+                _get_datasets_root,
+                create_dataset,
+                export_dataset,
+                import_dataset,
+            )
+
+            monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
+
+            success, message = create_dataset(
+                name="dataset_align_import",
+                description="Testing alignment path rewrite on import",
+                original_path=valid_dataset_path,
+                cached=True,
+                anonymize=False,
+                transcribed=True,
+            )
+            assert success is True
+            assert isinstance(message, dict)
+            source_id = message["id"]
+
+            source_root = _get_datasets_root() / source_id
+            alignment_id = "test_alignment_001"
+            alignment_dir = source_root / "alignments" / alignment_id
+            tg_dir = alignment_dir / "textgrids"
+            tg_dir.mkdir(parents=True, exist_ok=True)
+
+            alignment_metadata = {
+                "id": alignment_id,
+                "engine_id": "mfa",
+                "model_metadata": {},
+                "local": True,
+                "alignment_date": "2026-04-14T00:00:00",
+                "status": "completed",
+                "tg_path": str(tg_dir),
+            }
+            alignment_json = alignment_dir / "voxkit_alignment.json"
+            with open(alignment_json, "w") as f:
+                json.dump(alignment_metadata, f)
+
+            export_path = mock_get_storage_root()
+            export_dataset(source_id, export_path)
+
+            exported_dir = export_path / Path(message["name"] + "_" + str(source_id))
+            imp_success, _ = import_dataset(exported_dir)
+            assert imp_success is True
+
+            # Find the newly imported dataset (id differs from source_id).
+            imported_ids = [
+                p.name for p in _get_datasets_root().iterdir() if p.is_dir() and p.name != source_id
+            ]
+            assert len(imported_ids) == 1
+            new_id = imported_ids[0]
+            new_root = _get_datasets_root() / new_id
+
+            new_alignment_json = new_root / "alignments" / alignment_id / "voxkit_alignment.json"
+            assert new_alignment_json.exists()
+            with open(new_alignment_json, "r") as f:
+                rewritten = json.load(f)
+
+            expected_tg_path = str(new_root / "alignments" / alignment_id / "textgrids")
+            assert rewritten["tg_path"] == expected_tg_path
+            assert str(source_root) not in rewritten["tg_path"]
+
         def test_import_dataset_nonexistent(self, monkeypatch):
             from voxkit.storage import datasets
             from voxkit.storage.datasets import import_dataset
@@ -813,3 +881,19 @@ class TestDatasets:
 
             assert is_valid is False
             assert "Mismatch" in msg
+
+        def test_validate_dataset_unpaired_stems(self, monkeypatch):
+            from voxkit.storage.datasets import validate_dataset
+
+            # Create a dataset where counts match but stems do not
+            # (e.g. recording_A.wav paired with recording_B.lab)
+            unpaired_path = mock_get_storage_root() / "fake_datasets" / "unpaired_stems"
+            speaker_path = unpaired_path / "speaker_1"
+            speaker_path.mkdir(parents=True, exist_ok=True)
+            (speaker_path / "recording_A.wav").touch()
+            (speaker_path / "recording_B.lab").touch()
+
+            is_valid, msg = validate_dataset(unpaired_path)
+
+            assert is_valid is False
+            assert "Unpaired" in msg

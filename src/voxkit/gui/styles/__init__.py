@@ -257,6 +257,8 @@ class Buttons:
             font-size: 12px;
             font-weight: bold;
             color: {Colors.TEXT_SECONDARY};
+            min-width: 60px;
+            min-height: 24px;
         }}
         QPushButton:hover {{
             background-color: {Colors.LIGHT_GRAY};
