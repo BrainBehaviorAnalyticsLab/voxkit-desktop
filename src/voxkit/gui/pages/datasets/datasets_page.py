@@ -539,18 +539,15 @@ class DatasetsPage(QWidget):
         layout.setContentsMargins(5, 2, 5, 2)
         layout.setSpacing(5)
 
-        button_style = Buttons.SUCCESS_SMALL
-
         # Delete button
         delete_btn = QPushButton("Delete")
-        delete_btn.setMaximumWidth(60)
         delete_btn.setStyleSheet(Buttons.DELETE_SMALL)
         delete_btn.clicked.connect(lambda: self._delete_alignment(alignment))
         layout.addWidget(delete_btn)
 
         # View button
         view_btn = QPushButton("View")
-        view_btn.setStyleSheet(button_style)
+        view_btn.setStyleSheet(Buttons.SUCCESS_SMALL)
         view_btn.clicked.connect(lambda: self._view_alignment(alignment))
         layout.addWidget(view_btn)
 
