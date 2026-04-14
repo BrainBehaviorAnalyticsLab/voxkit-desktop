@@ -291,7 +291,6 @@ class CategoricalTableWidget(QWidget):
             button_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
             view_btn = QPushButton("View")
-            view_btn.setFixedSize(60, 24)
             view_btn.setStyleSheet(Buttons.TABLE_VIEW)
             view_btn.clicked.connect(lambda checked, idx=row_idx: self.view_item_details(idx))
             button_layout.addWidget(view_btn)

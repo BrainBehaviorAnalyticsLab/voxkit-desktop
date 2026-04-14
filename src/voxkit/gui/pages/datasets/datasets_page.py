@@ -547,7 +547,7 @@ class DatasetsPage(QWidget):
 
         # View button
         view_btn = QPushButton("View")
-        view_btn.setStyleSheet(Buttons.SUCCESS_SMALL)
+        view_btn.setStyleSheet(Buttons.TABLE_VIEW)
         view_btn.clicked.connect(lambda: self._view_alignment(alignment))
         layout.addWidget(view_btn)
 
@@ -807,15 +807,13 @@ class DatasetsPage(QWidget):
         """
         widget = QWidget()
         layout = QHBoxLayout(widget)
-        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setContentsMargins(5, 2, 5, 2)
+        layout.setSpacing(5)
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        button_style = Buttons.TABLE_VIEW
 
         # Details button
         details_btn = QPushButton("Details")
-        details_btn.setFixedSize(80, 24)
-        details_btn.setStyleSheet(button_style)
+        details_btn.setStyleSheet(Buttons.TABLE_VIEW)
         details_btn.clicked.connect(lambda: self._view_dataset_details(dataset_meta))
         layout.addWidget(details_btn)
 
