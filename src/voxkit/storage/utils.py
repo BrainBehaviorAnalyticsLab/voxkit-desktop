@@ -63,12 +63,20 @@ def generate_unique_id(prefix: str | None = None) -> str:
 def readable_from_unique_id(date_str: str) -> str:
     """Convert a unique ID timestamp to a human-readable format.
 
+    Accepts both plain timestamps (YYYYMMDD_HHMMSS_ffffff) and prefixed IDs
+    produced by generate_unique_id (e.g. prefix_YYYYMMDD_HHMMSS_ffffff).
+
     Args:
-        date_str: Timestamp string in format YYYYMMDD_HHMMSS_ffffff
+        date_str: Unique ID string, optionally prefixed as [prefix_]YYYYMMDD_HHMMSS_ffffff
 
     Returns:
         Human-readable date string (e.g., "January 01, 2024 at 12:00:00 PM")
     """
+    parts = date_str.split("_")
+    for i, part in enumerate(parts):
+        if len(part) == 8 and part.isdigit():
+            date_str = "_".join(parts[i:])
+            break
     dt = datetime.strptime(date_str, "%Y%m%d_%H%M%S_%f")
     return dt.strftime("%B %d, %Y at %I:%M:%S %p")
 

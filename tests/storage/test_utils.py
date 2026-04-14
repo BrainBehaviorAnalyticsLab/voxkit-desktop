@@ -185,3 +185,18 @@ class TestUtils:
             assert " at " in readable
             # Should contain AM/PM
             assert "AM" in readable or "PM" in readable
+
+        def test_readable_from_unique_id_with_prefix(self):
+            """Test that readable_from_unique_id handles prefixed IDs from generate_unique_id."""
+            prefixed_id = generate_unique_id(prefix="test")
+            readable = readable_from_unique_id(prefixed_id)
+
+            assert " at " in readable
+            assert "AM" in readable or "PM" in readable
+
+        def test_readable_from_unique_id_roundtrip_with_prefix(self):
+            """Test round-trip: a prefixed ID produces the same readable output as unprefixed."""
+            base_id = "20240115_143022_123456"
+            prefixed_id = f"myprefix_{base_id}"
+
+            assert readable_from_unique_id(base_id) == readable_from_unique_id(prefixed_id)
