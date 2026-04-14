@@ -881,3 +881,19 @@ class TestDatasets:
 
             assert is_valid is False
             assert "Mismatch" in msg
+
+        def test_validate_dataset_unpaired_stems(self, monkeypatch):
+            from voxkit.storage.datasets import validate_dataset
+
+            # Create a dataset where counts match but stems do not
+            # (e.g. recording_A.wav paired with recording_B.lab)
+            unpaired_path = mock_get_storage_root() / "fake_datasets" / "unpaired_stems"
+            speaker_path = unpaired_path / "speaker_1"
+            speaker_path.mkdir(parents=True, exist_ok=True)
+            (speaker_path / "recording_A.wav").touch()
+            (speaker_path / "recording_B.lab").touch()
+
+            is_valid, msg = validate_dataset(unpaired_path)
+
+            assert is_valid is False
+            assert "Unpaired" in msg

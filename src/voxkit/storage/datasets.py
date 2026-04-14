@@ -551,6 +551,7 @@ def validate_dataset(dataset_path: Path) -> Tuple[bool, str]:
     - Each speaker directory contains audio files (.wav, .flac, .mp3, .ogg, .m4a)
     - Each speaker directory contains label files (.lab, .txt)
     - Number of audio files matches number of label files per speaker
+    - Each audio file has a matching label file with the same stem name
 
     Expected structure:
 
@@ -603,15 +604,9 @@ def validate_dataset(dataset_path: Path) -> Tuple[bool, str]:
         audio_files = [
             f
             for f in os.listdir(speaker_path)
-            if f.endswith(".wav")
-            or f.endswith(".flac")
-            or f.endswith(".mp3")
-            or f.endswith(".ogg")
-            or f.endswith(".m4a")
+            if f.endswith((".wav", ".flac", ".mp3", ".ogg", ".m4a"))
         ]
-        label_files = [
-            f for f in os.listdir(speaker_path) if f.endswith(".lab") or f.endswith(".txt")
-        ]
+        label_files = [f for f in os.listdir(speaker_path) if f.endswith((".lab", ".txt"))]
 
         if not audio_files:
             return False, f"No audio files found in speaker directory '{speaker_path}'."
@@ -624,6 +619,16 @@ def validate_dataset(dataset_path: Path) -> Tuple[bool, str]:
                 False,
                 f"Mismatch between number of audio and label files in speaker "
                 f"directory '{speaker_path}'.",
+            )
+
+        audio_stems = {Path(f).stem for f in audio_files}
+        label_stems = {Path(f).stem for f in label_files}
+        unmatched = audio_stems.symmetric_difference(label_stems)
+        if unmatched:
+            return (
+                False,
+                f"Unpaired audio/label files in speaker directory '{speaker_path}': "
+                f"{', '.join(sorted(unmatched))}.",
             )
 
     return True, "Dataset is valid."
