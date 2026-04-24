@@ -9,7 +9,7 @@ readme = "README.md"
 requires-python = ">=3.11"
 license = {text = "MIT"}
 authors = [
-    {name = "Beckett Frey", email = "bfrey6@wisc.edu"}
+    {name = "Beckett Frey", email = "code@beckettfrey.com"}
 ]
 
 dependencies = [
@@ -54,9 +54,9 @@ installation = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/yourusername/your-app-name"
-Repository = "https://github.com/yourusername/your-app-name"
-Issues = "https://github.com/yourusername/your-app-name/issues"
+Homepage = "https://github.com/BrainBehaviorAnalyticsLab/voxkit-desktop"
+Repository = "https://github.com/BrainBehaviorAnalyticsLab/voxkit-desktop"
+Issues = "https://github.com/BrainBehaviorAnalyticsLab/voxkit-desktop/issues"
 
 [tool.ruff]
 line-length = 100
