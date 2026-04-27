@@ -1,6 +1,5 @@
-"""VoxKit GUI Module.
-
-PyQt6-based graphical user interface for the VoxKit desktop application.
+"""PyQt6-based graphical user interface for interacting with datasets using tools.
+Designed for ease of use and extensibility.
 
 API
 ---
