@@ -1,10 +1,7 @@
-"""Log Viewer Dialog.
-
-Read-only dialog that shows the tail of the rolling log file and appends
+"""Read-only dialog that shows the tail of the rolling log file and appends
 new records live via :class:`QObjectLogHandler`. Designed to be reusable
 from other surfaces (Dataset page, per-process views) by swapping the
-source file.
-"""
+source file."""
 
 from collections import deque
 from pathlib import Path

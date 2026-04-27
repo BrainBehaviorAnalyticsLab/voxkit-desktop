@@ -1,11 +1,4 @@
-"""Model Selection Panel Module.
-
-Combined engine and model selection widget for pipeline pages.
-
-API
----
-- **ModelSelectionPanel**: GroupBox with engine radio buttons and model dropdowns
-"""
+"""Combined engine and model selection widget for pipeline pages."""
 
 from PyQt6.QtWidgets import (
     QButtonGroup,

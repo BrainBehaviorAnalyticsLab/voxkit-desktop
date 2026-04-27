@@ -1,11 +1,4 @@
-"""CSV Viewer Dialog Module.
-
-Modal dialog for viewing CSV files in a formatted table.
-
-API
----
-- **CSVViewerDialog**: Dialog that displays CSV data with blur background effect
-"""
+"""Modal dialog for viewing CSV files in a formatted table."""
 
 import csv
 import os

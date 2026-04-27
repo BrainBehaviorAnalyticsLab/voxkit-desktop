@@ -1,11 +1,4 @@
-"""Overlay Effects Module.
-
-Semi-transparent overlay widget for modal dimming effects.
-
-API
----
-- **OverlayWidget**: Translucent overlay for background dimming
-"""
+"""Semi-transparent overlay widget for modal dimming effects."""
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor, QPainter
