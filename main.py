@@ -87,7 +87,7 @@ if getattr(sys, 'frozen', False):
 
 from PyQt6.QtWidgets import QApplication
 from voxkit.config import STARTUP_SCRIPT
-from voxkit.gui import AlignmentGUI
+from voxkit.gui import VoxKitGUI
 from voxkit.gui.workers.startup import execute_startup_script
 
 def main():
@@ -125,7 +125,7 @@ def main():
         app_config = AppConfig.from_yaml(profile_path / "app_info.yaml")
         pipeline_config = PipelineConfig.from_yaml(profile_path / "pipeline_definitions.yaml")
 
-    window = AlignmentGUI(pipeline_config=pipeline_config, app_config=app_config)
+    window = VoxKitGUI(pipeline_config=pipeline_config, app_config=app_config)
     window.show()
     log.info("Main window shown, entering Qt event loop")
     sys.exit(app.exec())
