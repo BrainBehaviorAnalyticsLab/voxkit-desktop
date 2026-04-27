@@ -10,7 +10,7 @@ API
 
 Available Analyzers
 -------------------
-**DefaultAnalyzer** (``default_analyzer.py``)
+**DefaultAnalyzer**
     Extracts speaker count and audio file counts per speaker directory.
     Includes a bar chart visualization for quick dataset overview.
 
