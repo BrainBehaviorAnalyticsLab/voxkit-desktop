@@ -1,6 +1,4 @@
-"""Utility Module for VoxKit Storage.
-
-This module provides utility functions for common VoxKit storage operations,
+"""This module provides utility functions for common VoxKit storage operations,
 including path management and unique identifier generation.
 
 API

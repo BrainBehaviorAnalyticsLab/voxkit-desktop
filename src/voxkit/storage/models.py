@@ -1,6 +1,4 @@
-"""Model Management Module.
-
-Specialized CRUD operations for managing models within the VoxKit storage system.
+"""Specialized CRUD operations for managing models within the VoxKit storage system.
 
 Directory Structure
 -------------------

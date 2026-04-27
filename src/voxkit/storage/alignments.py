@@ -1,6 +1,4 @@
-"""Dataset Alignment Storage Module.
-
-Specialized CRUD operations for managing dataset alignments within the VoxKit storage system.
+"""Specialized CRUD operations for managing dataset alignments within the VoxKit storage system.
 
 Directory Structure
 -------------------

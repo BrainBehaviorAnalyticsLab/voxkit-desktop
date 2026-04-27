@@ -1,6 +1,4 @@
-"""Storage Configuration.
-
-This module contains configuration constants for the VoxKit storage system.
+"""This module contains constants for the VoxKit storage system.
 
 Constants
 ---------
