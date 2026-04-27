@@ -1,6 +1,4 @@
-"""Components Module.
-
-Reusable PyQt6 widgets used throughout the VoxKit application.
+"""Reusable PyQt6 widgets taiored functionally and stylistically for the VoxKit application.
 
 API
 ---
@@ -10,6 +8,9 @@ API
 - **GripSplitter**: QSplitter with visible grip handle for intuitive resizing
 - **HuggingFaceButton**: Branded button with HuggingFace logo
 - **LoadingDialog**: Splash screen / loading dialog with animated spinner
+- **LogViewerDialog**: Dialog for viewing live application logs
+- **QObjectLogHandler**: Qt-aware logging handler that emits records as Qt signals
+- **get_gui_log_handler**: Accessor for the singleton GUI log handler
 - **ModelSelectionPanel**: Combined engine and model selection panel
 - **MultiColumnComboBox**: QComboBox with multi-column dropdown table display
 - **OverlayWidget**: Semi-transparent overlay for modal blur effects
@@ -29,6 +30,7 @@ from .dna_strand import DNAStrandWidget
 from .grip_splitter import GripSplitter
 from .huggingface_button import HuggingFaceButton
 from .loading_dialog import LoadingDialog
+from .log_handler import QObjectLogHandler, get_gui_log_handler
 from .log_viewer_dialog import LogViewerDialog
 from .model_selection_panel import ModelSelectionPanel
 from .overlay_effects import OverlayWidget
@@ -45,5 +47,7 @@ __all__ = [
     "ModelSelectionPanel",
     "MultiColumnComboBox",
     "OverlayWidget",
+    "QObjectLogHandler",
     "ToggleSwitch",
+    "get_gui_log_handler",
 ]
