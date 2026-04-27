@@ -1,7 +1,5 @@
-"""VoxKit Analyzers Module.
-
-Analyzers observe datasets and link metadata in flexible, abstract ways. They
-extract structured information at registration time, producing CSV summaries
+"""Analyzers observe datasets and link metadata. They
+extract structured information at registration time (ingestion), producing CSV summaries
 that can be visualized within VoxKit without rescanning the filesystem.
 
 API
@@ -9,7 +7,6 @@ API
 - **AnalyzerManager.list_analyzers**: List registered analyzer IDs
 - **AnalyzerManager.get_analyzer**: Retrieve analyzer instance by ID
 - **AnalyzerManager.get_analyzers**: Get all registered analyzers
-- **DatasetAnalyzer**: Abstract base class for all analyzers
 
 Available Analyzers
 -------------------
@@ -28,7 +25,7 @@ Analyzer output is stored alongside dataset metadata::
 
 Notes
 -----
-- Analyzers run during dataset registration
+- Analyzers run during dataset registration (ingestion)
 - Each analyzer's ``name`` property serves as its unique identifier
 - Output is a list of dicts where keys become CSV column headers
 - Custom visualizations can be provided via the ``visualize`` method
@@ -78,7 +75,4 @@ ManageAnalyzers = AnalyzerManager({default_analyzer_instance.name: default_analy
 
 __all__ = [
     "ManageAnalyzers",
-    "AnalyzerManager",
-    "DatasetAnalyzer",
-    "DefaultAnalyzer",
 ]
