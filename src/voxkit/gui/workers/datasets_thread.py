@@ -36,6 +36,7 @@ class DatasetRegistrationWorker(QThread):
         anonymize,
         transcribed,
         analysis_method,
+        hand_alignments_path=None,
     ):
         super().__init__()
         self.dataset_path = dataset_path
@@ -45,6 +46,7 @@ class DatasetRegistrationWorker(QThread):
         self.anonymize = anonymize
         self.transcribed = transcribed
         self.analysis_method = analysis_method
+        self.hand_alignments_path = hand_alignments_path
 
     def run(self):
         self.progress.emit("Validating dataset structure...")
@@ -78,6 +80,7 @@ class DatasetRegistrationWorker(QThread):
             transcribed=self.transcribed,
             analysis_data=analysis_data,
             analysis_method=self.analysis_method,
+            hand_alignments_path=self.hand_alignments_path,
         )
 
         print(f"Dataset creation result: {success}, message: {message}")

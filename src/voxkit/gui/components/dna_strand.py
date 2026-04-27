@@ -1,11 +1,4 @@
-"""DNA Strand Widget Module.
-
-Decorative audio waveform visualization for the toolbar.
-
-API
----
-- **DNAStrandWidget**: Procedural audio waveform decoration (Wav2Vec homage)
-"""
+"""Decorative audio waveform visualization for the toolbar."""
 
 import math
 

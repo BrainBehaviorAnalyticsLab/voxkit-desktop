@@ -1,20 +1,17 @@
-"""VoxKit - Speech Analysis and Forced Alignment Toolkit.
-
-A desktop application bridging AI/ML research and clinical speech-language
-pathology. Provides accessible interfaces to forced alignment engines and
-flexible dataset analysis tools.
+"""Modules for VoxKit; Provides accessible interfaces to forced alignment engines and
+flexible dataset analysis and management tools.
 
 Subpackages
 -----------
-- **engines**: Speech toolkit backends (MFA, Faster-Whisper)
+- **engines**: Speech toolkit backends (MFA, W2TG. FasterWhisper, etc.)
 - **analyzers**: Dataset metadata extraction
 - **storage**: Persistence for datasets, models, and alignments
 - **gui**: PyQt6 desktop interface
 - **config**: Application and pipeline configuration
 """
 
-__version__ = "0.1.0"
-__author__ = "Beckett Frey @beckettfrey.com"
+__version__ = "0.4.0"
+__author__ = "Beckett Frey - code@beckettfrey.com"
 
 # Import subpackages for pdoc discoverability (not re-exported in __all__)
 from . import analyzers, config, engines, gui, storage

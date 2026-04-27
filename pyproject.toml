@@ -9,7 +9,7 @@ readme = "README.md"
 requires-python = ">=3.11"
 license = {text = "MIT"}
 authors = [
-    {name = "Beckett Frey", email = "bfrey6@wisc.edu"}
+    {name = "Beckett Frey", email = "code@beckettfrey.com"}
 ]
 
 dependencies = [
@@ -28,7 +28,7 @@ dependencies = [
     "pyyaml>=6.0.0",
     "rich>=14.2.0",
     "faster-whisper>=1.1.0",
-    "alignment-comparison-plots",
+    "alignment-comparison-plots==0.1.1",
 ]
 
 [dependency-groups]
@@ -54,9 +54,9 @@ installation = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/yourusername/your-app-name"
-Repository = "https://github.com/yourusername/your-app-name"
-Issues = "https://github.com/yourusername/your-app-name/issues"
+Homepage = "https://github.com/BrainBehaviorAnalyticsLab/voxkit-desktop"
+Repository = "https://github.com/BrainBehaviorAnalyticsLab/voxkit-desktop"
+Issues = "https://github.com/BrainBehaviorAnalyticsLab/voxkit-desktop/issues"
 
 [tool.ruff]
 line-length = 100
@@ -202,9 +202,6 @@ show_missing = true
 
 [tool.setuptools.packages.find]
 where = ["src"]
-
-[tool.uv.sources]
-alignment-comparison-plots = { git = "https://github.com/WISCLab/alignment-comparison-plots" }
 
 [tool.shredguard]
 

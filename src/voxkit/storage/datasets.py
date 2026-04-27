@@ -1,6 +1,4 @@
-"""Dataset Management Module.
-
-Specialized CRUD operations for managing datasets within the VoxKit storage system.
+"""Specialized CRUD operations for managing datasets within the VoxKit storage system.
 
 Directory Structure
 -------------------
@@ -61,6 +59,7 @@ class DatasetMetadata(TypedDict):
         anonymize: Whether speaker identities should be anonymized.
         transcribed: Whether the dataset includes transcription files.
         registration_date: Human-readable registration timestamp.
+        hand_alignments_path: Optional path to pre-existing hand-annotated TextGrids.
     """
 
     name: str
@@ -71,6 +70,7 @@ class DatasetMetadata(TypedDict):
     anonymize: bool
     transcribed: bool
     registration_date: str
+    hand_alignments_path: str | None
 
 
 def _get_datasets_root() -> Path:
@@ -130,6 +130,7 @@ def create_dataset(
     transcribed: bool = False,
     analysis_data: list[dict[str, Any]] | None = None,
     analysis_method: str | None = None,
+    hand_alignments_path: str | None = None,
 ) -> tuple[Literal[True], DatasetMetadata] | tuple[Literal[False], str]:
     """Create a dataset metadata dictionary and create necessary directories.
 
@@ -146,6 +147,7 @@ def create_dataset(
         transcribed: Whether the dataset includes transcription files
         analysis_data: Optional list of analysis result dictionaries to save as CSV
         analysis_method: Optional name of the analysis method (used for CSV filename)
+        hand_alignments_path: Optional path to pre-existing hand-annotated TextGrids
 
     Returns:
         Tuple of (True, DatasetMetadata) on success or (False, error_message) on failure
@@ -178,6 +180,7 @@ def create_dataset(
             anonymize=anonymize,
             transcribed=transcribed,
             registration_date=humannow,
+            hand_alignments_path=hand_alignments_path,
         )
 
         # Create dataset directory
@@ -203,6 +206,14 @@ def create_dataset(
         if analysis_data is not None and analysis_method is not None:
             csv_path = dataset_dir / f"{analysis_method.lower()}_summary.csv"
             _save_analysis_csv(analysis_data, csv_path)
+
+        # Register the hand-annotated alignment entry if a path was provided
+        if hand_alignments_path:
+            from voxkit.storage.alignments import create_hand_alignment
+
+            ok, result = create_hand_alignment(metadata["id"], tg_path=hand_alignments_path)
+            if not ok:
+                raise RuntimeError(f"Failed to register hand alignment: {result}")
 
         return True, metadata
 

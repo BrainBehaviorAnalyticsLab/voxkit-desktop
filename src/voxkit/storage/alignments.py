@@ -1,6 +1,4 @@
-"""Dataset Alignment Storage Module.
-
-Specialized CRUD operations for managing dataset alignments within the VoxKit storage system.
+"""Specialized CRUD operations for managing dataset alignments within the VoxKit storage system.
 
 Directory Structure
 -------------------
@@ -19,6 +17,7 @@ Each dataset alignment follows a hierarchical structure:
 API
 ---
 - **create_alignment**: Create a new alignment entry in storage
+- **create_hand_alignment**: Create a new hand-annotated alignment entry in storage
 - **get_alignment_metadata**: Retrieve metadata for a specific alignment
 - **update_alignment**: Update the status or details of an existing alignment
 - **list_alignments**: List all alignments for a given dataset
@@ -43,6 +42,9 @@ from .config import ALIGNMENTS_ROOT
 from .datasets import _get_dataset_root, get_dataset_metadata
 from .models import ModelMetadata, get_model_metadata
 from .utils import generate_unique_id, readable_from_unique_id
+
+HAND_ALIGNMENT_SENTINEL = "hand"
+"""Sentinel value used for engine_id/model id on manually-created (hand) alignments."""
 
 AlignmentStatus = Literal["pending", "completed", "failed"]
 """Status of an alignment operation.
@@ -194,6 +196,141 @@ def create_alignment(
         if os.path.exists(alignment_root):
             shutil.rmtree(alignment_root, ignore_errors=True)
         return False, f"Failed to create alignment metadata: {str(e)}"
+
+
+_AUDIO_EXTS = (".wav", ".flac", ".mp3", ".ogg", ".m4a")
+
+
+def validate_hand_alignments(dataset_path: Path, hand_path: Path) -> Tuple[bool, str]:
+    """Validate that a hand-alignments directory matches a dataset's speaker/audio layout.
+
+    Expects the hand-alignments directory to mirror the dataset: one subdirectory
+    per speaker, containing a ``.TextGrid`` file for every audio file in the
+    corresponding dataset speaker directory (matched by stem).
+
+    Args:
+        dataset_path: Path to the dataset root (containing speaker subdirectories)
+        hand_path: Path to the hand-annotated TextGrid root
+
+    Returns:
+        Tuple of (True, "...") if valid, or (False, error_message) if not
+    """
+    if not isinstance(dataset_path, Path):
+        dataset_path = Path(dataset_path)
+    if not isinstance(hand_path, Path):
+        hand_path = Path(hand_path)
+
+    if not hand_path.exists() or not hand_path.is_dir():
+        return False, f"Hand alignments path '{hand_path}' is not an existing directory."
+
+    dataset_speakers = {
+        d.name for d in dataset_path.iterdir() if d.is_dir() and not d.name.startswith(".")
+    }
+    hand_speakers = {
+        d.name for d in hand_path.iterdir() if d.is_dir() and not d.name.startswith(".")
+    }
+
+    missing_speakers = dataset_speakers - hand_speakers
+    if missing_speakers:
+        return (
+            False,
+            f"Hand alignments missing speaker directories: {', '.join(sorted(missing_speakers))}",
+        )
+
+    for speaker in sorted(dataset_speakers):
+        audio_stems = {
+            f.stem for f in (dataset_path / speaker).iterdir() if f.suffix.lower() in _AUDIO_EXTS
+        }
+        tg_stems = {
+            f.stem for f in (hand_path / speaker).iterdir() if f.suffix.lower() == ".textgrid"
+        }
+        missing = audio_stems - tg_stems
+        if missing:
+            return (
+                False,
+                f"Speaker '{speaker}' is missing TextGrid files for: {', '.join(sorted(missing))}",
+            )
+
+    return True, "Hand alignments match dataset layout."
+
+
+def create_hand_alignment(
+    dataset_id: str,
+    tg_path: str | None = None,
+) -> tuple[Literal[True], AlignmentMetadata] | tuple[Literal[False], str]:
+    """Create a new hand-annotated alignment entry in storage.
+
+    Mirrors `create_alignment` but skips engine/model lookup — engine_id and the
+    model metadata fields are filled with the `HAND_ALIGNMENT_SENTINEL` value.
+    Starts in "completed" status since there is no processing step.
+
+    Args:
+        dataset_id: Identifier of the dataset to align
+        tg_path: Optional existing directory of hand-annotated TextGrids. When
+            provided, it is recorded as-is and the alignment is marked non-local.
+            When omitted, falls back to the same tg_path resolution used by
+            `create_alignment`.
+
+    Returns:
+        Tuple of (True, AlignmentMetadata) on success or (False, error_message) on failure
+    """
+    dataset_metadata = get_dataset_metadata(dataset_id)
+    if not dataset_metadata:
+        return False, f"Dataset '{dataset_id}' not found"
+
+    alignments_root = _get_alignments_root(dataset_id)
+    if not alignments_root:
+        return False, f"Dataset '{dataset_id}' not found"
+
+    now = generate_unique_id()
+    alignment_date = readable_from_unique_id(now)
+    alignment_root = alignments_root / now
+
+    alignment_root.mkdir(parents=False, exist_ok=False)
+
+    try:
+        if tg_path is not None:
+            local = False
+            resolved_tg_path = Path(tg_path)
+        else:
+            local = dataset_metadata["cached"]
+            if bool(local) is False:
+                resolved_tg_path = Path(dataset_metadata["original_path"]) / "textgrids"
+            else:
+                resolved_tg_path = alignment_root / "textgrids"
+            resolved_tg_path.mkdir(parents=False, exist_ok=True)
+
+        model_metadata = ModelMetadata(
+            name=HAND_ALIGNMENT_SENTINEL,
+            engine_id=HAND_ALIGNMENT_SENTINEL,
+            model_path="",  # type: ignore[typeddict-item]
+            data_path="",  # type: ignore[typeddict-item]
+            eval_path="",  # type: ignore[typeddict-item]
+            train_path="",  # type: ignore[typeddict-item]
+            download_date=alignment_date,
+            id=HAND_ALIGNMENT_SENTINEL,
+        )
+
+        metadata = AlignmentMetadata(
+            id=now,
+            engine_id=HAND_ALIGNMENT_SENTINEL,
+            model_metadata=model_metadata,
+            local=local,
+            tg_path=str(resolved_tg_path),
+            alignment_date=alignment_date,
+            status="completed",
+        )
+
+        metadata_path = alignment_root / "voxkit_alignment.json"
+        with open(metadata_path, "w") as f:
+            json.dump(metadata, f, indent=4)
+
+        return True, metadata
+
+    except Exception as e:
+        if os.path.exists(alignment_root):
+            shutil.rmtree(alignment_root, ignore_errors=True)
+        return False, f"Failed to create hand alignment metadata: {str(e)}"
 
 
 def get_alignment_metadata(dataset_id: str, alignment_id: str) -> AlignmentMetadata | None:

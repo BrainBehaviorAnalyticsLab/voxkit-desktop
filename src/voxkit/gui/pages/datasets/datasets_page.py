@@ -35,8 +35,13 @@ from voxkit.gui.components.csv_viewer_dialog import CSVViewerDialog
 from voxkit.gui.styles import Buttons, Containers, Labels
 from voxkit.gui.workers import DatasetRegistrationWorker
 from voxkit.storage import alignments, datasets
-from voxkit.storage.alignments import AlignmentMetadata
+from voxkit.storage.alignments import HAND_ALIGNMENT_SENTINEL, AlignmentMetadata
 from voxkit.storage.datasets import DatasetMetadata
+
+# Virtual engine ids that are not registered in the engines registry but may
+# appear as `engine_id` on alignment metadata. Extend this list to surface new
+# non-engine alignment sources in the filter dropdown.
+VIRTUAL_ALIGNMENT_ENGINES: list[str] = [HAND_ALIGNMENT_SENTINEL]
 
 
 class DatasetsPage(QWidget):
@@ -61,6 +66,10 @@ class DatasetsPage(QWidget):
             if engine.has_tool("align"):
                 filtered_engines.append(engine_id)
         return filtered_engines
+
+    def get_alignment_engine_ids(self) -> list[str]:
+        """Return all engine ids that can appear on alignments, including virtual ones."""
+        return self.get_engines() + VIRTUAL_ALIGNMENT_ENGINES
 
     def init_ui(self):
         """Initialize the UI components"""
@@ -447,7 +456,7 @@ class DatasetsPage(QWidget):
         self.engine_filter_combo.blockSignals(True)
         self.engine_filter_combo.clear()
         self.engine_filter_combo.addItem("All Engines")
-        self.engine_filter_combo.addItems(sorted(self.get_engines()))
+        self.engine_filter_combo.addItems(sorted(self.get_alignment_engine_ids()))
         self.engine_filter_combo.setCurrentText(current_filter)
         self.engine_filter_combo.blockSignals(False)
 
@@ -673,6 +682,14 @@ class DatasetsPage(QWidget):
                     default_value=False,
                     tooltip="Mark as already containing transcriptions",
                 ),
+                FieldConfig(
+                    name="hand_alignments_path",
+                    label="Hand Alignments Path",
+                    field_type=FieldType.LINEEDIT,
+                    default_value="",
+                    placeholder="Optional: path to pre-existing TextGrids...",
+                    tooltip="Optional directory containing hand-annotated TextGrid files",
+                ),
             ],
         )
 
@@ -695,6 +712,7 @@ class DatasetsPage(QWidget):
         cache = values.get("cache", False)
         anonymize = values.get("anonymize", False)
         transcribed = values.get("transcribed", False)
+        hand_alignments_path = values.get("hand_alignments_path", "").strip() or None
 
         # Validation
         if not dataset_path:
@@ -709,6 +727,14 @@ class DatasetsPage(QWidget):
             QMessageBox.warning(self, "Input Error", "Please enter a description.")
             return
 
+        if hand_alignments_path is not None:
+            ok, msg = alignments.validate_hand_alignments(
+                Path(dataset_path), Path(hand_alignments_path)
+            )
+            if not ok:
+                QMessageBox.warning(self, "Input Error", msg)
+                return
+
         # Start registration in worker thread
         print(
             f"Starting dataset registration with params: {dataset_path}, {dataset_name}, "
@@ -716,7 +742,14 @@ class DatasetsPage(QWidget):
             f"analysis_method={analysis_method}"
         )
         self.registration_worker = DatasetRegistrationWorker(
-            dataset_path, dataset_name, description, cache, anonymize, transcribed, analysis_method
+            dataset_path,
+            dataset_name,
+            description,
+            cache,
+            anonymize,
+            transcribed,
+            analysis_method,
+            hand_alignments_path,
         )
         if self.registration_worker is None:
             return

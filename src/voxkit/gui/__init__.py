@@ -1,10 +1,9 @@
-"""VoxKit GUI Module.
-
-PyQt6-based graphical user interface for the VoxKit desktop application.
+"""PyQt6-based graphical user interface for interacting with datasets using tools.
+Designed for ease of use and extensibility.
 
 API
 ---
-- **AlignmentGUI**: Main application window with toolbar navigation
+- **VoxKitGUI**: Main application window with toolbar navigation
 
 Submodules
 ----------
@@ -167,13 +166,13 @@ ToolBarStyle = """
     """
 
 
-class AlignmentGUI(QMainWindow):
+class VoxKitGUI(QMainWindow):
     def __init__(
         self,
         app_config: Optional[AppConfig] = None,
         pipeline_config: Optional[PipelineConfig] = None,
     ):
-        """Initialize the AlignmentGUI.
+        """Initialize the VoxKitGUI.
 
         Args:
             app_config: Application configuration. If None, loads default from config files.
@@ -186,7 +185,7 @@ class AlignmentGUI(QMainWindow):
         self.pipeline_config = pipeline_config or get_pipeline_config()
 
         logger.info(
-            "AlignmentGUI initialized: app=%s version=%s",
+            "VoxKitGUI initialized: app=%s version=%s",
             self.app_config.app_name,
             self.app_config.version,
         )
@@ -450,4 +449,4 @@ class AlignmentGUI(QMainWindow):
             self._log_viewer.activateWindow()
 
 
-__all__ = ["AlignmentGUI"]
+__all__ = ["VoxKitGUI"]

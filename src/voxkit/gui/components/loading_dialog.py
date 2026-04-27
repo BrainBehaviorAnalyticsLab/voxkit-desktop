@@ -1,11 +1,4 @@
-"""Loading Dialog Module.
-
-Splash screen / loading dialog for long-running operations.
-
-API
----
-- **LoadingDialog**: Modal dialog with animated spinner and status message
-"""
+"""Splash screen / loading dialog for long-running operations."""
 
 from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, Qt, QTimer
 from PyQt6.QtWidgets import QDialog, QGraphicsOpacityEffect, QLabel, QVBoxLayout
