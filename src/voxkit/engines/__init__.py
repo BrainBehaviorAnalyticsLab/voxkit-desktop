@@ -1,30 +1,28 @@
-"""VoxKit Engines Module.
-
-Engines are speech toolkit backends that perform alignment, training, and
-transcription operations. Each engine provides one or more tools with
-configurable settings.
+"""Engines are speech toolkit backends. Each engine provides one or more tools
+where each tool is a unit of functionality (e.g. alignment, training, transcription).
 
 API
 ---
 - **EngineManager.list_engines**: List registered engine IDs
 - **EngineManager.get_engine**: Retrieve engine instance by ID
 - **EngineManager.get_tool_providers**: Get engines providing a specific tool type
-- **AlignmentEngine**: Abstract base class for all engines
-- **ToolType**: Literal type for tool categories ("train", "align", "transcribe")
+- **ToolType**: Literal type for compatible tool types
 
 Available Engines
 -----------------
-**MFAEngine** (``mfa_engine.py``)
+**MFAEngine**
     Montreal Forced Aligner integration. Provides alignment using pretrained
     acoustic models and training via model adaptation.
+    Tools: ``alignment``, ``training``
 
-**FasterWhisperEngine** (``faster_whisper_engine.py``)
-    Faster-Whisper integration for transcription. Produces .lab label files
+**W2TGEngine**
+    Wav2TextGrid integration using Wav2Vec 2.0 models.
+    Tools: ``alignment``, ``training``
+
+**FasterWhisperEngine**
+    Faster-Whisper integration for transcription. Produces .lab transcript files
     from audio using CTranslate2 backend.
-
-**W2TGEngine** (``w2tg_engine.py``) [disabled]
-    Wav2TextGrid integration using Wav2Vec 2.0 models. Supports both
-    alignment and from-scratch training.
+    Tools: ``transcription``
 
 Storage Structure
 -----------------
@@ -60,7 +58,7 @@ class EngineManager:
     """
     Manager class for registered engines.
 
-    Provides a unified interface to list and retrieve registered alignment engines.
+    Provides a unified interface to list and retrieve engines.
 
     Methods:
         list_engines(): Return a list of registered engine IDs.
@@ -99,11 +97,4 @@ mfa = MFAEngine(id="MFAENGINE")
 faster_whisper = FasterWhisperEngine(id="FASTERWHISPERENGINE")
 engines = EngineManager({mfa.id: mfa, faster_whisper.id: faster_whisper, w2tg.id: w2tg})
 
-__all__ = [
-    "engines",
-    "EngineManager",
-    "AlignmentEngine",
-    "ToolType",
-    "MFAEngine",
-    "FasterWhisperEngine",
-]
+__all__ = ["engines", "ToolType"]

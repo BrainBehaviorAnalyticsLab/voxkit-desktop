@@ -1,11 +1,4 @@
-"""Toggle Switch Module.
-
-Animated iOS-style toggle switch widget.
-
-API
----
-- **ToggleSwitch**: Custom toggle switch with smooth animation
-"""
+"""Animated iOS-style toggle switch widget."""
 
 from PyQt6.QtCore import (  # type: ignore[attr-defined]
     QEasingCurve,

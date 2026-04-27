@@ -1,12 +1,4 @@
-"""Grip Splitter Module.
-
-Custom QSplitter with a visible grip handle for intuitive resizing.
-
-API
----
-- **GripSplitter**: QSplitter with custom grip handles
-- **GripSplitterHandle**: Custom handle with visible grip dots
-"""
+"""Custom QSplitter with a visible grip handle for intuitive resizing."""
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor, QPainter

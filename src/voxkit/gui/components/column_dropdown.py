@@ -1,11 +1,4 @@
-"""Column Dropdown Module.
-
-QComboBox with multi-column table dropdown display.
-
-API
----
-- **MultiColumnComboBox**: ComboBox with tabular dropdown (single selection)
-"""
+"""QComboBox with multi-column table dropdown display."""
 
 import sys
 

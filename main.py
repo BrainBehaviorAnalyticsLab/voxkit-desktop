@@ -12,8 +12,10 @@ from voxkit.config.pipeline_config import PipelineConfig
 from voxkit.config.app_config import AppConfig, get_app_config, get_profile_config_path
 from voxkit.config.logging_config import setup_logging
 
-# Disable Qt emoji support to prevent crashes in frozen builds
-
+# Minimal early config so frozen-env messages below are emitted before
+# setup_logging() runs in main(); setup_logging() will reconfigure handlers.
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+log = logging.getLogger("voxkit.main")
 
 # CRITICAL: Must be at the top for frozen apps using multiprocessing
 if __name__ == "__main__":
@@ -55,10 +57,10 @@ if getattr(sys, 'frozen', False):
     if conda_bin:
         existing_path = os.environ.get('PATH', '/usr/bin:/bin:/usr/sbin:/sbin')
         minimal_env['PATH'] = f"{conda_bin}:{existing_path}"
-        print(f"[FROZEN] Added conda to PATH: {conda_bin}")
+        log.info("[FROZEN] Added conda to PATH: %s", conda_bin)
     else:
         minimal_env['PATH'] = os.environ.get('PATH', '/usr/bin:/bin:/usr/sbin:/sbin')
-        print("[FROZEN] Warning: conda not found in standard locations. MFA alignment may fail.")
+        log.warning("[FROZEN] conda not found in standard locations. MFA alignment may fail.")
 
     # PyInstaller-specific: Add Qt plugin paths
     if getattr(sys, '_MEIPASS', None):
@@ -67,30 +69,26 @@ if getattr(sys, 'frozen', False):
         if os.path.exists(qt_plugins):
             minimal_env['QT_PLUGIN_PATH'] = qt_plugins
             minimal_env['QT_QPA_PLATFORM_PLUGIN_PATH'] = os.path.join(qt_plugins, 'platforms')
-        
+
         # Additional Qt environment for frozen apps
         minimal_env['QT_AUTO_SCREEN_SCALE_FACTOR'] = '1'
         minimal_env['QT_LOGGING_RULES'] = '*.debug=false;qt.qpa.*=false'
-        
-        print(f"[FROZEN] Qt plugins directory: {qt_plugins}")
-        print(f"[FROZEN] Bundle directory: {bundle_dir}")
+
+        log.info("[FROZEN] Qt plugins directory: %s", qt_plugins)
+        log.info("[FROZEN] Bundle directory: %s", bundle_dir)
 
     # IMPORTANT: Don't clear os.environ - preserve system environment
     # Just add/override our minimal required variables
     for key, value in minimal_env.items():
         if value:
             os.environ[key] = value
-            
-    print("[FROZEN] Environment configured for frozen app")
 
-
+    log.info("[FROZEN] Environment configured for frozen app")
 
 from PyQt6.QtWidgets import QApplication
 from voxkit.config import STARTUP_SCRIPT
-from voxkit.gui import AlignmentGUI
+from voxkit.gui import VoxKitGUI
 from voxkit.gui.workers.startup import execute_startup_script
-from pathlib import Path
-
 
 def main():
     # Initialize logging as early as possible so startup work is captured.
@@ -108,7 +106,6 @@ def main():
     from voxkit.gui.components.log_handler import get_gui_log_handler
     get_gui_log_handler()
 
-    log = logging.getLogger("voxkit.main")
     log.info("VoxKit starting (frozen=%s)", bool(getattr(sys, "frozen", False)))
 
     app = QApplication(sys.argv)
@@ -128,7 +125,7 @@ def main():
         app_config = AppConfig.from_yaml(profile_path / "app_info.yaml")
         pipeline_config = PipelineConfig.from_yaml(profile_path / "pipeline_definitions.yaml")
 
-    window = AlignmentGUI(pipeline_config=pipeline_config, app_config=app_config)
+    window = VoxKitGUI(pipeline_config=pipeline_config, app_config=app_config)
     window.show()
     log.info("Main window shown, entering Qt event loop")
     sys.exit(app.exec())
@@ -136,6 +133,5 @@ def main():
 
 if __name__ == "__main__":
     # Prevent multiprocessing from spawning new app windows in frozen builds
-    multiprocessing.freeze_support()
     multiprocessing.set_start_method('spawn', force=True)
     main()

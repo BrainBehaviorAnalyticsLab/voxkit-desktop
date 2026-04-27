@@ -1,8 +1,5 @@
-"""Qt-aware logging handler that emits records as a pyqtSignal.
-
-Bridges stdlib :mod:`logging` into Qt's signal/slot system so dialogs and
-widgets can subscribe to live log output without polling the log file.
-"""
+"""Bridges stdlib :mod:`logging` into Qt's signal/slot system so dialogs and
+widgets can subscribe to live log output without polling the log file."""
 
 import logging
 
