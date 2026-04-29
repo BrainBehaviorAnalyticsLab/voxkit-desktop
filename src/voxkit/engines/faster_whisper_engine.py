@@ -134,7 +134,7 @@ class FasterWhisperEngine(AlignmentEngine):
             if not speaker_dir.is_dir() or speaker_dir.name.startswith("."):
                 continue
 
-            wav_files = sorted(speaker_dir.glob("*.wav"))
+            wav_files = sorted(f for f in speaker_dir.glob("*.wav") if not f.name.startswith("."))
             for wav_path in wav_files:
                 lab_path = wav_path.with_suffix(".lab")
 
