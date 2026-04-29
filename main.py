@@ -4,6 +4,18 @@ import logging
 import os
 import multiprocessing
 
+# Windows: configure console and stdout/stderr for UTF-8 before any output.
+# Without this, rich's legacy renderer falls back to cp1252 and chokes on
+# Unicode characters (e.g., circled letters in pipeline config YAML).
+if sys.platform == 'win32':
+    try:
+        import ctypes
+        ctypes.windll.kernel32.SetConsoleOutputCP(65001)
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+        sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+    except Exception:
+        pass
+
 # Apply patches for frozen (PyInstaller) environment BEFORE other imports
 if getattr(sys, 'frozen', False):
     import _frozen_patch
