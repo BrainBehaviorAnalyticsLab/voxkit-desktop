@@ -157,7 +157,7 @@ class GenericDialog(QDialog):
             print("Saved values json doesn't exist yet.")
             return
         try:
-            with open(self.store_values_path, "r") as f:
+            with open(self.store_values_path, "r", encoding="utf-8") as f:
                 saved_values = json.load(f)
                 for name, value in saved_values.items():
                     print(f"Loading saved value for {name}: {value}")

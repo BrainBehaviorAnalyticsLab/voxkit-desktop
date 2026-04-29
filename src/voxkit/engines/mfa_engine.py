@@ -204,7 +204,7 @@ class MFAEngine(AlignmentEngine):
         for key in serializable:
             if isinstance(serializable[key], Path):
                 serializable[key] = str(serializable[key])
-        with open(model_metadata_path, "w") as f:
+        with open(model_metadata_path, "w", encoding="utf-8") as f:
             import json
 
             json.dump(serializable, f, indent=4)

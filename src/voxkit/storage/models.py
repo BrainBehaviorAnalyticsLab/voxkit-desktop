@@ -179,7 +179,7 @@ def create_model(
         json_metadata = {k: str(v) if isinstance(v, Path) else v for k, v in model_metadata.items()}
 
         # Create metadata file and write metadata
-        with open(metadata_path, "w") as f:
+        with open(metadata_path, "w", encoding="utf-8") as f:
             json.dump(json_metadata, f, indent=4)
 
         return True, model_metadata
@@ -218,7 +218,7 @@ def update_model_metadata(engine_id: str, model_id: str, updates: dict) -> Tuple
 
     metadata_path = Path(model_root) / "voxkit_model.json"
     try:
-        with open(metadata_path, "r") as f:
+        with open(metadata_path, "r", encoding="utf-8") as f:
             metadata = json.load(f)
 
         # Update fields
@@ -226,7 +226,7 @@ def update_model_metadata(engine_id: str, model_id: str, updates: dict) -> Tuple
             if key in metadata:
                 metadata[key] = str(value)
 
-        with open(metadata_path, "w") as f:
+        with open(metadata_path, "w", encoding="utf-8") as f:
             json.dump(metadata, f, indent=4)
 
         return True, "Model metadata updated successfully."
@@ -266,7 +266,7 @@ def list_models(engine_id: str) -> list[ModelMetadata]:
                 metadata_path = dir / "voxkit_model.json"
                 if metadata_path.exists():
                     try:
-                        with open(metadata_path, "r") as f:
+                        with open(metadata_path, "r", encoding="utf-8") as f:
                             metadata = json.load(f)
                             models_found.append(metadata)
                     except json.JSONDecodeError as e:
@@ -302,7 +302,7 @@ def get_model_metadata(engine_id: str, model_id: str) -> ModelMetadata:
     metadata_path = Path(model_root) / "voxkit_model.json"
     if not metadata_path.exists():
         raise FileNotFoundError(f"Metadata file not found for model '{model_id}'")
-    with open(metadata_path, "r") as f:
+    with open(metadata_path, "r", encoding="utf-8") as f:
         metadata: ModelMetadata = json.load(f)
         return metadata
 
@@ -445,7 +445,7 @@ def import_models(engine_id, new_models_root: Path) -> Tuple[bool, str]:
                     metadata = None
                     # Read json metadata
 
-                    with open(metadata_path, "r") as f:
+                    with open(metadata_path, "r", encoding="utf-8") as f:
                         metadata = json.load(f)
 
                     if metadata is None:
@@ -494,7 +494,7 @@ def import_models(engine_id, new_models_root: Path) -> Tuple[bool, str]:
                     # Overwrite metadata file with new IDs and paths
                     new_metadata_path = dest_path / "voxkit_model.json"
 
-                    with open(new_metadata_path, "w") as f:
+                    with open(new_metadata_path, "w", encoding="utf-8") as f:
                         json.dump(json_metadata, f, indent=4)
 
                 except Exception as e:

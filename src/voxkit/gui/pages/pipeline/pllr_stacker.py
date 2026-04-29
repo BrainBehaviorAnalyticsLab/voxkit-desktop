@@ -486,7 +486,7 @@ class PLLRStacker(QWidget):
             print(f"[LOGIC] Settings file found at: {path_to_pllr_settings}")
             from json import load as json_load
 
-            with open(path_to_pllr_settings, "r") as f:
+            with open(path_to_pllr_settings, "r", encoding="utf-8") as f:
                 pllr_settings = json_load(f)
             print(f"[LOGIC] Settings loaded: {pllr_settings}")
         else:

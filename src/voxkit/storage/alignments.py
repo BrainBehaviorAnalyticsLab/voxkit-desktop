@@ -186,7 +186,7 @@ def create_alignment(
         # Fetch model metadata
         metadata_path = alignment_root / "voxkit_alignment.json"
 
-        with open(metadata_path, "w") as f:
+        with open(metadata_path, "w", encoding="utf-8") as f:
             json.dump(metadata, f, indent=4)
 
         return True, metadata
@@ -322,7 +322,7 @@ def create_hand_alignment(
         )
 
         metadata_path = alignment_root / "voxkit_alignment.json"
-        with open(metadata_path, "w") as f:
+        with open(metadata_path, "w", encoding="utf-8") as f:
             json.dump(metadata, f, indent=4)
 
         return True, metadata
@@ -357,7 +357,7 @@ def get_alignment_metadata(dataset_id: str, alignment_id: str) -> AlignmentMetad
     metadata_path = alignment_root / "voxkit_alignment.json"
 
     try:
-        with open(metadata_path, "r") as f:
+        with open(metadata_path, "r", encoding="utf-8") as f:
             metadata: AlignmentMetadata = json.load(f)
             # Normalize status to lowercase for consistency
             if "status" in metadata:
@@ -399,7 +399,7 @@ def update_alignment(dataset_id: str, alignment_id: str, updates: dict) -> Tuple
     metadata_path = alignment_root / "voxkit_alignment.json"
 
     try:
-        with open(metadata_path, "r") as f:
+        with open(metadata_path, "r", encoding="utf-8") as f:
             metadata = json.load(f)
 
         # Update fields
@@ -410,7 +410,7 @@ def update_alignment(dataset_id: str, alignment_id: str, updates: dict) -> Tuple
                     value = value.lower()
                 metadata[key] = value
 
-        with open(metadata_path, "w") as f:
+        with open(metadata_path, "w", encoding="utf-8") as f:
             json.dump(metadata, f, indent=4)
 
         return True, "Alignment metadata updated successfully."
@@ -447,7 +447,7 @@ def list_alignments(dataset_id: str) -> List[AlignmentMetadata]:
             metadata_path = dir / "voxkit_alignment.json"
             if metadata_path.exists():
                 try:
-                    with open(metadata_path, "r") as f:
+                    with open(metadata_path, "r", encoding="utf-8") as f:
                         metadata = json.load(f)
                         # Normalize status to lowercase for consistency
                         if "status" in metadata:

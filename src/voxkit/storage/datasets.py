@@ -114,7 +114,7 @@ def _get_dataset_metadata(dataset_root: Path) -> DatasetMetadata | None:
         metadata_path = dataset_root / "voxkit_dataset.json"
         if not metadata_path.exists():
             return None
-        with open(metadata_path, "r") as f:
+        with open(metadata_path, "r", encoding="utf-8") as f:
             result: DatasetMetadata = json.load(f)
             return result
     except Exception:
@@ -193,7 +193,7 @@ def create_dataset(
         alignments_dir = dataset_dir / ALIGNMENTS_ROOT
         alignments_dir.mkdir(parents=False, exist_ok=False)
         metadata_path = dataset_dir / "voxkit_dataset.json"
-        with open(metadata_path, "w") as f:
+        with open(metadata_path, "w", encoding="utf-8") as f:
             json.dump(metadata, f, indent=2)
 
         # Cache the dataset if requested
@@ -297,7 +297,7 @@ def list_datasets_metadata() -> List[DatasetMetadata]:
             if entry.is_dir():
                 metadata_path = os.path.join(entry.path, "voxkit_dataset.json")
                 if os.path.exists(metadata_path):
-                    with open(metadata_path, "r") as f:
+                    with open(metadata_path, "r", encoding="utf-8") as f:
                         metadata = json.load(f)
                         datasets.append(metadata)
         return datasets
@@ -340,7 +340,7 @@ def update_dataset_metadata(
 
         # Save the updated metadata
         metadata_path = _get_datasets_root() / dataset_id / "voxkit_dataset.json"
-        with open(metadata_path, "w") as f:
+        with open(metadata_path, "w", encoding="utf-8") as f:
             json.dump(metadata, f, indent=2)
 
         return True, "Dataset metadata updated successfully"
@@ -452,7 +452,7 @@ def _rewrite_imported_alignments(new_dataset_path: Path) -> None:
         if not metadata_file.exists():
             continue
         try:
-            with open(metadata_file, "r") as f:
+            with open(metadata_file, "r", encoding="utf-8") as f:
                 alignment_metadata = json.load(f)
         except (OSError, json.JSONDecodeError) as e:
             print(f"Skipping alignment metadata rewrite for '{metadata_file}': {e}")
@@ -463,7 +463,7 @@ def _rewrite_imported_alignments(new_dataset_path: Path) -> None:
 
         alignment_metadata["tg_path"] = str(alignment_dir / "textgrids")
         try:
-            with open(metadata_file, "w") as f:
+            with open(metadata_file, "w", encoding="utf-8") as f:
                 json.dump(alignment_metadata, f, indent=4)
         except OSError as e:
             print(f"Failed to rewrite alignment metadata '{metadata_file}': {e}")
@@ -536,7 +536,7 @@ def import_dataset(dataset_path: Path) -> Tuple[bool, str]:
 
         shutil.copytree(dataset_path, dataset_dest, dirs_exist_ok=True)
 
-        with open(metadata_path, "w") as f:
+        with open(metadata_path, "w", encoding="utf-8") as f:
             json.dump(dataset_metadata, f, indent=2)
 
         _rewrite_imported_alignments(dataset_dest)
