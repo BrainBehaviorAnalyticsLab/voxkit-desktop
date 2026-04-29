@@ -52,7 +52,7 @@ class DatasetRegistrationWorker(QThread):
         self.progress.emit("Validating dataset structure...")
 
         # First validate the dataset
-        valid, msg = datasets.validate_dataset(self.dataset_path)
+        valid, msg = datasets.validate_dataset(self.dataset_path, transcribed=self.transcribed)
 
         if not valid:
             self.finished.emit(

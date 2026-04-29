@@ -163,7 +163,7 @@ def create_dataset(
         - If analysis_data is provided, saves to {analysis_method}_summary.csv
     """
     # Validate dataset structure
-    valid, msg = validate_dataset(Path(original_path))
+    valid, msg = validate_dataset(Path(original_path), transcribed=transcribed)
     if not valid:
         return False, msg
 
@@ -498,17 +498,18 @@ def import_dataset(dataset_path: Path) -> Tuple[bool, str]:
         return False, f"Dataset path '{dataset_path}' does not exist."
     if not dataset_path.is_dir():
         return False, f"Dataset path '{dataset_path}' is not a directory."
-    valid, valid_msg = validate_dataset(dataset_path / "cache")
+    dataset_metadata_typed = _get_dataset_metadata(dataset_path)
+    if dataset_metadata_typed is None:
+        return False, "Dataset metadata file not found in the provided dataset path."
+
+    transcribed_flag: bool = bool(dataset_metadata_typed.get("transcribed", True))
+    valid, valid_msg = validate_dataset(dataset_path / "cache", transcribed=transcribed_flag)
 
     now = generate_unique_id()
 
     print(now)
     dataset_dest = _get_datasets_root() / now
     try:
-        dataset_metadata_typed = _get_dataset_metadata(dataset_path)
-        if dataset_metadata_typed is None:
-            return False, "Dataset metadata file not found in the provided dataset path."
-
         # Change metadata accordingly
         dataset_metadata: dict[str, Any] = dict(dataset_metadata_typed)  # Make a copy to modify
         dataset_metadata["id"] = now
@@ -551,7 +552,7 @@ def import_dataset(dataset_path: Path) -> Tuple[bool, str]:
         return False, f"Failed to import dataset: {str(e)}"
 
 
-def validate_dataset(dataset_path: Path) -> Tuple[bool, str]:
+def validate_dataset(dataset_path: Path, transcribed: bool = True) -> Tuple[bool, str]:
     """Validate if a dataset follows the expected organization pattern.
 
     Validation checks:
@@ -560,16 +561,14 @@ def validate_dataset(dataset_path: Path) -> Tuple[bool, str]:
     - Contains speaker subdirectories (not files at root level)
     - Each speaker directory is not empty
     - Each speaker directory contains audio files (.wav, .flac, .mp3, .ogg, .m4a)
-    - Each speaker directory contains label files (.lab, .txt)
-    - Number of audio files matches number of label files per speaker
-    - Each audio file has a matching label file with the same stem name
+    - If transcribed=True: each speaker directory contains matching label files (.lab, .txt)
 
     Expected structure:
 
         dataset_path/
         ├── speaker_001/
         │   ├── audio_001.wav
-        │   ├── audio_001.lab
+        │   ├── audio_001.lab  (only required when transcribed=True)
         │   ├── audio_002.wav
         │   └── audio_002.lab
         └── speaker_002/
@@ -578,6 +577,7 @@ def validate_dataset(dataset_path: Path) -> Tuple[bool, str]:
 
     Args:
         dataset_path: Path to dataset root directory
+        transcribed: Whether to require matching label files alongside audio files
 
     Returns:
         Tuple of (True, validation_message) if valid or (False, error_description) if invalid
@@ -622,24 +622,25 @@ def validate_dataset(dataset_path: Path) -> Tuple[bool, str]:
         if not audio_files:
             return False, f"No audio files found in speaker directory '{speaker_path}'."
 
-        if not label_files:
-            return False, f"No label files found in speaker directory '{speaker_path}'."
+        if transcribed:
+            if not label_files:
+                return False, f"No label files found in speaker directory '{speaker_path}'."
 
-        if len(audio_files) != len(label_files):
-            return (
-                False,
-                f"Mismatch between number of audio and label files in speaker "
-                f"directory '{speaker_path}'.",
-            )
+            if len(audio_files) != len(label_files):
+                return (
+                    False,
+                    f"Mismatch between number of audio and label files in speaker "
+                    f"directory '{speaker_path}'.",
+                )
 
-        audio_stems = {Path(f).stem for f in audio_files}
-        label_stems = {Path(f).stem for f in label_files}
-        unmatched = audio_stems.symmetric_difference(label_stems)
-        if unmatched:
-            return (
-                False,
-                f"Unpaired audio/label files in speaker directory '{speaker_path}': "
-                f"{', '.join(sorted(unmatched))}.",
-            )
+            audio_stems = {Path(f).stem for f in audio_files}
+            label_stems = {Path(f).stem for f in label_files}
+            unmatched = audio_stems.symmetric_difference(label_stems)
+            if unmatched:
+                return (
+                    False,
+                    f"Unpaired audio/label files in speaker directory '{speaker_path}': "
+                    f"{', '.join(sorted(unmatched))}.",
+                )
 
     return True, "Dataset is valid."
