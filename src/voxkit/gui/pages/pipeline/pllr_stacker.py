@@ -358,7 +358,10 @@ class PLLRStacker(QWidget):
             )
             return
 
-        textgrid_path = alignment_data["tg_path"] + "/cache"
+        is_cached = alignment_data["local"] == "True" or alignment_data["local"] is True
+        textgrid_path = (
+            alignment_data["tg_path"] + "/cache" if is_cached else alignment_data["tg_path"]
+        )
         print(f"[DEBUG] TextGrid path from alignment: {textgrid_path}")
         print("[DEBUG] Checking if TextGrid path exists...")
 
