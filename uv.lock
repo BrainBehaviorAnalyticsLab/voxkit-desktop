@@ -3009,6 +3009,7 @@ dependencies = [
     { name = "pytest" },
     { name = "pyyaml" },
     { name = "rich" },
+    { name = "speechbrain" },
     { name = "torch" },
     { name = "torchaudio" },
     { name = "wav2textgrid" },
@@ -3050,6 +3051,7 @@ requires-dist = [
     { name = "pytest", specifier = ">=8.4.2" },
     { name = "pyyaml", specifier = ">=6.0.0" },
     { name = "rich", specifier = ">=14.2.0" },
+    { name = "speechbrain", git = "https://github.com/BeckettFrey/speechbrain.git?branch=fix%2Fwindows-lazy-import-inspect-path" },
     { name = "torch", specifier = "==2.8.0" },
     { name = "torchaudio", specifier = "==2.8.0" },
     { name = "wav2textgrid", editable = "../Wav2TextGrid" },
@@ -3085,7 +3087,6 @@ dependencies = [
     { name = "scipy" },
     { name = "seaborn" },
     { name = "soundfile" },
-    { name = "tdqm" },
     { name = "torch" },
     { name = "transformers" },
 ]
@@ -3100,7 +3101,6 @@ requires-dist = [
     { name = "scipy", specifier = "==1.16.2" },
     { name = "seaborn", specifier = "==0.13.2" },
     { name = "soundfile", specifier = "==0.13.1" },
-    { name = "tdqm", specifier = "==0.0.1" },
     { name = "torch", specifier = "==2.8.0" },
     { name = "transformers", specifier = "==5.6.2" },
 ]
@@ -3862,7 +3862,7 @@ wheels = [
 [[package]]
 name = "speechbrain"
 version = "1.1.0"
-source = { git = "https://github.com/speechbrain/speechbrain.git?rev=develop#9c826ef3937bac885c8a6ca86c6889a30f256fb5" }
+source = { git = "https://github.com/BeckettFrey/speechbrain.git?branch=fix%2Fwindows-lazy-import-inspect-path#a89d8ffd2354bdb47c22010676eaf79ac7498b0c" }
 dependencies = [
     { name = "huggingface-hub" },
     { name = "hyperpyyaml" },
@@ -3923,15 +3923,6 @@ sdist = { url = "https://files.pythonhosted.org/packages/83/d3/803453b36afefb7c2
 wheels = [
     { url = "https://files.pythonhosted.org/packages/a2/09/77d55d46fd61b4a135c444fc97158ef34a095e5681d0a6c10b75bf356191/sympy-1.14.0-py3-none-any.whl", hash = "sha256:e091cc3e99d2141a0ba2847328f5479b05d94a6635cb96148ccb3f34671bd8f5", size = 6299353, upload-time = "2025-04-27T18:04:59.103Z" },
 ]
-
-[[package]]
-name = "tdqm"
-version = "0.0.1"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "tqdm" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/5a/38/58c9e22b95e98666fe29f35e217ab6126a03798dadf3f4f8f3e5f898510b/tdqm-0.0.1.tar.gz", hash = "sha256:f050004a76b1d22f70b78209b48781353c82440215b6ba7d22b1f499b05a0101", size = 1388, upload-time = "2020-08-19T20:16:22.191Z" }
 
 [[package]]
 name = "threadpoolctl"
@@ -4097,14 +4088,14 @@ wheels = [
 
 [[package]]
 name = "tqdm"
-version = "4.67.3"
+version = "4.67.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "colorama", marker = "sys_platform == 'win32'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/09/a9/6ba95a270c6f1fbcd8dac228323f2777d886cb206987444e4bce66338dd4/tqdm-4.67.3.tar.gz", hash = "sha256:7d825f03f89244ef73f1d4ce193cb1774a8179fd96f31d7e1dcde62092b960bb", size = 169598, upload-time = "2026-02-03T17:35:53.048Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/a8/4b/29b4ef32e036bb34e4ab51796dd745cdba7ed47ad142a9f4a1eb8e0c744d/tqdm-4.67.1.tar.gz", hash = "sha256:f8aef9c52c08c13a65f30ea34f4e5aac3fd1a34959879d7e59e63027286627f2", size = 169737, upload-time = "2024-11-24T20:12:22.481Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/16/e1/3079a9ff9b8e11b846c6ac5c8b5bfb7ff225eee721825310c91b3b50304f/tqdm-4.67.3-py3-none-any.whl", hash = "sha256:ee1e4c0e59148062281c49d80b25b67771a127c85fc9676d3be5f243206826bf", size = 78374, upload-time = "2026-02-03T17:35:50.982Z" },
+    { url = "https://files.pythonhosted.org/packages/d0/30/dc54f88dd4a2b5dc8a0279bdd7270e735851848b762aeb1c1184ed1f6b14/tqdm-4.67.1-py3-none-any.whl", hash = "sha256:26445eca388f82e72884e0d580d5464cd801a3ea01e63e5601bdff9ba6a48de2", size = 78540, upload-time = "2024-11-24T20:12:19.698Z" },
 ]
 
 [[package]]
@@ -4244,7 +4235,6 @@ dependencies = [
     { name = "numpy" },
     { name = "pandas" },
     { name = "praatio" },
-    { name = "speechbrain" },
     { name = "torch" },
     { name = "torchaudio" },
     { name = "tqdm" },
@@ -4263,7 +4253,6 @@ requires-dist = [
     { name = "numpy", specifier = ">=2.2.6" },
     { name = "pandas", specifier = ">=2.3.2" },
     { name = "praatio", specifier = ">=6.2.0" },
-    { name = "speechbrain", git = "https://github.com/speechbrain/speechbrain.git?rev=develop" },
     { name = "torch", specifier = ">=2.8.0" },
     { name = "torchaudio", specifier = "==2.8.0" },
     { name = "tqdm", specifier = ">=4.67.1" },

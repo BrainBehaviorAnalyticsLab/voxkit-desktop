@@ -29,6 +29,7 @@ dependencies = [
     "rich>=14.2.0",
     "faster-whisper>=1.1.0",
     "alignment-comparison-plots",
+    "speechbrain>=1.0.3",
 ]
 
 [dependency-groups]
@@ -62,6 +63,7 @@ Issues = "https://github.com/BrainBehaviorAnalyticsLab/voxkit-desktop/issues"
 pypllrcomputer = { path = "C:/Users/beckett/Repos/PyPhonemePronunciationScorer", editable = true }
 wav2textgrid = { path = "C:/Users/beckett/Repos/Wav2TextGrid", editable = true }
 alignment-comparison-plots = { path = "C:/Users/beckett/Repos/alignment-comparison-plots", editable = true }
+speechbrain = { git = "https://github.com/BeckettFrey/speechbrain.git", branch = "fix/windows-lazy-import-inspect-path" }
 
 [tool.ruff]
 line-length = 100
