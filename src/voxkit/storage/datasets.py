@@ -561,7 +561,7 @@ def validate_dataset(dataset_path: Path, transcribed: bool = True) -> Tuple[bool
     - Contains speaker subdirectories (not files at root level)
     - Each speaker directory is not empty
     - Each speaker directory contains audio files (.wav, .flac, .mp3, .ogg, .m4a)
-    - If transcribed=True: each speaker directory contains matching label files (.lab, .txt)
+    - If transcribed=True: each audio file has a matching .lab file in the same directory
 
     Expected structure:
 
@@ -577,7 +577,7 @@ def validate_dataset(dataset_path: Path, transcribed: bool = True) -> Tuple[bool
 
     Args:
         dataset_path: Path to dataset root directory
-        transcribed: Whether to require matching label files alongside audio files
+        transcribed: Whether to require a .lab file for every audio file
 
     Returns:
         Tuple of (True, validation_message) if valid or (False, error_description) if invalid
@@ -617,30 +617,28 @@ def validate_dataset(dataset_path: Path, transcribed: bool = True) -> Tuple[bool
             for f in os.listdir(speaker_path)
             if f.endswith((".wav", ".flac", ".mp3", ".ogg", ".m4a"))
         ]
-        label_files = [f for f in os.listdir(speaker_path) if f.endswith((".lab", ".txt"))]
 
         if not audio_files:
             return False, f"No audio files found in speaker directory '{speaker_path}'."
 
+        lab_files = [f for f in os.listdir(speaker_path) if f.endswith(".lab")]
+
         if transcribed:
-            if not label_files:
-                return False, f"No label files found in speaker directory '{speaker_path}'."
-
-            if len(audio_files) != len(label_files):
-                return (
-                    False,
-                    f"Mismatch between number of audio and label files in speaker "
-                    f"directory '{speaker_path}'.",
-                )
-
             audio_stems = {Path(f).stem for f in audio_files}
-            label_stems = {Path(f).stem for f in label_files}
-            unmatched = audio_stems.symmetric_difference(label_stems)
-            if unmatched:
+            lab_stems = {Path(f).stem for f in lab_files}
+            missing = audio_stems - lab_stems
+            if missing:
                 return (
                     False,
-                    f"Unpaired audio/label files in speaker directory '{speaker_path}': "
-                    f"{', '.join(sorted(unmatched))}.",
+                    f"Missing .lab files for audio files in speaker directory "
+                    f"'{speaker_path}': {', '.join(sorted(missing))}.",
+                )
+        else:
+            if lab_files:
+                return (
+                    False,
+                    f"Dataset is marked as not transcribed but .lab files were found in "
+                    f"'{speaker_path}'. Set 'Transcribed' to true or remove the .lab files.",
                 )
 
     return True, "Dataset is valid."
