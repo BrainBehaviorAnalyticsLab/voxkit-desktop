@@ -5,6 +5,13 @@ import sys
 from pathlib import Path
 
 
+def _no_window() -> dict:
+    """Return creationflags to suppress console windows on Windows."""
+    if sys.platform == "win32":
+        return {"creationflags": subprocess.CREATE_NO_WINDOW}
+    return {}
+
+
 def _find_conda() -> str:
     """Return the conda executable path, checking common install locations on Windows."""
     # Fast path: conda is already on PATH
@@ -64,7 +71,7 @@ def ensure_dictionary_downloaded(dictionary_name: str = "english_us_arpa") -> No
     ]
 
     print(f"[mfa] Ensuring dictionary '{dictionary_name}' is downloaded...")
-    result = subprocess.run(download_cmd, capture_output=True, text=True)
+    result = subprocess.run(download_cmd, capture_output=True, text=True, **_no_window())
 
     # Check if dictionary is available (either just downloaded or already present)
     # MFA returns success if already downloaded, or downloads successfully
@@ -80,7 +87,7 @@ def ensure_dictionary_downloaded(dictionary_name: str = "english_us_arpa") -> No
             "list",
             "dictionary",
         ]
-        list_result = subprocess.run(list_cmd, capture_output=True, text=True)
+        list_result = subprocess.run(list_cmd, capture_output=True, text=True, **_no_window())
         assert dictionary_name in list_result.stdout, (
             f"Dictionary '{dictionary_name}' is not available. "
             f"Download failed with: {result.stderr}"
@@ -131,7 +138,7 @@ def run_mfa_align(
 
     try:
         print(f"[mfa.run_mfa_align] Running MFA align with command: {' '.join(cmd)}")
-        subprocess.run(cmd, check=True)
+        subprocess.run(cmd, check=True, **_no_window())
         print("[mfa.run_mfa_align] MFA alignment completed successfully.")
     except subprocess.CalledProcessError as e:
         print(f"[mfa.run_mfa_align] MFA alignment failed with error: {e}")
@@ -181,7 +188,7 @@ def run_mfa_adapt(
 
     try:
         print(f"[mfa.run_mfa_adapt] Running MFA adapt with command: {' '.join(cmd)}")
-        subprocess.run(cmd, check=True, capture_output=True, text=True)
+        subprocess.run(cmd, check=True, capture_output=True, text=True, **_no_window())
         print("[mfa.run_mfa_adapt] MFA adaptation completed successfully.")
     except subprocess.CalledProcessError as e:
         print(f"[mfa.run_mfa_adapt] MFA adaptation failed with error: {e}")
@@ -201,7 +208,7 @@ def download_acoustic_model(release_path, output_file):
     cmd = ["curl", "-L", "-o", output_file, url]
     try:
         print(f"[mfa.download_acoustic_model] Downloading model from {url} to {output_file}")
-        subprocess.run(cmd, check=True)
+        subprocess.run(cmd, check=True, **_no_window())
         print("[mfa.download_acoustic_model] Model downloaded successfully.")
     except subprocess.CalledProcessError as e:
         print(f"[mfa.download_acoustic_model] Model download failed with error: {e}")
