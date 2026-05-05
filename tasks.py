@@ -88,13 +88,23 @@ def clean(c):
     _log("Cleanup completed", GREEN)
 
 
-@task(pre=[clean])
-def build(c):
-    """Build standalone executable for current platform."""
-    _log("Building VoxKit...")
+@task(pre=[clean], name="macos-build")
+def macos_build(c):
+    """Build standalone executable for macOS."""
+    _log("Building VoxKit for macOS...")
     c.run(
         "uv run --group installation python scripts/build.py build "
         "--entry main.py --name VoxKit --icon ./assets/voxkit.icns --windowed"
+    )
+
+
+@task(pre=[clean], name="windows-build")
+def windows_build(c):
+    """Build standalone executable for Windows."""
+    _log("Building VoxKit for Windows...")
+    c.run(
+        "uv run --group installation python scripts/build.py build "
+        "--entry main.py --name VoxKit --icon ./assets/voxkit.ico --windowed"
     )
 
 
