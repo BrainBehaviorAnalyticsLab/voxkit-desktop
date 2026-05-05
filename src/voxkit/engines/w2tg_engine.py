@@ -144,6 +144,8 @@ class W2TGEngine(AlignmentEngine):
         assert not isinstance(msg, str)
         alignment_meta = msg
         dataset_meta = datasets.get_dataset_metadata(dataset_id)
+        if dataset_meta is None:
+            raise ValueError(f"Dataset '{dataset_id}' not found.")
         model_meta = models.get_model_metadata(self.id, model_id)
 
         print(f"Aligning with settings: {settings}")
@@ -153,7 +155,10 @@ class W2TGEngine(AlignmentEngine):
 
         model_path = model_meta["model_path"]
         print(f"Using model path: {model_path}")
-        audio_root = datasets._get_dataset_root(dataset_id)
+        if dataset_meta["cached"]:
+            audio_root = datasets._get_dataset_root(dataset_id)
+        else:
+            audio_root = Path(dataset_meta["original_path"])
 
         try:
             align_dirs(

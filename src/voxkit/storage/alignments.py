@@ -163,15 +163,9 @@ def create_alignment(
     alignment_root.mkdir(parents=False, exist_ok=False)
 
     try:
-        tg_path = None
         local = dataset_metadata["cached"]
-        if bool(local) is False:
-            tg_path = Path(dataset_metadata["original_path"]) / "textgrids"
-            tg_path.mkdir(parents=False, exist_ok=True)
-
-        else:
-            tg_path = alignment_root / "textgrids"
-            tg_path.mkdir(parents=False, exist_ok=True)
+        tg_path = alignment_root / "textgrids"
+        tg_path.mkdir(parents=False, exist_ok=True)
 
         metadata = AlignmentMetadata(
             id=now,
