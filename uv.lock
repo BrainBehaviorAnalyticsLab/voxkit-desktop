@@ -152,27 +152,12 @@ wheels = [
 
 [[package]]
 name = "alignment-comparison-plots"
-source = { editable = "../alignment-comparison-plots" }
+version = "0.1.2.dev2+gb44799d30"
+source = { git = "https://github.com/WISCLab/alignment-comparison-plots?branch=voxkit-windows-variant#b44799d3089b7631e3a87604f046966a2090582b" }
 dependencies = [
     { name = "matplotlib" },
     { name = "praat-textgrids" },
     { name = "pyqt6" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "matplotlib", specifier = "==3.10.6" },
-    { name = "praat-textgrids", specifier = ">=1.4.0" },
-    { name = "pyqt6", specifier = ">=6.10.2" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "mkdocs", specifier = ">=1.6.1" },
-    { name = "mkdocs-glightbox", specifier = ">=0.5.2" },
-    { name = "mkdocs-material", specifier = ">=9.7.5" },
-    { name = "mypy", specifier = ">=1.19.1" },
-    { name = "pytest", specifier = ">=9.0.2" },
 ]
 
 [[package]]
@@ -3039,14 +3024,14 @@ installation = [
 [package.metadata]
 requires-dist = [
     { name = "accelerate", specifier = ">=1.11.0" },
-    { name = "alignment-comparison-plots", editable = "../alignment-comparison-plots" },
+    { name = "alignment-comparison-plots", git = "https://github.com/WISCLab/alignment-comparison-plots?branch=voxkit-windows-variant" },
     { name = "datasets", specifier = ">=4.3.0" },
     { name = "faster-whisper", specifier = ">=1.1.0" },
     { name = "keyring", specifier = ">=25.6.0" },
     { name = "numba", specifier = ">=0.59.0" },
     { name = "pre-commit", specifier = ">=4.3.0" },
     { name = "pydantic", specifier = ">=2.12.3" },
-    { name = "pypllrcomputer", editable = "../PyPhonemePronunciationScorer" },
+    { name = "pypllrcomputer", git = "https://github.com/pkadambi/PyPhonemePronunciationScorer?branch=voxkit-windows-variant" },
     { name = "pyqt6", specifier = ">=6.9.1" },
     { name = "pytest", specifier = ">=8.4.2" },
     { name = "pyyaml", specifier = ">=6.0.0" },
@@ -3054,7 +3039,7 @@ requires-dist = [
     { name = "speechbrain", git = "https://github.com/BeckettFrey/speechbrain.git?branch=fix%2Fwindows-lazy-import-inspect-path" },
     { name = "torch", specifier = "==2.8.0" },
     { name = "torchaudio", specifier = "==2.8.0" },
-    { name = "wav2textgrid", editable = "../Wav2TextGrid" },
+    { name = "wav2textgrid", git = "https://github.com/pkadambi/Wav2TextGrid?branch=voxkit-windows-variant" },
 ]
 
 [package.metadata.requires-dev]
@@ -3077,7 +3062,7 @@ installation = [{ name = "pyinstaller", specifier = ">=5.10.1" }]
 [[package]]
 name = "pypllrcomputer"
 version = "1.0.0"
-source = { editable = "../PyPhonemePronunciationScorer" }
+source = { git = "https://github.com/pkadambi/PyPhonemePronunciationScorer?branch=voxkit-windows-variant#31165d3d5def6ee07b69b477da7f28329f0ad52e" }
 dependencies = [
     { name = "g2p-en" },
     { name = "librosa" },
@@ -3090,33 +3075,6 @@ dependencies = [
     { name = "torch" },
     { name = "transformers" },
 ]
-
-[package.metadata]
-requires-dist = [
-    { name = "g2p-en", specifier = ">=2.1.0" },
-    { name = "librosa", specifier = "==0.11.0" },
-    { name = "matplotlib", specifier = "==3.10.6" },
-    { name = "pandas", specifier = "==2.3.3" },
-    { name = "praatio", specifier = "==6.2.0" },
-    { name = "scipy", specifier = "==1.16.2" },
-    { name = "seaborn", specifier = "==0.13.2" },
-    { name = "soundfile", specifier = "==0.13.1" },
-    { name = "torch", specifier = "==2.8.0" },
-    { name = "transformers", specifier = "==5.6.2" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "coverage-badge", specifier = ">=1.1.2" },
-    { name = "mypy", specifier = ">=1.18.2" },
-    { name = "pre-commit", specifier = ">=4.3.0" },
-    { name = "pytest", specifier = ">=8.4.2" },
-    { name = "pytest-asyncio", specifier = ">=1.3.0" },
-    { name = "pytest-cov", specifier = ">=7.0.0" },
-    { name = "ruff", specifier = ">=0.14.0" },
-]
-docs = [{ name = "pdoc", specifier = ">=16.0.0" }]
-security = [{ name = "safety", specifier = ">=3.6.2" }]
 
 [[package]]
 name = "pyqt6"
@@ -4225,7 +4183,7 @@ wheels = [
 [[package]]
 name = "wav2textgrid"
 version = "0.1.2"
-source = { editable = "../Wav2TextGrid" }
+source = { git = "https://github.com/pkadambi/Wav2TextGrid?branch=voxkit-windows-variant#57f50b79c8f7c68cc0f24c1df197f888aa9db3f2" }
 dependencies = [
     { name = "argparse" },
     { name = "g2p-en" },
@@ -4240,33 +4198,6 @@ dependencies = [
     { name = "tqdm" },
     { name = "transformers" },
 ]
-
-[package.metadata]
-requires-dist = [
-    { name = "accelerate", marker = "extra == 'train'", specifier = ">=0.26.0" },
-    { name = "argparse", specifier = ">=1.4.0" },
-    { name = "datasets", marker = "extra == 'train'", specifier = ">=4.0.0" },
-    { name = "g2p-en", specifier = ">=2.1.0" },
-    { name = "huggingface-hub", specifier = ">=1.3.0" },
-    { name = "librosa", specifier = ">=0.11.0" },
-    { name = "nltk", specifier = ">=3.9.1" },
-    { name = "numpy", specifier = ">=2.2.6" },
-    { name = "pandas", specifier = ">=2.3.2" },
-    { name = "praatio", specifier = ">=6.2.0" },
-    { name = "torch", specifier = ">=2.8.0" },
-    { name = "torchaudio", specifier = "==2.8.0" },
-    { name = "tqdm", specifier = ">=4.67.1" },
-    { name = "transformers", specifier = "==5.6.2" },
-]
-provides-extras = ["train"]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "mypy", specifier = ">=1.18.2" },
-    { name = "pre-commit", specifier = ">=4.3.0" },
-    { name = "ruff", specifier = ">=0.14.0" },
-]
-security = [{ name = "safety", specifier = ">=3.6.2" }]
 
 [[package]]
 name = "xxhash"

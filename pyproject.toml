@@ -60,9 +60,9 @@ Repository = "https://github.com/BrainBehaviorAnalyticsLab/voxkit-desktop"
 Issues = "https://github.com/BrainBehaviorAnalyticsLab/voxkit-desktop/issues"
 
 [tool.uv.sources]
-pypllrcomputer = { path = "C:/Users/beckett/Repos/PyPhonemePronunciationScorer", editable = true }
-wav2textgrid = { path = "C:/Users/beckett/Repos/Wav2TextGrid", editable = true }
-alignment-comparison-plots = { path = "C:/Users/beckett/Repos/alignment-comparison-plots", editable = true }
+pypllrcomputer = { git = "https://github.com/pkadambi/PyPhonemePronunciationScorer", branch = "voxkit-windows-variant" }
+wav2textgrid = { git = "https://github.com/pkadambi/Wav2TextGrid", branch = "voxkit-windows-variant" }
+alignment-comparison-plots = { git = "https://github.com/WISCLab/alignment-comparison-plots", branch = "voxkit-windows-variant" }
 speechbrain = { git = "https://github.com/BeckettFrey/speechbrain.git", branch = "fix/windows-lazy-import-inspect-path" }
 
 [tool.ruff]
