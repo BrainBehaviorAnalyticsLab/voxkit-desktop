@@ -460,15 +460,12 @@ def import_models(engine_id, new_models_root: Path) -> Tuple[bool, str]:
                     if engine_id != metadata["engine_id"]:
                         return False, f"{source_model_path.name} (engine_id mismatch)"
 
-                    parts = metadata["model_path"].split(MODELS_ROOT)
-                    if len(parts) != 2:
+                    entrypoint_name = Path(metadata["model_path"]).name
+                    if not entrypoint_name:
                         return False, f"{source_model_path.name} (invalid model_path in metadata)"
 
-                    # Retain the model path don't assume it's the same for all models
-                    path_after_root = parts[1]
-
                     dest_model_entrypoint = (
-                        engine_models_root / MODELS_ROOT / model_id / path_after_root.split("/")[-1]
+                        engine_models_root / MODELS_ROOT / model_id / entrypoint_name
                     )
                     new_metadata = ModelMetadata(
                         name=metadata["name"],
