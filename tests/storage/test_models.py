@@ -670,6 +670,51 @@ class TestModels:
             assert success is True
             assert "imported successfully" in msg
 
+        def test_import_models_paths_rewritten(self, monkeypatch):
+            import json
+
+            from voxkit.storage import models
+            from voxkit.storage.config import MODELS_ROOT
+            from voxkit.storage.models import import_models, list_models
+
+            monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
+
+            engine_id = ENGINE_IDS[0]
+            import_source = mock_get_storage_root() / "import_source_paths"
+            model_dir = import_source / "model_to_import"
+            model_dir.mkdir(parents=True, exist_ok=True)
+            (model_dir / "entrypoint.model").mkdir(parents=True, exist_ok=True)
+
+            old_base = "/old/machine/path"
+            metadata = {
+                "name": "path_check_model",
+                "engine_id": engine_id,
+                "model_path": f"{old_base}/{engine_id}/{MODELS_ROOT}/old_id/entrypoint.model",
+                "data_path": f"{old_base}/data",
+                "eval_path": f"{old_base}/eval",
+                "train_path": f"{old_base}/train",
+                "download_date": "January 01, 2024 at 12:00:00 PM",
+                "id": "old_id",
+            }
+            with open(model_dir / "voxkit_model.json", "w") as f:
+                json.dump(metadata, f, indent=4)
+
+            success, _ = import_models(engine_id=engine_id, new_models_root=import_source)
+            assert success is True
+
+            imported = list_models(engine_id)
+            assert len(imported) == 1
+            imported_meta = imported[0]
+
+            storage_root = str(mock_get_storage_root())
+            assert old_base not in imported_meta["model_path"]
+            assert old_base not in imported_meta["data_path"]
+            assert old_base not in imported_meta["eval_path"]
+            assert old_base not in imported_meta["train_path"]
+            assert storage_root in imported_meta["model_path"]
+            assert "old_id" not in imported_meta["id"]
+            assert imported_meta["name"] == "path_check_model"
+
         def test_import_models_missing_metadata(self, monkeypatch):
             from voxkit.storage import models
             from voxkit.storage.models import import_models

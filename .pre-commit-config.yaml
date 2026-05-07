@@ -3,7 +3,7 @@ repos:
     hooks:
       - id: shredguard-check
         name: shredguard check
-        entry: shredguard check
+        entry: uv run --only-group dev shredguard check
         language: system
         types: [text]
 

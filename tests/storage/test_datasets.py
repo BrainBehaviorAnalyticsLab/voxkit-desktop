@@ -30,6 +30,15 @@ def generate_fake_datasets():
             wav_file.touch()
             lab_file.touch()
 
+    # Create a valid untranscribed dataset (wav only, no .lab files)
+    dataset_path = mock_get_storage_root() / "fake_datasets" / "valid_untranscribed"
+    dataset_path.mkdir(parents=True, exist_ok=True)
+    for participant in participant_names:
+        wavlab_path = dataset_path / participant
+        wavlab_path.mkdir(parents=True, exist_ok=True)
+        for i in range(5):
+            (wavlab_path / f"sample_{i}.wav").touch()
+
     # Create an invalid dataset path
     dataset_path = mock_get_storage_root() / "fake_datasets" / "invalid"
     dataset_path.mkdir(parents=True, exist_ok=True)
@@ -60,6 +69,7 @@ def manage_test_environment():
 
 
 valid_dataset_path = mock_get_storage_root() / "fake_datasets" / "valid"
+valid_untranscribed_dataset_path = mock_get_storage_root() / "fake_datasets" / "valid_untranscribed"
 invalid_dataset_path = mock_get_storage_root() / "fake_datasets" / "invalid"
 empty_dataset_path = mock_get_storage_root() / "fake_datasets" / "empty"
 
@@ -111,7 +121,7 @@ class TestDatasets:
             success, message = create_dataset(
                 name="test_dataset_cached",
                 description="A test dataset with caching",
-                original_path=valid_dataset_path,
+                original_path=valid_untranscribed_dataset_path,
                 cached=True,
                 anonymize=True,
                 transcribed=False,
@@ -144,7 +154,7 @@ class TestDatasets:
 
             assert success is False
             assert isinstance(message, str)
-            assert "No label files found" in message
+            assert "Missing .lab files" in message
             assert invalid_dataset_path.exists() is True
 
     class TestListDatasets:
@@ -166,7 +176,7 @@ class TestDatasets:
             create_dataset(
                 name="dataset_two",
                 description="Second test dataset",
-                original_path=valid_dataset_path,
+                original_path=valid_untranscribed_dataset_path,
                 cached=True,
                 anonymize=True,
                 transcribed=False,
@@ -596,7 +606,7 @@ class TestDatasets:
             success, message = create_dataset(
                 name="dataset_update_test",
                 description="Original description",
-                original_path=valid_dataset_path,
+                original_path=valid_untranscribed_dataset_path,
                 cached=False,
                 anonymize=False,
                 transcribed=False,
@@ -863,7 +873,7 @@ class TestDatasets:
             is_valid, msg = validate_dataset(invalid_dataset_path)
 
             assert is_valid is False
-            assert "No label files" in msg
+            assert "Missing .lab files" in msg
 
         def test_validate_dataset_mismatched_counts(self, monkeypatch):
             from voxkit.storage.datasets import validate_dataset
@@ -880,7 +890,8 @@ class TestDatasets:
             is_valid, msg = validate_dataset(mismatched_path)
 
             assert is_valid is False
-            assert "Mismatch" in msg
+            assert "Missing .lab files" in msg
+            assert "sample_2" in msg
 
         def test_validate_dataset_unpaired_stems(self, monkeypatch):
             from voxkit.storage.datasets import validate_dataset
@@ -896,4 +907,19 @@ class TestDatasets:
             is_valid, msg = validate_dataset(unpaired_path)
 
             assert is_valid is False
-            assert "Unpaired" in msg
+            assert "Missing .lab files" in msg
+            assert "recording_A" in msg
+
+        def test_validate_dataset_not_transcribed_but_has_lab_files(self, monkeypatch):
+            from voxkit.storage.datasets import validate_dataset
+
+            lab_present_path = mock_get_storage_root() / "fake_datasets" / "lab_but_not_transcribed"
+            speaker_path = lab_present_path / "speaker_1"
+            speaker_path.mkdir(parents=True, exist_ok=True)
+            (speaker_path / "sample_1.wav").touch()
+            (speaker_path / "sample_1.lab").touch()
+
+            is_valid, msg = validate_dataset(lab_present_path, transcribed=False)
+
+            assert is_valid is False
+            assert "not transcribed" in msg

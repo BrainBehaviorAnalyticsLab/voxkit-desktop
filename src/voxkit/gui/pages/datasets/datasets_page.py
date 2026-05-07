@@ -306,6 +306,7 @@ class DatasetsPage(QWidget):
             QTableWidget {
                 gridline-color: #ecf0f1;
                 background-color: white;
+                alternate-background-color: #f5f8fa;
                 border: 1px solid #bdc3c7;
                 border-radius: 4px;
             }

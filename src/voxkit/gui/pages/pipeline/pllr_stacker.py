@@ -80,8 +80,11 @@ FIELDS: list[FieldConfig] = [
         default_value="aggregate_by_phoneme_occurrence",
         options=[
             "aggregate_by_phoneme_occurrence",
-            "aggregate_by_phoneme_average",
-            "aggregate_by_phoneme_median",
+            "aggregate_by_unique_phonemes_in_utterance",
+            "aggregate_by_utterance",
+            "aggregate_by_phoneme_per_speaker",
+            "aggregate_by_type_per_speaker",
+            "aggregate_by_speaker",
         ],
         tooltip="Method to aggregate framewise probabilities into phonewise scores.",
     ),
@@ -358,7 +361,10 @@ class PLLRStacker(QWidget):
             )
             return
 
-        textgrid_path = alignment_data["tg_path"] + "/cache"
+        is_cached = alignment_data["local"] == "True" or alignment_data["local"] is True
+        textgrid_path = (
+            alignment_data["tg_path"] + "/cache" if is_cached else alignment_data["tg_path"]
+        )
         print(f"[DEBUG] TextGrid path from alignment: {textgrid_path}")
         print("[DEBUG] Checking if TextGrid path exists...")
 
@@ -486,7 +492,7 @@ class PLLRStacker(QWidget):
             print(f"[LOGIC] Settings file found at: {path_to_pllr_settings}")
             from json import load as json_load
 
-            with open(path_to_pllr_settings, "r") as f:
+            with open(path_to_pllr_settings, "r", encoding="utf-8") as f:
                 pllr_settings = json_load(f)
             print(f"[LOGIC] Settings loaded: {pllr_settings}")
         else:
@@ -505,6 +511,28 @@ class PLLRStacker(QWidget):
         print("         likelihood_dct=None")
 
         try:
+            from pypllrcomputer.pypllr_compute import (
+                aggregate_by_phoneme_occurrence,
+                aggregate_by_phoneme_per_speaker,
+                aggregate_by_speaker,
+                aggregate_by_type_per_speaker,
+                aggregate_by_unique_phonemes_in_utterance,
+                aggregate_by_utterance,
+            )
+
+            _agg_fns = {
+                "aggregate_by_phoneme_occurrence": aggregate_by_phoneme_occurrence,
+                "aggregate_by_unique_phonemes_in_utterance": (
+                    aggregate_by_unique_phonemes_in_utterance
+                ),
+                "aggregate_by_utterance": aggregate_by_utterance,
+                "aggregate_by_phoneme_per_speaker": aggregate_by_phoneme_per_speaker,
+                "aggregate_by_type_per_speaker": aggregate_by_type_per_speaker,
+                "aggregate_by_speaker": aggregate_by_speaker,
+            }
+            agg_key = pllr_settings.get("aggregation_function", "aggregate_by_phoneme_occurrence")
+            agg_fn = _agg_fns.get(agg_key, aggregate_by_phoneme_occurrence)
+
             compute_pllr(
                 tg_files_path=textgrid_path,
                 wav_files_path=wavlab_path,
@@ -513,9 +541,7 @@ class PLLRStacker(QWidget):
                 framewise_proba_df=framewise_path,
                 recompute_probas=pllr_settings.get("recompute_probas", True),
                 likelihood_dct=pllr_settings.get("likelihood_dct", None),
-                # aggregation_function=pllr_settings.get(
-                #     "aggregation_function", "aggregate_by_phoneme_occurrence"
-                # ),
+                aggregation_function=agg_fn,
             )
             print("[LOGIC] compute_pllr() completed successfully")
             return "PLLR extracted successfully"
