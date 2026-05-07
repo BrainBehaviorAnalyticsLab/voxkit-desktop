@@ -20,6 +20,7 @@ ENV/
 build/
 dist/
 downloads/
+installer/windows/output/
 .eggs/
 .eggs/**
 *.egg-info/
