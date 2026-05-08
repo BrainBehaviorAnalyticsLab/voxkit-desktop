@@ -159,6 +159,7 @@ class MFAEngine(AlignmentEngine):
                 alignment_id=msg["id"],
                 updates={"status": "failed"},
             )
+            raise
 
     def train_aligner(
         self, audio_root: Path, textgrid_root: Path, base_model_id: str | None, new_model_id: str
@@ -204,7 +205,7 @@ class MFAEngine(AlignmentEngine):
         for key in serializable:
             if isinstance(serializable[key], Path):
                 serializable[key] = str(serializable[key])
-        with open(model_metadata_path, "w") as f:
+        with open(model_metadata_path, "w", encoding="utf-8") as f:
             import json
 
             json.dump(serializable, f, indent=4)

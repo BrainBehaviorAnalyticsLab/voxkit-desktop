@@ -1,4 +1,51 @@
+import os
+import shutil
 import subprocess
+import sys
+from pathlib import Path
+
+
+def _no_window() -> dict:
+    """Return creationflags to suppress console windows on Windows."""
+    if sys.platform == "win32":
+        return {"creationflags": subprocess.CREATE_NO_WINDOW}
+    return {}
+
+
+def _find_conda() -> str:
+    """Return the conda executable path, checking common install locations on Windows."""
+    # Fast path: conda is already on PATH
+    if shutil.which("conda"):
+        return "conda"
+
+    if sys.platform == "win32":
+        home = Path.home()
+        candidates = [
+            home / "miniconda3" / "Scripts" / "conda.exe",
+            home / "anaconda3" / "Scripts" / "conda.exe",
+            home / "miniforge3" / "Scripts" / "conda.exe",
+            home / "mambaforge" / "Scripts" / "conda.exe",
+            home / "Miniconda3" / "Scripts" / "conda.exe",
+            home / "Anaconda3" / "Scripts" / "conda.exe",
+            Path("C:/ProgramData/miniconda3/Scripts/conda.exe"),
+            Path("C:/ProgramData/anaconda3/Scripts/conda.exe"),
+            Path("C:/tools/miniconda3/Scripts/conda.exe"),
+        ]
+        # Also check CONDA_PREFIX env var (set when a conda env is active)
+        conda_prefix = os.environ.get("CONDA_PREFIX") or os.environ.get("CONDA_EXE", "")
+        if conda_prefix:
+            candidates.insert(0, Path(conda_prefix).parent / "conda.exe")
+            candidates.insert(0, Path(conda_prefix))
+
+        for path in candidates:
+            if path.exists():
+                return str(path)
+
+    raise FileNotFoundError(
+        "conda not found. Install Miniconda from https://docs.conda.io/en/latest/miniconda.html "
+        "and create the aligner environment with: "
+        "conda create -n aligner -c conda-forge montreal-forced-aligner"
+    )
 
 
 def ensure_dictionary_downloaded(dictionary_name: str = "english_us_arpa") -> None:
@@ -10,8 +57,9 @@ def ensure_dictionary_downloaded(dictionary_name: str = "english_us_arpa") -> No
     Raises:
         AssertionError: If dictionary download fails and dictionary is not available.
     """
+    conda = _find_conda()
     download_cmd = [
-        "conda",
+        conda,
         "run",
         "-n",
         "aligner",
@@ -23,14 +71,14 @@ def ensure_dictionary_downloaded(dictionary_name: str = "english_us_arpa") -> No
     ]
 
     print(f"[mfa] Ensuring dictionary '{dictionary_name}' is downloaded...")
-    result = subprocess.run(download_cmd, capture_output=True, text=True)
+    result = subprocess.run(download_cmd, capture_output=True, text=True, **_no_window())
 
     # Check if dictionary is available (either just downloaded or already present)
     # MFA returns success if already downloaded, or downloads successfully
     if result.returncode != 0:
         # Try to list dictionaries to check if it's already available
         list_cmd = [
-            "conda",
+            conda,
             "run",
             "-n",
             "aligner",
@@ -39,7 +87,7 @@ def ensure_dictionary_downloaded(dictionary_name: str = "english_us_arpa") -> No
             "list",
             "dictionary",
         ]
-        list_result = subprocess.run(list_cmd, capture_output=True, text=True)
+        list_result = subprocess.run(list_cmd, capture_output=True, text=True, **_no_window())
         assert dictionary_name in list_result.stdout, (
             f"Dictionary '{dictionary_name}' is not available. "
             f"Download failed with: {result.stderr}"
@@ -47,6 +95,39 @@ def ensure_dictionary_downloaded(dictionary_name: str = "english_us_arpa") -> No
         print(f"[mfa] Dictionary '{dictionary_name}' already available.")
     else:
         print(f"[mfa] Dictionary '{dictionary_name}' is ready.")
+
+
+def _ensure_mfa_server_running() -> None:
+    """Start MFA's bundled Postgres server on Windows. No-op elsewhere.
+
+    Why: MFA 3.3.x's SQLite backend has a multiprocessing race in
+    `collect_alignments` on Windows where the `word_interval_temp` staging
+    table goes missing between worker connections, aborting the run with
+    "no such table: word_interval_temp". The Postgres backend (also bundled
+    in the aligner conda env) does not have this race. macOS and Linux are
+    not affected by the SQLite race in practice, so this is gated to win32
+    to avoid changing their behavior.
+    """
+    if sys.platform != "win32":
+        return
+
+    conda = _find_conda()
+    # Both calls are idempotent: `init` errors if the server dir already exists,
+    # `start` errors if it's already running. Either error state is the goal,
+    # so we ignore returncodes and only guard against true failures (timeout,
+    # missing conda). If the server genuinely can't come up, alignment will
+    # fall back to SQLite and surface its own error via the existing path.
+    for sub in (("server", "init"), ("server", "start")):
+        try:
+            subprocess.run(
+                [conda, "run", "-n", "aligner", "mfa", *sub],
+                capture_output=True,
+                text=True,
+                timeout=60,
+                **_no_window(),
+            )
+        except (subprocess.TimeoutExpired, FileNotFoundError):
+            pass
 
 
 def run_mfa_align(
@@ -68,9 +149,11 @@ def run_mfa_align(
     """
     # Ensure dictionary is downloaded
     ensure_dictionary_downloaded(dictionary_name)
+    _ensure_mfa_server_running()
 
+    conda = _find_conda()
     cmd = [
-        "conda",
+        conda,
         "run",
         "-n",
         "aligner",
@@ -89,11 +172,12 @@ def run_mfa_align(
 
     try:
         print(f"[mfa.run_mfa_align] Running MFA align with command: {' '.join(cmd)}")
-        subprocess.run(cmd, check=True)
+        subprocess.run(cmd, check=True, capture_output=True, text=True, **_no_window())
         print("[mfa.run_mfa_align] MFA alignment completed successfully.")
     except subprocess.CalledProcessError as e:
-        print(f"[mfa.run_mfa_align] MFA alignment failed with error: {e}")
-        raise
+        stderr_msg = e.stderr.strip() if e.stderr else "(no output captured)"
+        print(f"[mfa.run_mfa_align] MFA alignment failed:\n{stderr_msg}")
+        raise RuntimeError(f"MFA alignment failed (exit {e.returncode}):\n{stderr_msg}") from e
 
 
 def run_mfa_adapt(
@@ -119,9 +203,11 @@ def run_mfa_adapt(
     """
     # Ensure dictionary is downloaded
     ensure_dictionary_downloaded(dictionary_name)
+    _ensure_mfa_server_running()
 
+    conda = _find_conda()
     cmd = [
-        "conda",
+        conda,
         "run",
         "-n",
         "aligner",
@@ -138,7 +224,7 @@ def run_mfa_adapt(
 
     try:
         print(f"[mfa.run_mfa_adapt] Running MFA adapt with command: {' '.join(cmd)}")
-        subprocess.run(cmd, check=True, capture_output=True, text=True)
+        subprocess.run(cmd, check=True, capture_output=True, text=True, **_no_window())
         print("[mfa.run_mfa_adapt] MFA adaptation completed successfully.")
     except subprocess.CalledProcessError as e:
         print(f"[mfa.run_mfa_adapt] MFA adaptation failed with error: {e}")
@@ -158,7 +244,7 @@ def download_acoustic_model(release_path, output_file):
     cmd = ["curl", "-L", "-o", output_file, url]
     try:
         print(f"[mfa.download_acoustic_model] Downloading model from {url} to {output_file}")
-        subprocess.run(cmd, check=True)
+        subprocess.run(cmd, check=True, **_no_window())
         print("[mfa.download_acoustic_model] Model downloaded successfully.")
     except subprocess.CalledProcessError as e:
         print(f"[mfa.download_acoustic_model] Model download failed with error: {e}")

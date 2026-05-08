@@ -14,6 +14,14 @@ Available Analyzers
     Extracts speaker count and audio file counts per speaker directory.
     Includes a bar chart visualization for quick dataset overview.
 
+**ClipDurationStatisticsAnalyzer**
+    Reads audio metadata to compute total, average, min, and max clip duration
+    per speaker. Includes a bar chart visualization of total duration.
+
+**AudioFormatProfileAnalyzer**
+    Reads audio metadata to surface dominant sample rate, channel count, and
+    flags files that deviate from the speaker's dominant format.
+
 Output Structure
 ----------------
 Analyzer output is stored alongside dataset metadata::
@@ -35,7 +43,9 @@ from __future__ import annotations
 
 from typing import List
 
+from .audio_format_profile import AudioFormatProfileAnalyzer
 from .base import DatasetAnalyzer
+from .clip_duration_statistics import ClipDurationStatisticsAnalyzer
 from .default_analyzer import DefaultAnalyzer
 
 
@@ -69,9 +79,18 @@ class AnalyzerManager:
             raise ValueError(f"No analyzer with id: {analyzer_id}")
 
 
-default_analyzer_instance = DefaultAnalyzer()
+_default = DefaultAnalyzer()
+_duration = ClipDurationStatisticsAnalyzer()
+_format = AudioFormatProfileAnalyzer()
+
 # Singleton instance for unified export/interface
-ManageAnalyzers = AnalyzerManager({default_analyzer_instance.name: default_analyzer_instance})
+ManageAnalyzers = AnalyzerManager(
+    {
+        _default.name: _default,
+        _duration.name: _duration,
+        _format.name: _format,
+    }
+)
 
 __all__ = [
     "ManageAnalyzers",

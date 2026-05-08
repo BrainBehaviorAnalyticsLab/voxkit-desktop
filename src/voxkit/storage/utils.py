@@ -19,12 +19,16 @@ Notes
 """
 
 import json
-from datetime import datetime
+import threading
+from datetime import datetime, timedelta
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
 from .config import STORAGE_ROOT
+
+_id_lock = threading.Lock()
+_last_id_dt: datetime | None = None
 
 
 @lru_cache(maxsize=1)
@@ -52,10 +56,17 @@ def generate_unique_id(prefix: str | None = None) -> str:
     Returns:
         Unique identifier string in format: [prefix_]YYYYMMDD_HHMMSS_ffffff
     """
-    now = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+    global _last_id_dt
+    # Windows datetime.now() has ~15ms resolution; enforce monotonic microsecond precision.
+    with _id_lock:
+        now = datetime.now()
+        if _last_id_dt is not None and now <= _last_id_dt:
+            now = _last_id_dt + timedelta(microseconds=1)
+        _last_id_dt = now
+    now_str = now.strftime("%Y%m%d_%H%M%S_%f")
     if prefix:
-        return f"{prefix}_{now}"
-    return now
+        return f"{prefix}_{now_str}"
+    return now_str
 
 
 def readable_from_unique_id(date_str: str) -> str:
@@ -110,5 +121,5 @@ def save_json(file_path: Path, data: dict[str, Any]) -> None:
         data: Dictionary to serialize as JSON
     """
     file_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(file_path, "w") as f:
+    with open(file_path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=4)

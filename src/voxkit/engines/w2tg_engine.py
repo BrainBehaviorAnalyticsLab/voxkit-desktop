@@ -21,6 +21,7 @@ Notes
 - See https://huggingface.co/pkadambi/Wav2TextGrid
 """
 
+import logging
 from pathlib import Path
 
 from voxkit.gui.frameworks.settings_modal import (
@@ -33,6 +34,8 @@ from Wav2TextGrid.wav2textgrid import align_dirs
 from Wav2TextGrid.wav2textgrid_train import train_aligner
 
 from .base import AlignmentEngine
+
+logger = logging.getLogger(__name__)
 
 TrainerConfiguration: SettingsConfig = SettingsConfig(
     title="Wav2TextGrid Trainer Settings",
@@ -144,6 +147,8 @@ class W2TGEngine(AlignmentEngine):
         assert not isinstance(msg, str)
         alignment_meta = msg
         dataset_meta = datasets.get_dataset_metadata(dataset_id)
+        if dataset_meta is None:
+            raise ValueError(f"Dataset '{dataset_id}' not found.")
         model_meta = models.get_model_metadata(self.id, model_id)
 
         print(f"Aligning with settings: {settings}")
@@ -153,7 +158,10 @@ class W2TGEngine(AlignmentEngine):
 
         model_path = model_meta["model_path"]
         print(f"Using model path: {model_path}")
-        audio_root = datasets._get_dataset_root(dataset_id)
+        if dataset_meta["cached"]:
+            audio_root = datasets._get_dataset_root(dataset_id)
+        else:
+            audio_root = Path(dataset_meta["original_path"])
 
         try:
             align_dirs(
@@ -171,7 +179,7 @@ class W2TGEngine(AlignmentEngine):
             )
 
         except Exception as e:
-            print(f"Alignment failed: {e}")
+            logger.exception("W2TG alignment failed")
             alignments.update_alignment(
                 dataset_id=dataset_id,
                 alignment_id=alignment_meta["id"],
@@ -236,7 +244,7 @@ class W2TGEngine(AlignmentEngine):
                 download_nltk=True,
             )
         except Exception as e:
-            print(f"Training failed: {e}")
+            logger.exception("W2TG training failed")
             # Clean up model entry on failure
             if new_model_actual_id is not None:
                 models.delete_model(engine_id=self.id, model_id=new_model_actual_id)

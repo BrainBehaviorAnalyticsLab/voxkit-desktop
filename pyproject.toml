@@ -16,8 +16,8 @@ dependencies = [
     "pyqt6>=6.9.1",
     "torch==2.8.0",
     "torchaudio==2.8.0",
-    "pypllrcomputer @ git+https://github.com/BrainBehaviorAnalyticsLab/PyPLLRComputer.git@48a0c934e75f73235ba5a002538b8588fd6697e7",
-    "wav2textgrid @ git+https://github.com/pkadambi/Wav2TextGrid.git@3862476185a7558d481f1ae1c9cbca2e48c825a0",
+    "pypllrcomputer",
+    "wav2textgrid",
     "datasets>=4.3.0",
     "accelerate>=1.11.0",
     "keyring>=25.6.0",
@@ -28,7 +28,8 @@ dependencies = [
     "pyyaml>=6.0.0",
     "rich>=14.2.0",
     "faster-whisper>=1.1.0",
-    "alignment-comparison-plots==0.1.1",
+    "alignment-comparison-plots",
+    "speechbrain>=1.0.3",
 ]
 
 [dependency-groups]
@@ -57,6 +58,12 @@ installation = [
 Homepage = "https://github.com/BrainBehaviorAnalyticsLab/voxkit-desktop"
 Repository = "https://github.com/BrainBehaviorAnalyticsLab/voxkit-desktop"
 Issues = "https://github.com/BrainBehaviorAnalyticsLab/voxkit-desktop/issues"
+
+[tool.uv.sources]
+pypllrcomputer = { git = "https://github.com/pkadambi/PyPhonemePronunciationScorer", branch = "voxkit-windows-variant" }
+wav2textgrid = { git = "https://github.com/pkadambi/Wav2TextGrid", branch = "voxkit-windows-variant" }
+alignment-comparison-plots = { git = "https://github.com/WISCLab/alignment-comparison-plots", branch = "voxkit-windows-variant" }
+speechbrain = { git = "https://github.com/BeckettFrey/speechbrain.git", branch = "fix/windows-lazy-import-inspect-path" }
 
 [tool.ruff]
 line-length = 100
@@ -120,7 +127,9 @@ exclude = [
     "build.py",
     "example_startup_script.py",
     "test_imports.py",
-    "tests/"
+    "tests/",
+    "build/",
+    "dist/",
 ]
 
 

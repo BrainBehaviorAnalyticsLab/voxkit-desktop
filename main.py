@@ -1,8 +1,37 @@
 import sys
+import multiprocessing
+import os
+
+# CRITICAL: Must run before any heavy imports (voxkit, torch, PyQt6, etc.).
+# When PyTorch DataLoader workers spawn on Windows, each child re-launches the
+# frozen exe and re-imports this module. freeze_support() short-circuits the
+# child before it re-runs main() and tries to open another GUI window.
+if __name__ == "__main__":
+    multiprocessing.freeze_support()
+
+# In a --windowed PyInstaller build there is no console, so sys.stdout and
+# sys.stderr are None. Libraries like tqdm (used by transformers' Trainer)
+# crash with AttributeError: 'NoneType' object has no attribute 'write' when
+# they try to print progress. Redirect to devnull so writes silently no-op.
+if sys.stdout is None:
+    sys.stdout = open(os.devnull, "w", encoding="utf-8")
+if sys.stderr is None:
+    sys.stderr = open(os.devnull, "w", encoding="utf-8")
+
 import faulthandler
 import logging
-import os
-import multiprocessing
+
+# Windows: configure console and stdout/stderr for UTF-8 before any output.
+# Without this, rich's legacy renderer falls back to cp1252 and chokes on
+# Unicode characters (e.g., circled letters in pipeline config YAML).
+if sys.platform == 'win32':
+    try:
+        import ctypes
+        ctypes.windll.kernel32.SetConsoleOutputCP(65001)
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+        sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+    except Exception:
+        pass
 
 # Apply patches for frozen (PyInstaller) environment BEFORE other imports
 if getattr(sys, 'frozen', False):
@@ -16,10 +45,6 @@ from voxkit.config.logging_config import setup_logging
 # setup_logging() runs in main(); setup_logging() will reconfigure handlers.
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 log = logging.getLogger("voxkit.main")
-
-# CRITICAL: Must be at the top for frozen apps using multiprocessing
-if __name__ == "__main__":
-    multiprocessing.freeze_support()
 
 # Enable detailed crash reports
 faulthandler.enable()

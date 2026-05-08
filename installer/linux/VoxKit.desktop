@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=VoxKit
+Exec=VoxKit
+Icon=voxkit
+Type=Application
+Categories=Science;Audio;Education;
+Comment=AI/ML Speech Pathology Analysis
+Terminal=false

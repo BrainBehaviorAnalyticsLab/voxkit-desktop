@@ -136,8 +136,19 @@ class TrainingStacker(BaseStacker):
             return
 
         # Get dataset path
-        audio_path = datasets._get_dataset_root(selected_dataset_id)
-        if not audio_path:
+        dataset_metadata = datasets.get_dataset_metadata(selected_dataset_id)
+        if not dataset_metadata:
+            QMessageBox.warning(
+                self, "Invalid Dataset", f"Could not find path for dataset '{selected_dataset_id}'."
+            )
+            return
+
+        if bool(dataset_metadata["cached"]):
+            audio_path = datasets._get_dataset_root(selected_dataset_id)
+        else:
+            audio_path = Path(dataset_metadata["original_path"])
+
+        if not audio_path or not Path(audio_path).exists():
             QMessageBox.warning(
                 self, "Invalid Dataset", f"Could not find path for dataset '{selected_dataset_id}'."
             )

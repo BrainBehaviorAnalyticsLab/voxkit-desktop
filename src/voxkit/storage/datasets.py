@@ -114,7 +114,7 @@ def _get_dataset_metadata(dataset_root: Path) -> DatasetMetadata | None:
         metadata_path = dataset_root / "voxkit_dataset.json"
         if not metadata_path.exists():
             return None
-        with open(metadata_path, "r") as f:
+        with open(metadata_path, "r", encoding="utf-8") as f:
             result: DatasetMetadata = json.load(f)
             return result
     except Exception:
@@ -163,7 +163,7 @@ def create_dataset(
         - If analysis_data is provided, saves to {analysis_method}_summary.csv
     """
     # Validate dataset structure
-    valid, msg = validate_dataset(Path(original_path))
+    valid, msg = validate_dataset(Path(original_path), transcribed=transcribed)
     if not valid:
         return False, msg
 
@@ -193,7 +193,7 @@ def create_dataset(
         alignments_dir = dataset_dir / ALIGNMENTS_ROOT
         alignments_dir.mkdir(parents=False, exist_ok=False)
         metadata_path = dataset_dir / "voxkit_dataset.json"
-        with open(metadata_path, "w") as f:
+        with open(metadata_path, "w", encoding="utf-8") as f:
             json.dump(metadata, f, indent=2)
 
         # Cache the dataset if requested
@@ -297,7 +297,7 @@ def list_datasets_metadata() -> List[DatasetMetadata]:
             if entry.is_dir():
                 metadata_path = os.path.join(entry.path, "voxkit_dataset.json")
                 if os.path.exists(metadata_path):
-                    with open(metadata_path, "r") as f:
+                    with open(metadata_path, "r", encoding="utf-8") as f:
                         metadata = json.load(f)
                         datasets.append(metadata)
         return datasets
@@ -340,7 +340,7 @@ def update_dataset_metadata(
 
         # Save the updated metadata
         metadata_path = _get_datasets_root() / dataset_id / "voxkit_dataset.json"
-        with open(metadata_path, "w") as f:
+        with open(metadata_path, "w", encoding="utf-8") as f:
             json.dump(metadata, f, indent=2)
 
         return True, "Dataset metadata updated successfully"
@@ -452,7 +452,7 @@ def _rewrite_imported_alignments(new_dataset_path: Path) -> None:
         if not metadata_file.exists():
             continue
         try:
-            with open(metadata_file, "r") as f:
+            with open(metadata_file, "r", encoding="utf-8") as f:
                 alignment_metadata = json.load(f)
         except (OSError, json.JSONDecodeError) as e:
             print(f"Skipping alignment metadata rewrite for '{metadata_file}': {e}")
@@ -463,7 +463,7 @@ def _rewrite_imported_alignments(new_dataset_path: Path) -> None:
 
         alignment_metadata["tg_path"] = str(alignment_dir / "textgrids")
         try:
-            with open(metadata_file, "w") as f:
+            with open(metadata_file, "w", encoding="utf-8") as f:
                 json.dump(alignment_metadata, f, indent=4)
         except OSError as e:
             print(f"Failed to rewrite alignment metadata '{metadata_file}': {e}")
@@ -498,17 +498,18 @@ def import_dataset(dataset_path: Path) -> Tuple[bool, str]:
         return False, f"Dataset path '{dataset_path}' does not exist."
     if not dataset_path.is_dir():
         return False, f"Dataset path '{dataset_path}' is not a directory."
-    valid, valid_msg = validate_dataset(dataset_path / "cache")
+    dataset_metadata_typed = _get_dataset_metadata(dataset_path)
+    if dataset_metadata_typed is None:
+        return False, "Dataset metadata file not found in the provided dataset path."
+
+    transcribed_flag: bool = bool(dataset_metadata_typed.get("transcribed", True))
+    valid, valid_msg = validate_dataset(dataset_path / "cache", transcribed=transcribed_flag)
 
     now = generate_unique_id()
 
     print(now)
     dataset_dest = _get_datasets_root() / now
     try:
-        dataset_metadata_typed = _get_dataset_metadata(dataset_path)
-        if dataset_metadata_typed is None:
-            return False, "Dataset metadata file not found in the provided dataset path."
-
         # Change metadata accordingly
         dataset_metadata: dict[str, Any] = dict(dataset_metadata_typed)  # Make a copy to modify
         dataset_metadata["id"] = now
@@ -536,7 +537,7 @@ def import_dataset(dataset_path: Path) -> Tuple[bool, str]:
 
         shutil.copytree(dataset_path, dataset_dest, dirs_exist_ok=True)
 
-        with open(metadata_path, "w") as f:
+        with open(metadata_path, "w", encoding="utf-8") as f:
             json.dump(dataset_metadata, f, indent=2)
 
         _rewrite_imported_alignments(dataset_dest)
@@ -551,7 +552,7 @@ def import_dataset(dataset_path: Path) -> Tuple[bool, str]:
         return False, f"Failed to import dataset: {str(e)}"
 
 
-def validate_dataset(dataset_path: Path) -> Tuple[bool, str]:
+def validate_dataset(dataset_path: Path, transcribed: bool = True) -> Tuple[bool, str]:
     """Validate if a dataset follows the expected organization pattern.
 
     Validation checks:
@@ -560,16 +561,14 @@ def validate_dataset(dataset_path: Path) -> Tuple[bool, str]:
     - Contains speaker subdirectories (not files at root level)
     - Each speaker directory is not empty
     - Each speaker directory contains audio files (.wav, .flac, .mp3, .ogg, .m4a)
-    - Each speaker directory contains label files (.lab, .txt)
-    - Number of audio files matches number of label files per speaker
-    - Each audio file has a matching label file with the same stem name
+    - If transcribed=True: each audio file has a matching .lab file in the same directory
 
     Expected structure:
 
         dataset_path/
         ├── speaker_001/
         │   ├── audio_001.wav
-        │   ├── audio_001.lab
+        │   ├── audio_001.lab  (only required when transcribed=True)
         │   ├── audio_002.wav
         │   └── audio_002.lab
         └── speaker_002/
@@ -578,6 +577,7 @@ def validate_dataset(dataset_path: Path) -> Tuple[bool, str]:
 
     Args:
         dataset_path: Path to dataset root directory
+        transcribed: Whether to require a .lab file for every audio file
 
     Returns:
         Tuple of (True, validation_message) if valid or (False, error_description) if invalid
@@ -617,29 +617,28 @@ def validate_dataset(dataset_path: Path) -> Tuple[bool, str]:
             for f in os.listdir(speaker_path)
             if f.endswith((".wav", ".flac", ".mp3", ".ogg", ".m4a"))
         ]
-        label_files = [f for f in os.listdir(speaker_path) if f.endswith((".lab", ".txt"))]
 
         if not audio_files:
             return False, f"No audio files found in speaker directory '{speaker_path}'."
 
-        if not label_files:
-            return False, f"No label files found in speaker directory '{speaker_path}'."
+        lab_files = [f for f in os.listdir(speaker_path) if f.endswith(".lab")]
 
-        if len(audio_files) != len(label_files):
-            return (
-                False,
-                f"Mismatch between number of audio and label files in speaker "
-                f"directory '{speaker_path}'.",
-            )
-
-        audio_stems = {Path(f).stem for f in audio_files}
-        label_stems = {Path(f).stem for f in label_files}
-        unmatched = audio_stems.symmetric_difference(label_stems)
-        if unmatched:
-            return (
-                False,
-                f"Unpaired audio/label files in speaker directory '{speaker_path}': "
-                f"{', '.join(sorted(unmatched))}.",
-            )
+        if transcribed:
+            audio_stems = {Path(f).stem for f in audio_files}
+            lab_stems = {Path(f).stem for f in lab_files}
+            missing = audio_stems - lab_stems
+            if missing:
+                return (
+                    False,
+                    f"Missing .lab files for audio files in speaker directory "
+                    f"'{speaker_path}': {', '.join(sorted(missing))}.",
+                )
+        else:
+            if lab_files:
+                return (
+                    False,
+                    f"Dataset is marked as not transcribed but .lab files were found in "
+                    f"'{speaker_path}'. Set 'Transcribed' to true or remove the .lab files.",
+                )
 
     return True, "Dataset is valid."
