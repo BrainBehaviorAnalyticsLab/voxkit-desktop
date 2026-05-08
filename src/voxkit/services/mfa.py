@@ -138,11 +138,12 @@ def run_mfa_align(
 
     try:
         print(f"[mfa.run_mfa_align] Running MFA align with command: {' '.join(cmd)}")
-        subprocess.run(cmd, check=True, **_no_window())
+        subprocess.run(cmd, check=True, capture_output=True, text=True, **_no_window())
         print("[mfa.run_mfa_align] MFA alignment completed successfully.")
     except subprocess.CalledProcessError as e:
-        print(f"[mfa.run_mfa_align] MFA alignment failed with error: {e}")
-        raise
+        stderr_msg = e.stderr.strip() if e.stderr else "(no output captured)"
+        print(f"[mfa.run_mfa_align] MFA alignment failed:\n{stderr_msg}")
+        raise RuntimeError(f"MFA alignment failed (exit {e.returncode}):\n{stderr_msg}") from e
 
 
 def run_mfa_adapt(

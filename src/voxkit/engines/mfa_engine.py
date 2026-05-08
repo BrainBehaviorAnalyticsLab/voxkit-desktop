@@ -159,6 +159,7 @@ class MFAEngine(AlignmentEngine):
                 alignment_id=msg["id"],
                 updates={"status": "failed"},
             )
+            raise
 
     def train_aligner(
         self, audio_root: Path, textgrid_root: Path, base_model_id: str | None, new_model_id: str
