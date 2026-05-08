@@ -127,7 +127,9 @@ exclude = [
     "build.py",
     "example_startup_script.py",
     "test_imports.py",
-    "tests/"
+    "tests/",
+    "build/",
+    "dist/",
 ]
 
 
