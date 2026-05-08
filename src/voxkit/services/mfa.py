@@ -97,6 +97,39 @@ def ensure_dictionary_downloaded(dictionary_name: str = "english_us_arpa") -> No
         print(f"[mfa] Dictionary '{dictionary_name}' is ready.")
 
 
+def _ensure_mfa_server_running() -> None:
+    """Start MFA's bundled Postgres server on Windows. No-op elsewhere.
+
+    Why: MFA 3.3.x's SQLite backend has a multiprocessing race in
+    `collect_alignments` on Windows where the `word_interval_temp` staging
+    table goes missing between worker connections, aborting the run with
+    "no such table: word_interval_temp". The Postgres backend (also bundled
+    in the aligner conda env) does not have this race. macOS and Linux are
+    not affected by the SQLite race in practice, so this is gated to win32
+    to avoid changing their behavior.
+    """
+    if sys.platform != "win32":
+        return
+
+    conda = _find_conda()
+    # Both calls are idempotent: `init` errors if the server dir already exists,
+    # `start` errors if it's already running. Either error state is the goal,
+    # so we ignore returncodes and only guard against true failures (timeout,
+    # missing conda). If the server genuinely can't come up, alignment will
+    # fall back to SQLite and surface its own error via the existing path.
+    for sub in (("server", "init"), ("server", "start")):
+        try:
+            subprocess.run(
+                [conda, "run", "-n", "aligner", "mfa", *sub],
+                capture_output=True,
+                text=True,
+                timeout=60,
+                **_no_window(),
+            )
+        except (subprocess.TimeoutExpired, FileNotFoundError):
+            pass
+
+
 def run_mfa_align(
     corpus_dir, model_path, output_dir, dictionary_name="english_us_arpa", eval_dir=None
 ) -> None:
@@ -116,6 +149,7 @@ def run_mfa_align(
     """
     # Ensure dictionary is downloaded
     ensure_dictionary_downloaded(dictionary_name)
+    _ensure_mfa_server_running()
 
     conda = _find_conda()
     cmd = [
@@ -169,6 +203,7 @@ def run_mfa_adapt(
     """
     # Ensure dictionary is downloaded
     ensure_dictionary_downloaded(dictionary_name)
+    _ensure_mfa_server_running()
 
     conda = _find_conda()
     cmd = [
