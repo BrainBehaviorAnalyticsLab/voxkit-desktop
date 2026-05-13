@@ -56,13 +56,3 @@ jobs:
       - name: Run tests
         run: |
           xvfb-run -a uv run invoke run-tests
-
-      - name: Run linting
-        run: |
-          uv run invoke lint-check
-        continue-on-error: true
-
-      - name: Run type checking
-        run: |
-          uv run invoke mypy-check
-        continue-on-error: true
