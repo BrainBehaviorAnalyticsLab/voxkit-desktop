@@ -359,7 +359,7 @@ class TextGridTimeline(QWidget):
 
                 # Label inside block
                 if bw > 10 and iv_label:
-                    text_color = QColor("white") if (active or not silent) else color.darker(140)
+                    text_color = QColor("white") if active else color.darker(140)
                     painter.setPen(text_color)
                     painter.drawText(
                         x1 + 2,
