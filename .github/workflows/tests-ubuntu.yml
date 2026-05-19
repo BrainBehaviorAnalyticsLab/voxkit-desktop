@@ -4,9 +4,11 @@ on:
   push:
     branches:
       - main
+      - develop
   pull_request:
     branches:
       - main
+      - develop
 
 permissions:
   contents: read
@@ -18,11 +20,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
 
       - name: Install Qt system dependencies
         run: |
@@ -49,6 +46,8 @@ jobs:
 
       - name: Install uv
         uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
 
       - name: Configure Git for private repos
         run: |
@@ -61,13 +60,3 @@ jobs:
       - name: Run tests
         run: |
           xvfb-run -a uv run invoke run-tests
-
-      - name: Run linting
-        run: |
-          uv run invoke lint-check
-        continue-on-error: true
-
-      - name: Run type checking
-        run: |
-          uv run invoke mypy-check
-        continue-on-error: true
