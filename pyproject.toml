@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "pypllr-gui"
 dynamic = ["version"]
-description = "AI/ML Research -> Clinical Applications (Speech Pathology)"
+description = "PyQt6 workbench bridging audio ML engines and speech-pathology clinical workflows."
 readme = "README.md"
 requires-python = ">=3.11"
 license = {text = "MIT"}
