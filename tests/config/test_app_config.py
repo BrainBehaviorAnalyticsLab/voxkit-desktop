@@ -71,7 +71,6 @@ class TestAppConfigFromYaml:
     def test_from_yaml_success(self, tmp_path):
         yaml_content = """
 app_name: MyApp
-version: 1.2.3
 description: My application description
 introduction: Welcome to MyApp
 help_url: http://myapp.com/help
@@ -84,7 +83,6 @@ release_notes: Bug fixes and improvements
         config = AppConfig.from_yaml(config_file)
 
         assert config.app_name == "MyApp"
-        assert config.version == "1.2.3"
         assert config.description == "My application description"
         assert config.introduction == "Welcome to MyApp"
         assert config.help_url == "http://myapp.com/help"
@@ -100,7 +98,6 @@ release_notes: Bug fixes and improvements
         config = AppConfig.from_yaml(config_file)
 
         assert config.app_name == "VoxKit"
-        assert config.version == "0.0.0"
         assert config.description == ""
         assert config.introduction == ""
         assert config.help_url == "https://voxkit-web.vercel.app/help"
@@ -114,7 +111,6 @@ release_notes: Bug fixes and improvements
     def test_from_yaml_partial_config(self, tmp_path):
         yaml_content = """
 app_name: PartialApp
-version: 0.1.0
 """
         config_file = tmp_path / "app_info.yaml"
         config_file.write_text(yaml_content)
@@ -122,9 +118,24 @@ version: 0.1.0
         config = AppConfig.from_yaml(config_file)
 
         assert config.app_name == "PartialApp"
-        assert config.version == "0.1.0"
         assert config.description == ""
         assert config.introduction == ""
+
+
+class TestVersionFile:
+    """Verify the canonical version source (config/VERSION)."""
+
+    def test_version_file_exists(self):
+        version_file = get_config_root() / "VERSION"
+        assert version_file.exists(), f"Expected canonical version file at {version_file}"
+
+    def test_version_file_has_nonempty_version(self):
+        version = (get_config_root() / "VERSION").read_text(encoding="utf-8").strip()
+        assert version, "config/VERSION is empty"
+        # Loose sanity check: at least one digit and a dot (e.g. "0.4.1").
+        assert any(ch.isdigit() for ch in version) and "." in version, (
+            f"config/VERSION does not look like a version string: {version!r}"
+        )
 
 
 class TestAppConfigLoadDefault:

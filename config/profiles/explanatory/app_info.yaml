@@ -2,7 +2,7 @@
 # This file contains metadata about the application version and purpose
 
 app_name: "VoxKit"
-version: "0.1.0"
+# version is sourced from config/VERSION (single source of truth)
 description: "AI/ML Research -> Clinical Applications (Speech Pathology)"
 help_url: "https://voxkit-web.vercel.app/help"
 
@@ -12,17 +12,17 @@ log_backup_count: 3      # number of rotated files to retain
 
 # Introduction text displayed to users
 introduction: |
-  VoxKit bridges advanced ML alignment tools and clinical speech pathology research. 
-  This toolkit enables rigorous phonetic analysis without requiring deep technical 
+  VoxKit bridges advanced ML alignment tools and clinical speech pathology research.
+  This toolkit enables rigorous phonetic analysis without requiring deep technical
   expertise in machine learning or command-line interfaces.
-  
+
   Core Workflow:
   1. Register and analyze your speech datasets
   2. Train custom acoustic models or use pretrained engines (MFA, W2TG)
   3. Generate phoneme-level forced alignments with timing precision
   4. Extract Goodness of Pronunciation (PLLR) scores for clinical assessment
   5. Export results with full provenance tracking for reproducible research
-  
+
   Key Capabilities:
   - Multiple alignment engines (MFA, Wav2TextGrid, WhisperX in development)
   - Extensible analyzer system for custom metadata extraction
@@ -38,7 +38,7 @@ release_notes: |
   - Enhanced dataset analyzers with custom metadata extraction
   - Model management interface with version tracking
   - Startup routines for automated asset downloads
-  
+
   Configuration Changes:
   - Researchers can now modify workflows by editing config/pipeline_definitions.yaml
   - No code changes required for common workflow adaptations
@@ -49,10 +49,10 @@ contact_info:
   github_issues: "https://github.com/BrainBehaviorAnalyticsLab/voxkit-desktop/issues"
   email_support: "bfrey6@wisc.edu"
   documentation: "https://voxkit-web.vercel.app/help"
-  
+
 # Research context
 research_context: |
-  VoxKit was developed through collaboration between WISCLab and the Brain Behavior 
-  Analytics Lab to democratize access to state-of-the-art forced alignment tools. 
-  The platform is designed around established speech pathology research methodologies 
+  VoxKit was developed through collaboration between WISCLab and the Brain Behavior
+  Analytics Lab to democratize access to state-of-the-art forced alignment tools.
+  The platform is designed around established speech pathology research methodologies
   rather than generic audio processing workflows.

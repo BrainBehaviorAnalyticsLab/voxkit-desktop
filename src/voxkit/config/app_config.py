@@ -154,9 +154,14 @@ class AppConfig:
         with open(config_path, "r", encoding="utf-8") as f:
             data = yaml.safe_load(f)
 
+        # Version is sourced from config/VERSION (single source of truth),
+        # not from per-profile YAML.
+        version_file = get_config_root() / "VERSION"
+        version = version_file.read_text(encoding="utf-8").strip()
+
         return cls(
             app_name=data.get("app_name", "VoxKit"),
-            version=data.get("version", "0.0.0"),
+            version=version,
             description=data.get("description", ""),
             introduction=data.get("introduction", ""),
             help_url=data.get("help_url", "https://voxkit-web.vercel.app/help"),

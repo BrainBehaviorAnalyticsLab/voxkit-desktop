@@ -3,8 +3,8 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 [project]
 name = "pypllr-gui"
-version = "0.1.0"
-description = "AI/ML Research -> Clinical Applications (Speech Pathology)"
+dynamic = ["version"]
+description = "PyQt6 workbench bridging audio ML engines and speech-pathology clinical workflows."
 readme = "README.md"
 requires-python = ">=3.11"
 license = {text = "MIT"}
@@ -211,6 +211,9 @@ show_missing = true
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.dynamic]
+version = {file = ["config/VERSION"]}
 
 [tool.shredguard]
 
