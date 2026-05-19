@@ -101,6 +101,20 @@ def _get_dataset_root(dataset_id: str) -> Path | None:
     return None
 
 
+def get_dataset_data_path(meta: DatasetMetadata) -> Path | None:
+    """Return the directory containing the dataset's speaker subdirs.
+
+    For cached datasets this is ``<dataset_root>/cache``; for non-cached
+    datasets it is the original on-disk path recorded in metadata.
+    """
+    if meta.get("cached"):
+        root = _get_dataset_root(meta["id"])
+        if root is None:
+            return None
+        return root / "cache"
+    return Path(meta["original_path"])
+
+
 def _get_dataset_metadata(dataset_root: Path) -> DatasetMetadata | None:
     """Load dataset metadata from the given dataset root directory.
 

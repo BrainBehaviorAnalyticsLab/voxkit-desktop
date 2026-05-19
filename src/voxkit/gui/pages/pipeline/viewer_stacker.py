@@ -40,7 +40,6 @@ from voxkit.gui.components import MultiColumnComboBox
 from voxkit.gui.pages.pipeline.base_stacker import BaseStacker
 from voxkit.gui.styles import Buttons, Colors, Containers, Labels
 from voxkit.storage import alignments, datasets
-from voxkit.storage.datasets import _get_dataset_root
 
 if TYPE_CHECKING:
     from PyQt6.QtMultimedia import QAudioOutput, QMediaPlayer
@@ -116,15 +115,6 @@ def _parse_textgrid(filepath: str) -> list[dict]:
 # ---------------------------------------------------------------------------
 # Path helpers
 # ---------------------------------------------------------------------------
-
-
-def _dataset_data_path(meta: datasets.DatasetMetadata) -> Path:
-    """Return the directory containing speaker subdirs (audio + .lab files)."""
-    if meta.get("cached"):
-        root = _get_dataset_root(meta["id"])
-        if root:
-            return root / "cache"
-    return Path(meta["original_path"])
 
 
 def _find_textgrid(tg_root: Path, speaker: str, stem: str) -> Path | None:
@@ -694,7 +684,7 @@ class ViewerStacker(BaseStacker):
         if not self._current_dataset_meta:
             return
 
-        self._current_data_path = _dataset_data_path(self._current_dataset_meta)
+        self._current_data_path = datasets.get_dataset_data_path(self._current_dataset_meta)
 
         al_list = alignments.list_alignments(dataset_id)
         if al_list:

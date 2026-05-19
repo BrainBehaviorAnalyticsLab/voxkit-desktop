@@ -143,10 +143,7 @@ class TrainingStacker(BaseStacker):
             )
             return
 
-        if bool(dataset_metadata["cached"]):
-            audio_path = datasets._get_dataset_root(selected_dataset_id)
-        else:
-            audio_path = Path(dataset_metadata["original_path"])
+        audio_path = datasets.get_dataset_data_path(dataset_metadata)
 
         if not audio_path or not Path(audio_path).exists():
             QMessageBox.warning(
