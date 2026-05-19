@@ -386,14 +386,7 @@ class PLLRStacker(QWidget):
             QMessageBox.warning(self, "Invalid Dataset", "Could not find dataset metadata.")
             return
 
-        wavlab_path: Path | str | None = None
-        if not (dataset_meta["cached"] == "True" or dataset_meta["cached"] is True):
-            wavlab_path = dataset_meta["original_path"]
-
-        else:
-            dataset_root = datasets._get_dataset_root(selected_dataset_id)
-            if dataset_root:
-                wavlab_path = dataset_root / "cache"
+        wavlab_path: Path | str | None = datasets.get_dataset_data_path(dataset_meta)
 
         print(f"[DEBUG] Dataset root path: {wavlab_path}")
 
