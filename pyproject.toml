@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 [project]
 name = "pypllr-gui"
-version = "0.1.0"
+dynamic = ["version"]
 description = "AI/ML Research -> Clinical Applications (Speech Pathology)"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -211,6 +211,9 @@ show_missing = true
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.dynamic]
+version = {file = ["config/VERSION"]}
 
 [tool.shredguard]
 

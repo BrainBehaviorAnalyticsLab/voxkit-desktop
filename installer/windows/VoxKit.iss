@@ -1,5 +1,14 @@
 #define AppName "VoxKit"
-#define AppVersion "0.4.1"
+
+; AppVersion is read from config/VERSION (single source of truth).
+#define VersionFile "..\..\config\VERSION"
+#define VersionHandle FileOpen(VersionFile)
+#if VersionHandle
+  #define AppVersion Trim(FileRead(VersionHandle))
+  #expr FileClose(VersionHandle)
+#else
+  #error "Could not open config/VERSION"
+#endif
 #define AppPublisher "Brain Behavior Analytics Lab"
 #define AppURL "https://github.com/BrainBehaviorAnalyticsLab/voxkit-desktop"
 #define AppExeName "VoxKit.exe"
