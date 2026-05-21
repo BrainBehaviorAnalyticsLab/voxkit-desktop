@@ -18,4 +18,4 @@ STORAGE_ROOT: str = "~/.voxkit"  # Root directory for all storage
 MODELS_ROOT: str = "train"  # Path from STORAGE_ROOT to models
 DATASETS_ROOT: str = "datasets"  # Path from STORAGE_ROOT to datasets
 ALIGNMENTS_ROOT: str = "alignments"  # Path from STORAGE_ROOT/DATASETS_ROOT to alignments
-SUPERSET_AUDIO_EXTENSIONS: set[str] = {".wav", ".flac", ".mp3", ".ogg", ".m4a"}
+SUPERSET_AUDIO_EXTENSIONS: frozenset[str] = frozenset({".wav", ".flac", ".mp3", ".ogg", ".m4a"})
