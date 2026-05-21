@@ -100,8 +100,7 @@ def resolve_config_file(filename: str) -> Path:
 
     # Throw error if not found in either location
     raise FileNotFoundError(
-        f"Config file '{filename}' not found in profile '{profile}' "
-        f"or default profile"
+        f"Config file '{filename}' not found in profile '{profile}' or default profile"
     )
 
 
