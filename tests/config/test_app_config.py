@@ -6,7 +6,6 @@ from voxkit.config.app_config import (
     AppConfig,
     get_active_profile,
     get_app_config,
-    get_config_path,
     get_config_root,
     get_profile_config_path,
 )
@@ -35,10 +34,6 @@ class TestConfigPaths:
         # Should be config/profiles/<profile_name>
         assert result.parent.name == "profiles"
 
-    def test_get_config_path_is_alias_for_profile_path(self):
-        # get_config_path is now an alias for get_profile_config_path
-        assert get_config_path() == get_profile_config_path()
-
 
 class TestAppConfig:
     def test_dataclass_fields(self):
@@ -52,7 +47,7 @@ class TestAppConfig:
         assert config.version == "1.0.0"
         assert config.description == "Test description"
         assert config.introduction == "Test intro"
-        assert config.help_url == "https://voxkit-web.vercel.app/help"
+        assert config.help_url is None
         config = AppConfig(
             app_name="TestApp",
             version="2.0.0",

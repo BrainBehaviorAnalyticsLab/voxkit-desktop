@@ -43,7 +43,7 @@ import shutil
 from pathlib import Path
 from typing import Any, List, Literal, Tuple, TypedDict
 
-from voxkit.storage.config import ALIGNMENTS_ROOT, DATASETS_ROOT
+from voxkit.storage.constants import ALIGNMENTS_ROOT, DATASETS_ROOT, SUPERSET_AUDIO_EXTENSIONS
 from voxkit.storage.utils import generate_unique_id, get_storage_root, readable_from_unique_id
 
 
@@ -627,9 +627,7 @@ def validate_dataset(dataset_path: Path, transcribed: bool = True) -> Tuple[bool
     for speaker in speaker_dirs:
         speaker_path = os.path.join(dataset_path, speaker)
         audio_files = [
-            f
-            for f in os.listdir(speaker_path)
-            if f.endswith((".wav", ".flac", ".mp3", ".ogg", ".m4a"))
+            f for f in os.listdir(speaker_path) if f.endswith(tuple(SUPERSET_AUDIO_EXTENSIONS))
         ]
 
         if not audio_files:

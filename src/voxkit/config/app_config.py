@@ -14,6 +14,8 @@ from typing import Optional
 
 import yaml
 
+from voxkit.config.constants import DEFAULT_HELP_URL
+
 
 def get_config_root() -> Path:
     """Get the path to the config root directory.
@@ -96,28 +98,10 @@ def resolve_config_file(filename: str) -> Path:
     if default_path.exists():
         return default_path
 
-    # Fall back to legacy location (config root)
-    legacy_path = config_root / filename
-    if legacy_path.exists():
-        return legacy_path
-
+    # Throw error if not found in either location
     raise FileNotFoundError(
-        f"Config file '{filename}' not found in profile '{profile}', "
-        f"default profile, or config root"
+        f"Config file '{filename}' not found in profile '{profile}' or default profile"
     )
-
-
-# Legacy alias for backwards compatibility
-def get_config_path() -> Path:
-    """Get the path to the config directory.
-
-    Deprecated: Use get_profile_config_path() for profile-aware loading,
-    or get_config_root() for the config root directory.
-
-    Returns:
-        Path to the active profile's config directory
-    """
-    return get_profile_config_path()
 
 
 @dataclass
@@ -128,7 +112,7 @@ class AppConfig:
     version: str
     description: str
     introduction: str
-    help_url: str = "https://voxkit-web.vercel.app/help"
+    help_url: str | None = None
     release_date: Optional[str] = None
     release_notes: Optional[str] = None
     log_max_bytes: int = 5 * 1024 * 1024
@@ -164,7 +148,7 @@ class AppConfig:
             version=version,
             description=data.get("description", ""),
             introduction=data.get("introduction", ""),
-            help_url=data.get("help_url", "https://voxkit-web.vercel.app/help"),
+            help_url=data.get("help_url", DEFAULT_HELP_URL),
             release_date=data.get("release_date"),
             release_notes=data.get("release_notes"),
             log_max_bytes=int(data.get("log_max_bytes", 5 * 1024 * 1024)),

@@ -25,7 +25,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
-from .config import STORAGE_ROOT
+from .constants import STORAGE_ROOT
 
 _id_lock = threading.Lock()
 _last_id_dt: datetime | None = None

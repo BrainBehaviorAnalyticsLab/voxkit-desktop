@@ -32,8 +32,9 @@ Example::
 import json
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any
 
+from voxkit.engines.constants import AVAILABLE_TOOLS
 from voxkit.storage.utils import get_storage_root
 
 """
@@ -42,18 +43,16 @@ a specific task. Each engine can have no more than one of each type of tool, and
 has its own settings that are stored in a JSON file.
 """
 
-ToolType = Literal["train", "align", "transcribe"]
-
 
 class AlignmentEngine(ABC):
     """
     Abstract base class for alignment engines.
 
-    Subclasses must implement at least one ToolType operation and provide
+    Subclasses must implement at least one AVAILABLE_TOOLS operation and provide
     specific validation criteria.
 
     Attributes:
-        settings_configurations (dict[ToolType, Any]): Mapping of
+        settings_configurations (dict[AVAILABLE_TOOLS, Any]): Mapping of
             tool type names ("train"/"align") to their store configuration.
         reference_url (str | None): Optional reference URL for the engine.
         description (str | None): Human-readable description of the engine.
@@ -63,7 +62,7 @@ class AlignmentEngine(ABC):
 
     def __init__(
         self,
-        settings_configurations: dict[ToolType, Any],
+        settings_configurations: dict[AVAILABLE_TOOLS, Any],
         reference_url: str | None = None,
         description: str | None = None,
         human_readable_name: str | None = None,
@@ -218,7 +217,7 @@ class AlignmentEngine(ABC):
         """
         return {field.name: field.default_value for field in (cfg.fields or [])}
 
-    def get_settings(self, tool_type: ToolType) -> dict:
+    def get_settings(self, tool_type: AVAILABLE_TOOLS) -> dict:
         """
         Load and validate settings for a specific tool.
 
@@ -269,7 +268,7 @@ class AlignmentEngine(ABC):
 
         return settings
 
-    def get_settings_config(self, tool_type: ToolType) -> Any:
+    def get_settings_config(self, tool_type: AVAILABLE_TOOLS) -> Any:
         """
         Return the :class:`Any` for a tool type.
 
@@ -287,7 +286,7 @@ class AlignmentEngine(ABC):
             raise ValueError(f"No settings configuration found for tool type: {tool_type}")
         return config
 
-    def has_tool(self, tool_type: ToolType) -> bool:
+    def has_tool(self, tool_type: AVAILABLE_TOOLS) -> bool:
         """Check if the engine has a tool of the specified type."""
         return tool_type in self.settings_configurations
 

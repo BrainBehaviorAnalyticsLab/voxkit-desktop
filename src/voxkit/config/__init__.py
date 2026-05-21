@@ -28,6 +28,7 @@ from voxkit.config.app_config import (
     get_profile_config_path,
     resolve_config_file,
 )
+from voxkit.config.constants import DEFAULT_HELP_URL
 from voxkit.config.logging_config import (
     LOG_FILE,
     reset_logging,
@@ -40,7 +41,6 @@ from voxkit.config.pipeline_config import (
     get_pipeline_config,
 )
 from voxkit.config.startup_config import (
-    HELP_URL,
     STARTUP_SCRIPT,
     AppName,
     Defaults,
@@ -63,7 +63,7 @@ __all__ = [
     "UIConfig",
     "get_pipeline_config",
     # Startup config
-    "HELP_URL",
+    "DEFAULT_HELP_URL",
     "AppName",
     "Dimensions",
     "Defaults",

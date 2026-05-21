@@ -3,7 +3,7 @@ from typing import Callable, Literal
 
 from voxkit.services.mfa import download_acoustic_model
 from voxkit.storage import models
-from voxkit.storage.config import MODELS_ROOT
+from voxkit.storage.constants import MODELS_ROOT
 from voxkit.storage.models import download_and_copy_huggingface_model
 from voxkit.storage.utils import get_storage_root
 
@@ -18,7 +18,6 @@ Defaults = {
 }
 
 Mode = Literal["MFAENGINE", "W2TGENGINE"]
-HELP_URL = "https://voxkit-web.vercel.app/help"
 
 
 def startup_routine():

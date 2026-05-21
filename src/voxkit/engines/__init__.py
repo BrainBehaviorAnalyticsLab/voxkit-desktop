@@ -6,7 +6,7 @@ API
 - **EngineManager.list_engines**: List registered engine IDs
 - **EngineManager.get_engine**: Retrieve engine instance by ID
 - **EngineManager.get_tool_providers**: Get engines providing a specific tool type
-- **ToolType**: Literal type for compatible tool types
+- **AVAILABLE_TOOLS**: Literal type for compatible tool types
 
 Available Engines
 -----------------
@@ -48,7 +48,8 @@ from __future__ import annotations
 
 from typing import List
 
-from .base import AlignmentEngine, ToolType
+from .base import AlignmentEngine
+from .constants import AVAILABLE_TOOLS
 from .faster_whisper_engine import FasterWhisperEngine
 from .mfa_engine import MFAEngine
 from .w2tg_engine import W2TGEngine
@@ -82,7 +83,7 @@ class EngineManager:
         except KeyError:
             raise ValueError(f"No engine with id: {engine_id}")
 
-    def get_tool_providers(self, tool: ToolType) -> dict[str, AlignmentEngine]:
+    def get_tool_providers(self, tool: AVAILABLE_TOOLS) -> dict[str, AlignmentEngine]:
         """Return a list of engines that provide the specified tool type."""
         engines = {}
         for _, engine in self._engines.items():
@@ -97,4 +98,4 @@ mfa = MFAEngine(id="MFAENGINE")
 faster_whisper = FasterWhisperEngine(id="FASTERWHISPERENGINE")
 engines = EngineManager({mfa.id: mfa, faster_whisper.id: faster_whisper, w2tg.id: w2tg})
 
-__all__ = ["engines", "ToolType"]
+__all__ = ["engines", "AVAILABLE_TOOLS"]
