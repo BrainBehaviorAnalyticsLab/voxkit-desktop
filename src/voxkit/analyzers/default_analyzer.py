@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 from .base import DatasetAnalyzer
+from .constants import SUPERSET_AUDIO_EXTENSIONS
 
 
 class DefaultAnalyzer(DatasetAnalyzer):
@@ -43,7 +44,7 @@ class DefaultAnalyzer(DatasetAnalyzer):
             ``audio_file_count``.
         """
         results = []
-        audio_extensions = {".wav", ".flac", ".mp3", ".ogg", ".m4a"}
+        audio_extensions = SUPERSET_AUDIO_EXTENSIONS
 
         try:
             for entry in os.scandir(dataset_path):
