@@ -631,7 +631,7 @@ class TestModels:
             import json
 
             from voxkit.storage import models
-            from voxkit.storage.config import MODELS_ROOT
+            from voxkit.storage.constants import MODELS_ROOT
             from voxkit.storage.models import import_models
 
             monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
@@ -674,7 +674,7 @@ class TestModels:
             import json
 
             from voxkit.storage import models
-            from voxkit.storage.config import MODELS_ROOT
+            from voxkit.storage.constants import MODELS_ROOT
             from voxkit.storage.models import import_models, list_models
 
             monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
@@ -737,7 +737,7 @@ class TestModels:
             import json
 
             from voxkit.storage import models
-            from voxkit.storage.config import MODELS_ROOT
+            from voxkit.storage.constants import MODELS_ROOT
             from voxkit.storage.models import import_models
 
             monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)

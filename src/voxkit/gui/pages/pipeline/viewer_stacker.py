@@ -40,6 +40,7 @@ from voxkit.gui.components import MultiColumnComboBox
 from voxkit.gui.pages.pipeline.base_stacker import BaseStacker
 from voxkit.gui.styles import Buttons, Colors, Containers, Labels
 from voxkit.storage import alignments, datasets
+from voxkit.storage.constants import SUPERSET_AUDIO_EXTENSIONS
 
 if TYPE_CHECKING:
     from PyQt6.QtMultimedia import QAudioOutput, QMediaPlayer
@@ -52,7 +53,7 @@ except ImportError:
     MULTIMEDIA_AVAILABLE = False
 
 
-_AUDIO_EXTENSIONS = {".wav", ".flac", ".mp3", ".ogg", ".m4a"}
+_AUDIO_EXTENSIONS = SUPERSET_AUDIO_EXTENSIONS
 _SILENCE_LABELS = {"", "sp", "sil", "<eps>", "spn"}
 
 # ---------------------------------------------------------------------------

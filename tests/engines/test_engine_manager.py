@@ -35,7 +35,7 @@ class TestEngineManager:
         assert "No engine with id" in str(exc_info.value)
 
     def test_get_tool_providers_align(self):
-        # ToolType is Literal["train", "align", "transcribe"]
+        # AVAILABLE_TOOLS is Literal["train", "align", "transcribe"]
         providers = engines.get_tool_providers("align")
         assert isinstance(providers, dict)
         # At least some engines should provide alignment

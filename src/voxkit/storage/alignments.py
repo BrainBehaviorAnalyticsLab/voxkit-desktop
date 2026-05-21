@@ -38,7 +38,7 @@ import shutil
 from pathlib import Path
 from typing import List, Literal, Tuple, TypedDict
 
-from .config import ALIGNMENTS_ROOT
+from .constants import ALIGNMENTS_ROOT, SUPERSET_AUDIO_EXTENSIONS
 from .datasets import _get_dataset_root, get_dataset_metadata
 from .models import ModelMetadata, get_model_metadata
 from .utils import generate_unique_id, readable_from_unique_id
@@ -192,7 +192,7 @@ def create_alignment(
         return False, f"Failed to create alignment metadata: {str(e)}"
 
 
-_AUDIO_EXTS = (".wav", ".flac", ".mp3", ".ogg", ".m4a")
+_AUDIO_EXTS = SUPERSET_AUDIO_EXTENSIONS
 
 
 def validate_hand_alignments(dataset_path: Path, hand_path: Path) -> Tuple[bool, str]:

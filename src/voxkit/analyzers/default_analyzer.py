@@ -17,8 +17,9 @@ import os
 from pathlib import Path
 from typing import Any, Dict, List
 
+from voxkit.storage.constants import SUPERSET_AUDIO_EXTENSIONS
+
 from .base import DatasetAnalyzer
-from .constants import SUPERSET_AUDIO_EXTENSIONS
 
 
 class DefaultAnalyzer(DatasetAnalyzer):
