@@ -98,28 +98,11 @@ def resolve_config_file(filename: str) -> Path:
     if default_path.exists():
         return default_path
 
-    # Fall back to legacy location (config root)
-    legacy_path = config_root / filename
-    if legacy_path.exists():
-        return legacy_path
-
+    # Throw error if not found in either location
     raise FileNotFoundError(
         f"Config file '{filename}' not found in profile '{profile}', "
         f"default profile, or config root"
     )
-
-
-# Legacy alias for backwards compatibility
-def get_config_path() -> Path:
-    """Get the path to the config directory.
-
-    Deprecated: Use get_profile_config_path() for profile-aware loading,
-    or get_config_root() for the config root directory.
-
-    Returns:
-        Path to the active profile's config directory
-    """
-    return get_profile_config_path()
 
 
 @dataclass
