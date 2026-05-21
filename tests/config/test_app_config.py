@@ -52,7 +52,7 @@ class TestAppConfig:
         assert config.version == "1.0.0"
         assert config.description == "Test description"
         assert config.introduction == "Test intro"
-        assert config.help_url == "https://voxkit-web.vercel.app/help"
+        assert config.help_url is None
         config = AppConfig(
             app_name="TestApp",
             version="2.0.0",

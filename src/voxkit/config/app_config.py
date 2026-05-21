@@ -14,6 +14,8 @@ from typing import Optional
 
 import yaml
 
+from voxkit.config.constants import DEFAULT_HELP_URL
+
 
 def get_config_root() -> Path:
     """Get the path to the config root directory.
@@ -128,7 +130,7 @@ class AppConfig:
     version: str
     description: str
     introduction: str
-    help_url: str = "https://voxkit-web.vercel.app/help"
+    help_url: str | None = None
     release_date: Optional[str] = None
     release_notes: Optional[str] = None
     log_max_bytes: int = 5 * 1024 * 1024
@@ -164,7 +166,7 @@ class AppConfig:
             version=version,
             description=data.get("description", ""),
             introduction=data.get("introduction", ""),
-            help_url=data.get("help_url", "https://voxkit-web.vercel.app/help"),
+            help_url=data.get("help_url", DEFAULT_HELP_URL),
             release_date=data.get("release_date"),
             release_notes=data.get("release_notes"),
             log_max_bytes=int(data.get("log_max_bytes", 5 * 1024 * 1024)),
