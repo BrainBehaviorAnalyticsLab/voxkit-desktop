@@ -12,8 +12,33 @@ def _no_window() -> dict:
     return {}
 
 
-def _find_conda() -> str:
-    """Return the conda executable path, checking common install locations on Windows."""
+def _find_conda(conda_path: str | None = None) -> str:
+    """Return the conda executable path.
+
+    Resolution order:
+        1. ``conda_path`` argument, when it points to an existing file. This is
+           the path a user configures in the MFA engine settings, primarily so
+           Windows users with a non-standard Anaconda/Miniconda install can
+           point VoxKit straight at their ``conda.exe``.
+        2. The ``VOXKIT_CONDA_PATH`` environment variable, when it points to an
+           existing file.
+        3. ``conda`` on the system PATH.
+        4. Common install locations on Windows.
+
+    Args:
+        conda_path: Optional user-configured path to the conda executable.
+
+    Raises:
+        FileNotFoundError: If conda cannot be located through any of the above.
+    """
+    # User-configured path (settings dialog) or environment override take
+    # precedence over auto-detection so a deliberate choice always wins.
+    for candidate in (conda_path, os.environ.get("VOXKIT_CONDA_PATH")):
+        if candidate:
+            resolved = Path(candidate).expanduser()
+            if resolved.exists():
+                return str(resolved)
+
     # Fast path: conda is already on PATH
     if shutil.which("conda"):
         return "conda"
@@ -44,20 +69,25 @@ def _find_conda() -> str:
     raise FileNotFoundError(
         "conda not found. Install Miniconda from https://docs.conda.io/en/latest/miniconda.html "
         "and create the aligner environment with: "
-        "conda create -n aligner -c conda-forge montreal-forced-aligner"
+        "conda create -n aligner -c conda-forge montreal-forced-aligner. "
+        "If conda is installed but not on PATH (common on Windows), set its full path in the "
+        "MFA engine settings ('Conda Path') or via the VOXKIT_CONDA_PATH environment variable."
     )
 
 
-def ensure_dictionary_downloaded(dictionary_name: str = "english_us_arpa") -> None:
+def ensure_dictionary_downloaded(
+    dictionary_name: str = "english_us_arpa", conda_path: str | None = None
+) -> None:
     """Ensure the specified MFA dictionary is downloaded.
 
     Args:
         dictionary_name: Name of the dictionary to download (default: "english_us_arpa").
+        conda_path: Optional user-configured path to the conda executable.
 
     Raises:
         AssertionError: If dictionary download fails and dictionary is not available.
     """
-    conda = _find_conda()
+    conda = _find_conda(conda_path)
     download_cmd = [
         conda,
         "run",
@@ -97,7 +127,7 @@ def ensure_dictionary_downloaded(dictionary_name: str = "english_us_arpa") -> No
         print(f"[mfa] Dictionary '{dictionary_name}' is ready.")
 
 
-def _ensure_mfa_server_running() -> None:
+def _ensure_mfa_server_running(conda_path: str | None = None) -> None:
     """Start MFA's bundled Postgres server on Windows. No-op elsewhere.
 
     Why: MFA 3.3.x's SQLite backend has a multiprocessing race in
@@ -111,7 +141,7 @@ def _ensure_mfa_server_running() -> None:
     if sys.platform != "win32":
         return
 
-    conda = _find_conda()
+    conda = _find_conda(conda_path)
     # Both calls are idempotent: `init` errors if the server dir already exists,
     # `start` errors if it's already running. Either error state is the goal,
     # so we ignore returncodes and only guard against true failures (timeout,
@@ -131,7 +161,12 @@ def _ensure_mfa_server_running() -> None:
 
 
 def run_mfa_align(
-    corpus_dir, model_path, output_dir, dictionary_name="english_us_arpa", eval_dir=None
+    corpus_dir,
+    model_path,
+    output_dir,
+    dictionary_name="english_us_arpa",
+    eval_dir=None,
+    conda_path=None,
 ) -> None:
     """
     Run MFA align command with the provided arguments.
@@ -142,16 +177,17 @@ def run_mfa_align(
         output_dir: Path to output TextGrids.
         dictionary_name: MFA dictionary name (default: "english_us_arpa").
         eval_dir: Optional path to reference alignments for evaluation.
+        conda_path: Optional user-configured path to the conda executable.
 
     Raises:
         AssertionError: If dictionary is not available.
         subprocess.CalledProcessError: If MFA alignment fails.
     """
     # Ensure dictionary is downloaded
-    ensure_dictionary_downloaded(dictionary_name)
-    _ensure_mfa_server_running()
+    ensure_dictionary_downloaded(dictionary_name, conda_path=conda_path)
+    _ensure_mfa_server_running(conda_path=conda_path)
 
-    conda = _find_conda()
+    conda = _find_conda(conda_path)
     cmd = [
         conda,
         "run",
@@ -186,6 +222,7 @@ def run_mfa_adapt(
     output_model_path,
     dictionary_name="english_us_arpa",
     num_iterations=1,
+    conda_path=None,
 ) -> None:
     """
     Run MFA adapt command with the provided arguments.
@@ -196,16 +233,17 @@ def run_mfa_adapt(
         output_model_path (str): Path where the adapted model will be saved.
         dictionary_name (str): Name of the dictionary to use (default: "english_us_arpa").
         num_iterations (int): Number of adaptation iterations.
+        conda_path (str | None): Optional user-configured path to the conda executable.
 
     Raises:
         AssertionError: If dictionary is not available.
         subprocess.CalledProcessError: If MFA adaptation fails.
     """
     # Ensure dictionary is downloaded
-    ensure_dictionary_downloaded(dictionary_name)
-    _ensure_mfa_server_running()
+    ensure_dictionary_downloaded(dictionary_name, conda_path=conda_path)
+    _ensure_mfa_server_running(conda_path=conda_path)
 
-    conda = _find_conda()
+    conda = _find_conda(conda_path)
     cmd = [
         conda,
         "run",
