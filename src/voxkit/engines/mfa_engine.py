@@ -11,8 +11,12 @@ Settings
 --------
 Stored at ``~/.voxkit/MFAENGINE/{tool}/settings.json``:
 
-- **align**: dictionary, file_type
-- **train**: epochs, use_gpu
+- **align**: dictionary, file_type, conda_path
+- **train**: dictionary, num_iterations, use_gpu, conda_path
+
+``conda_path`` lets users (mainly on Windows) point VoxKit at a specific
+``conda``/``conda.exe`` when it is not discoverable on PATH. Leaving it blank
+keeps the existing auto-detection behavior.
 
 Notes
 -----
@@ -32,6 +36,29 @@ from voxkit.services.mfa import run_mfa_adapt, run_mfa_align
 from voxkit.storage import alignments, datasets, models
 
 from .base import AlignmentEngine
+from .constants import AVAILABLE_TOOLS
+
+
+def _conda_path_field() -> FieldConfig:
+    """Build the shared 'Conda Path' settings field used by every MFA tool.
+
+    The field is optional: a blank value preserves the existing auto-detection
+    in ``voxkit.services.mfa._find_conda``. It exists primarily so Windows users
+    whose conda install is not on PATH can point VoxKit straight at their
+    ``conda.exe``.
+    """
+    return FieldConfig(
+        name="conda_path",
+        label="Conda Path",
+        field_type=FieldType.LINEEDIT,
+        default_value="",
+        placeholder="auto-detect",
+        tooltip=(
+            "Full path to the conda executable. Leave blank to auto-detect. "
+            "Mainly useful on Windows when conda.exe is not on PATH "
+            r"(e.g. C:\Users\me\miniconda3\Scripts\conda.exe)."
+        ),
+    )
 
 
 class MFAEngine(AlignmentEngine):
@@ -44,7 +71,7 @@ class MFAEngine(AlignmentEngine):
             settings_configurations={
                 "align": SettingsConfig(
                     title="MFA Aligner Settings",
-                    dimensions=(400, 350),
+                    dimensions=(460, 380),
                     apply_blur=True,
                     fields=[
                         FieldConfig(
@@ -61,12 +88,13 @@ class MFAEngine(AlignmentEngine):
                             default_value="wav",
                             tooltip="Specify the audio file type (e.g., wav, flac).",
                         ),
+                        _conda_path_field(),
                     ],
                     store_file="MFAENGINE/align/settings.json",
                 ),
                 "train": SettingsConfig(
                     title="MFA Trainer Settings",
-                    dimensions=(400, 350),
+                    dimensions=(460, 440),
                     apply_blur=True,
                     fields=[
                         FieldConfig(
@@ -92,6 +120,7 @@ class MFAEngine(AlignmentEngine):
                             default_value=False,
                             tooltip="Enable GPU acceleration for faster training.",
                         ),
+                        _conda_path_field(),
                     ],
                     store_file="MFAENGINE/train/settings.json",
                 ),
@@ -147,6 +176,7 @@ class MFAEngine(AlignmentEngine):
                 corpus_dir=str(corpus_path),
                 model_path=str(model_path),
                 output_dir=str(alignment_output_path),
+                conda_path=self._configured_conda_path("align"),
             )
             alignments.update_alignment(
                 dataset_id=dataset_id,
@@ -234,9 +264,25 @@ class MFAEngine(AlignmentEngine):
                 corpus_dir=str(audio_root),
                 base_model_path=str(base_model_path),
                 output_model_path=str(new_model_path),
+                conda_path=self._configured_conda_path("train"),
             )
         except Exception as e:
             raise RuntimeError(f"MFA model training failed: {e}")
+
+    def _configured_conda_path(self, tool_type: AVAILABLE_TOOLS) -> str | None:
+        """Return the user-configured conda path for a tool, or None if unset.
+
+        Reads the persisted settings for ``tool_type`` and normalizes a blank
+        or whitespace-only value to ``None`` so the service layer falls back to
+        auto-detection.
+        """
+        try:
+            value = self.get_settings(tool_type).get("conda_path")
+        except Exception:
+            return None
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+        return None
 
     def _validate_align_settings(self, settings: dict) -> bool:
         return True  # Implement validation logic for align settings here
