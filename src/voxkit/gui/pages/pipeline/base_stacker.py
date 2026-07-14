@@ -8,9 +8,16 @@ API
 """
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import (
+    QHBoxLayout,
+    QLabel,
+    QProgressBar,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
+)
 
-from voxkit.gui.styles import Buttons, Labels
+from voxkit.gui.styles import Buttons, Containers, Labels
 
 
 class BaseStacker(QWidget):
@@ -40,6 +47,7 @@ class BaseStacker(QWidget):
         super().__init__(parent)
         self._parent_widget = parent
         self.status_label: QLabel | None = None
+        self.progress_bar: QProgressBar | None = None
         self.main_layout: QVBoxLayout
         self.content_layout: QVBoxLayout
         self.init_ui()
@@ -92,11 +100,20 @@ class BaseStacker(QWidget):
         self.main_layout.addLayout(header_layout)
 
     def _create_status_label(self):
-        """Create the standard status label."""
+        """Create the standard status label and its indeterminate progress bar."""
         self.status_label = QLabel("Ready")
         self.status_label.setStyleSheet(Labels.STATUS_READY)
         self.status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.main_layout.addWidget(self.status_label)
+
+        # Indeterminate (busy) bar: range (0, 0) makes Qt render a bouncing
+        # bar instead of a percentage, since work here has no known progress.
+        self.progress_bar = QProgressBar()
+        self.progress_bar.setRange(0, 0)
+        self.progress_bar.setTextVisible(False)
+        self.progress_bar.setStyleSheet(Containers.PROGRESS_BAR)
+        self.progress_bar.setVisible(False)
+        self.main_layout.addWidget(self.progress_bar)
 
     def set_status(self, message: str, status_type: str = "ready"):
         """Set the status label text and styling.
@@ -117,6 +134,9 @@ class BaseStacker(QWidget):
 
         self.status_label.setText(message)
         self.status_label.setStyleSheet(status_styles.get(status_type, Labels.STATUS_READY))
+
+        if self.progress_bar:
+            self.progress_bar.setVisible(status_type == "working")
 
     # Methods for subclasses to override
 
