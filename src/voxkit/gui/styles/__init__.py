@@ -637,6 +637,19 @@ class Containers:
         }
     """
 
+    PROGRESS_BAR = f"""
+        QProgressBar {{
+            border: 1px solid {Colors.BORDER};
+            border-radius: 4px;
+            background-color: {Colors.BG_SECONDARY};
+            max-height: 6px;
+        }}
+        QProgressBar::chunk {{
+            background-color: {Colors.PRIMARY};
+            border-radius: 4px;
+        }}
+    """
+
     GROUP_BOX = """
         QGroupBox {
             font-weight: bold;
