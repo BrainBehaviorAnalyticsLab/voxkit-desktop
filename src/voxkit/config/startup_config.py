@@ -77,7 +77,7 @@ def startup_routine():
     # Create folder for W2TG model
     w2tg_path = storage_root / "W2TGENGINE" / MODELS_ROOT
     w2tg_path.mkdir(parents=True, exist_ok=True)
-    success, metadata = models.create_model("W2TGENGINE", "prads_model")
+    success, metadata = models.create_model("W2TGENGINE", "default")
     if not success:
         print(f"[STARTUP] Failed to create model metadata. {metadata}")
         return
