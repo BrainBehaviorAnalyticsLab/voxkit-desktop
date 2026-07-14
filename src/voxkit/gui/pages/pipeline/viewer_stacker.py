@@ -1,13 +1,20 @@
 """Viewer Stacker Module.
 
-Pipeline page for browsing alignment results — synchronized view of TextGrid
-tiers, transcript, and audio playback for any speaker/file in a registered
-alignment.
+Pipeline page for browsing alignment results — synchronized view of a
+waveform, spectrogram, TextGrid tiers, transcript, and audio playback for any
+speaker/file in a registered alignment.
 
 API
 ---
+- **TimeAxisMixin**: Shared time<->pixel mapping so multiple panels
+  (waveform, spectrogram, TextGrid tiers) stay pixel-aligned to the same
+  playhead.
 - **TextGridTimeline**: Custom painted widget rendering TextGrid tiers as a
   time-aligned view with a live playhead and click-to-seek.
+- **WaveformPanel**: Custom painted waveform view, time-synced with
+  TextGridTimeline via TimeAxisMixin.
+- **SpectrogramPanel**: Praat-style grayscale spectrogram view, time-synced
+  via TimeAxisMixin; opt-in since it's slower to compute than the waveform.
 - **ViewerStacker**: Alignment viewer workflow UI
 """
 
@@ -20,9 +27,10 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import QPoint, Qt, QUrl, pyqtSignal
-from PyQt6.QtGui import QColor, QFont, QPainter, QPen, QPolygon
+from PyQt6.QtCore import QPoint, Qt, QTimer, QUrl, pyqtSignal
+from PyQt6.QtGui import QColor, QFont, QImage, QPainter, QPen, QPixmap, QPolygon
 from PyQt6.QtWidgets import (
+    QCheckBox,
     QComboBox,
     QHBoxLayout,
     QLabel,
@@ -39,6 +47,7 @@ from PyQt6.QtWidgets import (
 from voxkit.gui.components import MultiColumnComboBox
 from voxkit.gui.pages.pipeline.base_stacker import BaseStacker
 from voxkit.gui.styles import Buttons, Colors, Containers, Labels
+from voxkit.gui.workers.worker_thread import WorkerThread
 from voxkit.storage import alignments, datasets
 from voxkit.storage.constants import SUPERSET_AUDIO_EXTENSIONS
 
@@ -139,11 +148,62 @@ def _find_lab(data_root: Path, speaker: str, stem: str) -> Path | None:
 
 
 # ---------------------------------------------------------------------------
+# TimeAxisMixin
+# ---------------------------------------------------------------------------
+
+
+class TimeAxisMixin:
+    """Shared time <-> pixel mapping for timeline-synced panels.
+
+    Multiple panels (TextGrid tiers, waveform, spectrogram) must map a given
+    time value to the *identical* x-coordinate, or their playheads and
+    content visibly drift apart from one another, especially on window
+    resize. Centralizing the transform here — rather than duplicating the
+    arithmetic per widget — is what guarantees that.
+
+    Classes mixing this in must also derive from QWidget (for ``self.width()``)
+    and maintain a ``self._duration`` (seconds) attribute.
+    """
+
+    LEFT_MARGIN = 92  # space reserved for row/tier name labels
+    RIGHT_MARGIN = 8
+
+    _duration: float = 0.0
+
+    def _time_to_x(self, t: float) -> int:
+        if self._duration <= 0:
+            return self.LEFT_MARGIN
+        span = self.width() - self.LEFT_MARGIN - self.RIGHT_MARGIN
+        return self.LEFT_MARGIN + int(t / self._duration * span)
+
+    def _x_to_time(self, x: float) -> float:
+        span = self.width() - self.LEFT_MARGIN - self.RIGHT_MARGIN
+        if span <= 0:
+            return 0.0
+        return max(0.0, min(self._duration, (x - self.LEFT_MARGIN) / span * self._duration))
+
+    def _draw_playhead(self, painter: QPainter, current_time: float, height: int) -> None:
+        """Draw the shared red playhead marker at ``current_time``."""
+        if self._duration <= 0:
+            return
+        px = self._time_to_x(current_time)
+        painter.setPen(QPen(QColor("#e74c3c"), 2))
+        painter.drawLine(px, 0, px, height)
+
+        ts = 5
+        painter.setBrush(QColor("#e74c3c"))
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.drawPolygon(
+            QPolygon([QPoint(px - ts, 0), QPoint(px + ts, 0), QPoint(px, ts * 2)])
+        )
+
+
+# ---------------------------------------------------------------------------
 # TextGridTimeline
 # ---------------------------------------------------------------------------
 
 
-class TextGridTimeline(QWidget):
+class TextGridTimeline(TimeAxisMixin, QWidget):
     """Custom painted widget showing TextGrid tiers as a synchronized timeline.
 
     - One row per tier, each with time-scaled labeled interval blocks.
@@ -155,8 +215,6 @@ class TextGridTimeline(QWidget):
 
     TIER_HEIGHT = 36
     RULER_HEIGHT = 26
-    LEFT_MARGIN = 92  # space reserved for tier name labels
-    RIGHT_MARGIN = 8
 
     # Fixed colors for well-known tier names (case-insensitive match)
     _TIER_COLOR_MAP: dict[str, QColor] = {
@@ -206,20 +264,6 @@ class TextGridTimeline(QWidget):
         self._current_time = 0.0
         self.setFixedHeight(self.RULER_HEIGHT)
         self.update()
-
-    # ── coordinate conversion ─────────────────────────────────────────────────
-
-    def _time_to_x(self, t: float) -> int:
-        if self._duration <= 0:
-            return self.LEFT_MARGIN
-        span = self.width() - self.LEFT_MARGIN - self.RIGHT_MARGIN
-        return self.LEFT_MARGIN + int(t / self._duration * span)
-
-    def _x_to_time(self, x: float) -> float:
-        span = self.width() - self.LEFT_MARGIN - self.RIGHT_MARGIN
-        if span <= 0:
-            return 0.0
-        return max(0.0, min(self._duration, (x - self.LEFT_MARGIN) / span * self._duration))
 
     # ── painting ──────────────────────────────────────────────────────────────
 
@@ -366,18 +410,7 @@ class TextGridTimeline(QWidget):
             painter.drawLine(self.LEFT_MARGIN, y + self.TIER_HEIGHT, w, y + self.TIER_HEIGHT)
 
         # ── Playhead ──────────────────────────────────────────────────────────
-        if self._duration > 0:
-            px = self._time_to_x(self._current_time)
-            painter.setPen(QPen(QColor("#e74c3c"), 2))
-            painter.drawLine(px, 0, px, h)
-
-            # Small downward triangle at ruler
-            ts = 5
-            painter.setBrush(QColor("#e74c3c"))
-            painter.setPen(Qt.PenStyle.NoPen)
-            painter.drawPolygon(
-                QPolygon([QPoint(px - ts, 0), QPoint(px + ts, 0), QPoint(px, ts * 2)])
-            )
+        self._draw_playhead(painter, self._current_time, h)
 
     def mousePressEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton and self._duration > 0:
@@ -385,6 +418,337 @@ class TextGridTimeline(QWidget):
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
+        self.update()
+
+
+# ---------------------------------------------------------------------------
+# WaveformPanel
+# ---------------------------------------------------------------------------
+
+
+class WaveformPanel(TimeAxisMixin, QWidget):
+    """Custom painted waveform view, time-synced with TextGridTimeline.
+
+    Loading a file's samples and computing its min/max envelope happens once
+    per file, on a background thread (large files can take a couple seconds
+    with librosa) — ``paintEvent`` only blits the cached envelope and moves
+    the playhead, it never recomputes on paint.
+    """
+
+    _PEAK_BUCKETS = 2000  # envelope resolution; independent of pixel width
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self._duration: float = 0.0
+        self._current_time: float = 0.0
+        self._peaks: list[tuple[float, float]] | None = None
+        self._peak_abs: float = 1.0
+        self._loading = False
+        self._load_token = 0
+        self._worker: WorkerThread | None = None
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        self.setFixedHeight(90)
+
+    def set_duration(self, duration: float) -> None:
+        self._duration = duration
+        self.update()
+
+    def set_current_time(self, seconds: float) -> None:
+        if abs(seconds - self._current_time) > 0.008:
+            self._current_time = seconds
+            self.update()
+
+    def clear(self) -> None:
+        self._peaks = None
+        self._peak_abs = 1.0
+        self._loading = False
+        self._duration = 0.0
+        self._current_time = 0.0
+        self._load_token += 1  # invalidate any in-flight worker result
+        self.update()
+
+    def load_audio(self, audio_path: Path) -> None:
+        """Kick off background envelope computation for a new audio file."""
+        self._peaks = None
+        self._loading = True
+        self._load_token += 1
+        token = self._load_token
+        self.update()
+
+        def _compute() -> str:
+            import librosa
+
+            samples, _sr = librosa.load(str(audio_path), sr=None, mono=True)
+            bucket_size = max(1, len(samples) // self._PEAK_BUCKETS)
+            peaks = [
+                (float(chunk.min()), float(chunk.max()))
+                for i in range(0, len(samples), bucket_size)
+                if len(chunk := samples[i : i + bucket_size])
+            ]
+            self._pending_peaks = peaks
+            # Normalize display to this file's own peak amplitude (Audacity/
+            # Praat-style) — many recordings peak well under +/-1.0, and
+            # without this a quiet file renders as a flat line.
+            self._pending_peak_abs = max(
+                (max(abs(mn), abs(mx)) for mn, mx in peaks), default=1.0
+            ) or 1.0
+            self._pending_token = token
+            return "Waveform loaded"
+
+        self._worker = WorkerThread(_compute)
+        self._worker.finished.connect(self._on_peaks_ready)
+        self._worker.start()
+
+    def _on_peaks_ready(self, success: bool, _message: str) -> None:
+        # A later load_audio() call may have started (and finished) while
+        # this worker was running; discard results from a stale file.
+        if getattr(self, "_pending_token", None) != self._load_token:
+            return
+        self._loading = False
+        if success and hasattr(self, "_pending_peaks"):
+            self._peaks = self._pending_peaks
+            self._peak_abs = self._pending_peak_abs
+        self.update()
+
+    def paintEvent(self, _event):
+        painter = QPainter(self)
+        w, h = self.width(), self.height()
+        painter.fillRect(0, 0, w, h, QColor("#f8f9fa"))
+
+        # Left margin (matches TextGridTimeline's tier-name column for alignment)
+        painter.fillRect(0, 0, self.LEFT_MARGIN, h, QColor("#ecf0f1"))
+        painter.setPen(QPen(QColor("#bdc3c7"), 1))
+        painter.drawLine(self.LEFT_MARGIN, 0, self.LEFT_MARGIN, h)
+
+        mid_y = h // 2
+        if self._loading:
+            painter.setPen(QColor("#7f8c8d"))
+            painter.drawText(
+                self.LEFT_MARGIN,
+                0,
+                w - self.LEFT_MARGIN,
+                h,
+                Qt.AlignmentFlag.AlignCenter,
+                "Loading waveform...",
+            )
+        elif self._peaks:
+            painter.setPen(QPen(QColor("#3498db"), 1))
+            n = len(self._peaks)
+            amp_scale = (h / 2 - 4) / self._peak_abs
+            for i, (mn, mx) in enumerate(self._peaks):
+                t = (i / n) * self._duration if self._duration > 0 else 0.0
+                x = self._time_to_x(t)
+                y1 = mid_y - int(mx * amp_scale)
+                y2 = mid_y - int(mn * amp_scale)
+                painter.drawLine(x, y1, x, y2)
+
+        self._draw_playhead(painter, self._current_time, h)
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self.update()
+
+
+# ---------------------------------------------------------------------------
+# SpectrogramPanel
+# ---------------------------------------------------------------------------
+
+
+class SpectrogramPanel(TimeAxisMixin, QWidget):
+    """Praat-style grayscale spectrogram, time-synced with TextGridTimeline.
+
+    Opt-in (via a "Show Spectrogram" toggle) since computing the STFT is
+    slower than the waveform envelope, especially for large files. The STFT
+    itself is computed once per file on a background thread; only the final
+    "render cached data to an image" step runs on the GUI thread, and that
+    step is debounced on resize so live window-dragging doesn't trigger a
+    re-render on every intermediate frame.
+
+    Rendering mimics Praat's default spectrogram view: grayscale (louder =
+    darker), a 0-5000 Hz linear frequency range, a 50 dB dynamic range, and a
+    5 ms analysis window (a Hann-window approximation of Praat's Gaussian
+    window, giving the same "wideband" appearance).
+    """
+
+    FREQ_MAX_HZ = 5000
+    DYNAMIC_RANGE_DB = 50
+    WINDOW_SECONDS = 0.005
+
+    _RESIZE_DEBOUNCE_MS = 200
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self._duration: float = 0.0
+        self._current_time: float = 0.0
+        self._loaded_path: Path | None = None
+        self._freqs = None
+        self._Sxx_db = None
+        self._pixmap: QPixmap | None = None
+        self._loading = False
+        self._load_token = 0
+        self._worker: WorkerThread | None = None
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        self.setFixedHeight(160)
+
+        self._resize_timer = QTimer(self)
+        self._resize_timer.setSingleShot(True)
+        self._resize_timer.timeout.connect(self._regenerate_pixmap)
+
+    def set_duration(self, duration: float) -> None:
+        self._duration = duration
+        self.update()
+
+    def set_current_time(self, seconds: float) -> None:
+        if abs(seconds - self._current_time) > 0.008:
+            self._current_time = seconds
+            self.update()
+
+    def clear(self) -> None:
+        self._loaded_path = None
+        self._freqs = None
+        self._Sxx_db = None
+        self._pixmap = None
+        self._loading = False
+        self._duration = 0.0
+        self._current_time = 0.0
+        self._load_token += 1  # invalidate any in-flight worker result
+        self.update()
+
+    def load_audio(self, audio_path: Path) -> None:
+        """Kick off background STFT computation for a new file.
+
+        No-op if this exact file is already loaded (cheap to call from a
+        toggle handler without worrying about redundant recomputation).
+        """
+        if self._loaded_path == audio_path and self._Sxx_db is not None:
+            return
+
+        self._loaded_path = audio_path
+        self._Sxx_db = None
+        self._pixmap = None
+        self._loading = True
+        self._load_token += 1
+        token = self._load_token
+        self.update()
+
+        def _compute() -> str:
+            import librosa
+            import numpy as np
+
+            samples, sr = librosa.load(str(audio_path), sr=None, mono=True)
+            # win_length is the actual 5ms analysis window (Praat's time/frequency
+            # tradeoff); n_fft is zero-padded much larger purely to interpolate a
+            # smoother frequency axis for display — without this split, n_fft tied
+            # directly to a 5ms window gives only ~26 bins under 5kHz, which then
+            # blurs badly when stretched to fill the panel.
+            win_length = max(32, int(sr * self.WINDOW_SECONDS))
+            n_fft = max(2048, win_length)
+            hop_length = max(1, win_length // 4)
+            stft = librosa.stft(
+                samples,
+                n_fft=n_fft,
+                hop_length=hop_length,
+                win_length=win_length,
+                window="hann",
+            )
+            magnitude_db = librosa.amplitude_to_db(np.abs(stft), ref=np.max)
+
+            freqs = librosa.fft_frequencies(sr=sr, n_fft=n_fft)
+            keep = freqs <= self.FREQ_MAX_HZ
+
+            self._pending_freqs = freqs[keep]
+            self._pending_Sxx_db = magnitude_db[keep, :]
+            self._pending_token = token
+            return "Spectrogram computed"
+
+        self._worker = WorkerThread(_compute)
+        self._worker.finished.connect(self._on_spectrogram_ready)
+        self._worker.start()
+
+    def _on_spectrogram_ready(self, success: bool, _message: str) -> None:
+        # A later load_audio() call may have started (and finished) while
+        # this worker was running; discard results from a stale file.
+        if getattr(self, "_pending_token", None) != self._load_token:
+            return
+        self._loading = False
+        if success and hasattr(self, "_pending_Sxx_db"):
+            self._freqs = self._pending_freqs
+            self._Sxx_db = self._pending_Sxx_db
+            self._regenerate_pixmap()
+        self.update()
+
+    def _regenerate_pixmap(self) -> None:
+        """Re-render the cached STFT data to a QPixmap sized to the current widget.
+
+        Rendering (not recomputing the STFT) happens here so the plotted
+        axes' left margin lines up with TimeAxisMixin.LEFT_MARGIN exactly at
+        the widget's *current* size — required for the shared playhead
+        (drawn using the fixed-pixel LEFT_MARGIN convention) to land on the
+        correct column regardless of window width.
+        """
+        if self._Sxx_db is None:
+            return
+
+        w, h = max(1, self.width()), max(1, self.height())
+
+        from matplotlib.backends.backend_agg import FigureCanvasAgg
+        from matplotlib.figure import Figure
+
+        dpi = 100
+        # Render at 2x the widget's pixel density and downscale on paint
+        # (with a smooth-transform hint) — sharper than rendering 1:1, since
+        # it supersamples rather than upscales. Axes are placed by fraction
+        # (0-1 of figure size), so this doesn't disturb the LEFT_MARGIN math
+        # below regardless of the multiplier.
+        supersample = 2
+        fig = Figure(figsize=(w / dpi, h / dpi), dpi=dpi * supersample)
+        canvas = FigureCanvasAgg(fig)
+
+        left_frac = self.LEFT_MARGIN / w
+        right_frac = 1 - (self.RIGHT_MARGIN / w)
+        ax = fig.add_axes((left_frac, 0.14, right_frac - left_frac, 0.82))
+
+        duration = self._duration if self._duration > 0 else 1.0
+        ax.imshow(
+            self._Sxx_db,
+            aspect="auto",
+            origin="lower",
+            cmap="Greys",
+            vmin=-self.DYNAMIC_RANGE_DB,
+            vmax=0,
+            interpolation="nearest",
+            extent=(0, duration, self._freqs[0], self._freqs[-1]),
+        )
+        ax.set_ylabel("Hz", fontsize=7)
+        ax.tick_params(labelsize=6)
+        fig.patch.set_facecolor("#f8f9fa")
+
+        canvas.draw()
+        buf_w, buf_h = canvas.get_width_height()
+        buf = canvas.buffer_rgba()
+        image = QImage(bytes(buf), buf_w, buf_h, QImage.Format.Format_RGBA8888)
+        self._pixmap = QPixmap.fromImage(image.copy())
+        self.update()
+
+    def paintEvent(self, _event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, True)
+        w, h = self.width(), self.height()
+        painter.fillRect(0, 0, w, h, QColor("#f8f9fa"))
+
+        if self._loading:
+            painter.setPen(QColor("#7f8c8d"))
+            painter.drawText(
+                0, 0, w, h, Qt.AlignmentFlag.AlignCenter, "Computing spectrogram..."
+            )
+        elif self._pixmap:
+            painter.drawPixmap(self.rect(), self._pixmap)
+
+        self._draw_playhead(painter, self._current_time, h)
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self._resize_timer.start(self._RESIZE_DEBOUNCE_MS)
         self.update()
 
 
@@ -415,6 +779,10 @@ class ViewerStacker(BaseStacker):
         self._selection_section: QWidget
         self._viewer_section: QWidget
         self._timeline: TextGridTimeline
+        self._waveform: WaveformPanel
+        self._spectrogram: SpectrogramPanel
+        self._spectrogram_toggle: QCheckBox
+        self._show_spectrogram: bool = False
         self._active_label: QLabel
         self._transcript_edit: QTextEdit
         self._audio_path_label: QLabel
@@ -569,6 +937,38 @@ class ViewerStacker(BaseStacker):
             self._seek_slider.setRange(0, 0)
             self._seek_slider.sliderMoved.connect(self._seek_to_ms)
             view_col.addWidget(self._seek_slider)
+
+        # Waveform ────────────────────────────────────────────────────────────
+        wf_header = QHBoxLayout()
+        wf_header.setContentsMargins(0, 4, 0, 0)
+        wf_lbl = QLabel("Waveform")
+        wf_lbl.setStyleSheet(Labels.SECTION_LABEL)
+        wf_header.addWidget(wf_lbl)
+        wf_header.addStretch()
+        view_col.addLayout(wf_header)
+
+        self._waveform = WaveformPanel()
+        self._waveform.setStyleSheet(f"border: 1px solid {Colors.BORDER}; border-radius: 4px;")
+        view_col.addWidget(self._waveform)
+
+        # Spectrogram (opt-in) ────────────────────────────────────────────────
+        spec_header = QHBoxLayout()
+        spec_header.setContentsMargins(0, 4, 0, 0)
+        spec_lbl = QLabel("Spectrogram")
+        spec_lbl.setStyleSheet(Labels.SECTION_LABEL)
+        spec_header.addWidget(spec_lbl)
+        spec_header.addStretch()
+
+        self._spectrogram_toggle = QCheckBox("Show Spectrograms (may be slower for large files)")
+        self._spectrogram_toggle.setChecked(self._show_spectrogram)
+        self._spectrogram_toggle.toggled.connect(self._on_spectrogram_toggled)
+        spec_header.addWidget(self._spectrogram_toggle)
+        view_col.addLayout(spec_header)
+
+        self._spectrogram = SpectrogramPanel()
+        self._spectrogram.setStyleSheet(f"border: 1px solid {Colors.BORDER}; border-radius: 4px;")
+        self._spectrogram.setVisible(self._show_spectrogram)
+        view_col.addWidget(self._spectrogram)
 
         # TextGrid timeline ───────────────────────────────────────────────────
         tg_header = QHBoxLayout()
@@ -795,6 +1195,19 @@ class ViewerStacker(BaseStacker):
         self._load_viewer(audio_path, lab_path, tg_path)
         self._viewer_section.setVisible(True)
 
+    def _on_spectrogram_toggled(self, checked: bool) -> None:
+        """Handle the "Show Spectrogram" toggle.
+
+        The toggle's state persists across file switches for the rest of the
+        session (it's a plain instance attribute on this long-lived widget,
+        not reset per file) — only the cached spectrogram data itself is
+        cleared/recomputed per file, in ``_load_viewer``.
+        """
+        self._show_spectrogram = checked
+        self._spectrogram.setVisible(checked)
+        if checked and self._current_audio_path and self._current_audio_path.exists():
+            self._spectrogram.load_audio(self._current_audio_path)
+
     # ── Viewer loading ────────────────────────────────────────────────────────
 
     def _load_viewer(
@@ -808,6 +1221,10 @@ class ViewerStacker(BaseStacker):
         if audio_path.exists():
             self._audio_path_label.setText(str(audio_path))
             self._current_audio_path = audio_path
+            self._waveform.load_audio(audio_path)
+            self._spectrogram.clear()
+            if self._show_spectrogram:
+                self._spectrogram.load_audio(audio_path)
             if MULTIMEDIA_AVAILABLE and self._player:
                 if self._player.playbackState() != QMediaPlayer.PlaybackState.StoppedState:
                     self._player.stop()
@@ -817,6 +1234,8 @@ class ViewerStacker(BaseStacker):
         else:
             self._audio_path_label.setText(f"Audio not found: {audio_path}")
             self._current_audio_path = None
+            self._waveform.clear()
+            self._spectrogram.clear()
 
         # ── Transcript ────────────────────────────────────────────────────────
         if lab_path and lab_path.exists():
@@ -845,7 +1264,7 @@ class ViewerStacker(BaseStacker):
                         duration = self._player.duration() / 1000.0
 
                     self._loaded_tiers = tiers
-                    self._timeline.set_data(tiers, duration)
+                    self._set_shared_duration(tiers, duration)
                     self._active_label.setVisible(True)
             except Exception as exc:
                 self._audio_path_label.setText(
@@ -911,10 +1330,14 @@ class ViewerStacker(BaseStacker):
                 f"{self._fmt_ms(position_ms)} / {self._fmt_ms(self._player.duration())}"
             )
 
-        # Advance timeline playhead
+        # Advance timeline + waveform + spectrogram playheads together
         secs = position_ms / 1000.0
         if self._timeline:
             self._timeline.set_current_time(secs)
+        if self._waveform:
+            self._waveform.set_current_time(secs)
+        if self._spectrogram:
+            self._spectrogram.set_current_time(secs)
 
         # Update active-segment label
         if self._active_label and self._active_label.isVisible() and self._loaded_tiers:
@@ -936,7 +1359,19 @@ class ViewerStacker(BaseStacker):
             # Only override if timeline duration seems shorter than the audio
             existing = self._timeline._duration
             if existing < dur_s * 0.95:
-                self._timeline.set_data(self._loaded_tiers, dur_s)
+                self._set_shared_duration(self._loaded_tiers, dur_s)
+
+    def _set_shared_duration(self, tiers: list[dict], duration: float) -> None:
+        """Push the same duration to every timeline-synced panel.
+
+        Why: keeping this in one place is what guarantees the TextGrid
+        timeline, waveform, and spectrogram panels never disagree on their
+        time axis (see TimeAxisMixin) — never call
+        ``set_data``/``set_duration`` on them individually from elsewhere.
+        """
+        self._timeline.set_data(tiers, duration)
+        self._waveform.set_duration(duration)
+        self._spectrogram.set_duration(duration)
 
     def _open_audio_externally(self):
         path = self._current_audio_path
@@ -966,4 +1401,4 @@ class ViewerStacker(BaseStacker):
         return lbl
 
 
-__all__ = ["TextGridTimeline", "ViewerStacker"]
+__all__ = ["SpectrogramPanel", "TextGridTimeline", "ViewerStacker", "WaveformPanel"]
