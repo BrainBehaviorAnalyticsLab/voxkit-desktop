@@ -10,6 +10,7 @@ from PyQt6.QtWidgets import (
     QDialog,
     QDialogButtonBox,
     QDoubleSpinBox,
+    QFileDialog,
     QFormLayout,
     QGraphicsBlurEffect,
     QHBoxLayout,
@@ -262,7 +263,43 @@ class GenericDialog(QDialog):
         for field_config in self.field_configs:
             widget = self._create_field_widget(field_config)
             self.field_widgets[field_config.name] = widget
-            self.form_layout.addRow(field_config.label, widget)
+            row_widget = self._wrap_with_browse_button(widget, field_config)
+            self.form_layout.addRow(field_config.label, row_widget)
+
+    def _wrap_with_browse_button(self, widget: QWidget, config: FieldConfig) -> QWidget:
+        """
+        Pair a DIRPATH field's line edit with a "Browse..." button.
+
+        Args:
+            widget: The line edit widget created for this field.
+            config: Field configuration; only DIRPATH fields get a button.
+
+        Returns:
+            A container widget with the line edit and button side by side,
+            or the original widget unchanged for other field types.
+        """
+        if config.field_type != FieldType.DIRPATH:
+            return widget
+
+        container = QWidget()
+        row_layout = QHBoxLayout(container)
+        row_layout.setContentsMargins(0, 0, 0, 0)
+        row_layout.addWidget(widget)
+
+        browse_btn = QPushButton("Browse...")
+        browse_btn.setStyleSheet(Buttons.SECONDARY)
+        browse_btn.clicked.connect(lambda: self._browse_for_directory(widget))
+        row_layout.addWidget(browse_btn)
+
+        return container
+
+    def _browse_for_directory(self, lineedit: QLineEdit) -> None:
+        """Open a directory picker and write the chosen path into ``lineedit``."""
+        current = lineedit.text().strip()
+        start_dir = current if current and Path(current).exists() else str(Path.home())
+        directory = QFileDialog.getExistingDirectory(self, "Select Directory", start_dir)
+        if directory:
+            lineedit.setText(directory)
 
     def _create_field_widget(self, config: FieldConfig) -> QWidget:
         """
@@ -289,6 +326,8 @@ class GenericDialog(QDialog):
         elif config.field_type == FieldType.CHECKBOX:
             widget = ToggleSwitch(checked=bool(config.default_value))
         elif config.field_type == FieldType.LINEEDIT:
+            widget = self._create_lineedit(config)
+        elif config.field_type == FieldType.DIRPATH:
             widget = self._create_lineedit(config)
         elif config.field_type == FieldType.COMBOBOX:
             widget = self._create_combobox(config)

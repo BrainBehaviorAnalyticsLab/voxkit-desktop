@@ -193,16 +193,16 @@ class ManageAlignersWidget(CategoricalTableWidget):
         # Create settings config
         config = SettingsConfig(
             title="Register New Model",
-            dimensions=(400, 250),
+            dimensions=(400, 320),
             apply_blur=False,
             store_file="model_registration_settings.json",
             fields=[
                 FieldConfig(
                     name="model_path",
                     label="Model Path",
-                    field_type=FieldType.LINEEDIT,
+                    field_type=FieldType.DIRPATH,
                     default_value="",
-                    placeholder="Browse for model directory...",
+                    placeholder="e.g., /home/acoustic-models",
                     tooltip="Path to the model directory or file",
                 ),
                 FieldConfig(
