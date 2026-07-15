@@ -354,74 +354,10 @@ pipeline:
         an output directory. Files are named by plot type.
 
   # ======
-  # PIPELINE STEP F: PLLR EXTRACTION
-  # ======
-  - id: "pllr"
-    label: "Ⓕ Extract PLLR Scoring"
-    stacker_class: "PLLRStacker"
-    enabled: true
-    collapsible_sections:
-      "About This Step": |
-        PLLR (Probabilistic Linear Likelihood Ratio) extraction calculates pronunciation quality scores for each phoneme in your alignments.
-
-        Input: Existing alignments (TextGrids) from step Ⓒ
-        Output: CSV files with phoneme-level and frame-level probability scores
-
-        These scores can be used for clinical assessment, research analysis, or identifying pronunciation patterns.
-
-      "Ⓕ-① Choose a PLLR Dataset": |
-        What it does: Selects which dataset to analyze for pronunciation scoring.
-
-        Requirements: The dataset must have completed alignments from step Ⓒ.
-
-        What happens next: After selection, element ② will populate with available alignments for this dataset.
-
-      "Ⓕ-② Choose an Alignment": |
-        What it does: Selects which alignment provides the TextGrids for scoring.
-
-        Depends on: Your selection in Ⓕ-① (dataset). This dropdown only populates after selecting a dataset.
-
-        Shows: Engine ID, model name, alignment date, and status.
-
-        Multiple alignments: If you've aligned the same dataset with different models, you can extract PLLR scores from each to compare results.
-
-      "Ⓕ-③ Output Path": |
-        What it does: Specifies where to save the extracted score files.
-
-        Output files created:
-        phonewise_proba.csv: One score per phoneme instance
-        framewise_proba.csv: Frame-by-frame probability values
-
-        Browse button: Opens a directory picker to select the output location.
-
-        Recommendation: Use a dedicated output folder to keep results organized.
-
-      "Ⓕ-④ Start PLLR Extraction Button": |
-        What it does: Begins the PLLR score computation.
-
-        Processing: Each audio file is analyzed against its TextGrid alignment using a pronunciation scoring model (typically wav2vec2-based).
-
-        Duration: Processing time depends on dataset size and whether probability caches exist from previous runs.
-
-        On completion: CSV files are written to the specified output path.
-
-      "Settings (⚙️ Button)": |
-        What it does: Opens PLLR-specific configuration options.
-
-        Available settings:
-        Acoustic Model: HuggingFace model for probability computation
-        Phone Key: Key name for phone labels in model config
-        Recompute Probabilities: Whether to recalculate or use cached values
-        Likelihood Dict Path: Location for caching computed likelihoods
-        Aggregation Function: Method for combining frame scores into phoneme scores
-
-        When to adjust: Default settings work for standard English analysis. Adjust for different languages or specialized scoring needs.
-
-  # ======
-  # PIPELINE STEP G: CORRECT ALIGNMENTS
+  # PIPELINE STEP F: CORRECT ALIGNMENTS
   # ======
   - id: "correct_alignments"
-    label: "Ⓖ Correct Alignments"
+    label: "Ⓕ Correct Alignments"
     stacker_class: "CorrectAlignmentsStacker"
     enabled: true
     collapsible_sections:
@@ -438,20 +374,20 @@ pipeline:
         here, and there's no undo/redo -- reload the file to discard an in-progress,
         unsaved correction.
 
-      "Ⓖ-① Choose a Dataset": |
+      "Ⓕ-① Choose a Dataset": |
         What it does: Selects which registered dataset to browse.
 
         Requirements: The dataset must have at least one completed alignment.
 
-      "Ⓖ-② Choose a Source Alignment": |
+      "Ⓕ-② Choose a Source Alignment": |
         What it does: Selects which alignment's boundaries you want to correct.
 
-        Depends on: Your selection in Ⓖ-① (dataset).
+        Depends on: Your selection in Ⓕ-① (dataset).
 
         This is the alignment your corrections are based on -- it is read from, but
         never written to.
 
-      "Ⓖ-③ Speaker and File Navigation": |
+      "Ⓕ-③ Speaker and File Navigation": |
         What it does: Lets you drill down from dataset -> speaker -> audio file, same
         as the Alignment Viewer.
 
@@ -478,7 +414,71 @@ pipeline:
         Subsequent saves in the same session: write into that same corrected
         alignment, without creating another one.
 
-        The source alignment selected in Ⓖ-② is never modified by this button.
+        The source alignment selected in Ⓕ-② is never modified by this button.
+
+  # ======
+  # PIPELINE STEP G: PLLR EXTRACTION
+  # ======
+  - id: "pllr"
+    label: "Ⓖ Extract PLLR Scoring"
+    stacker_class: "PLLRStacker"
+    enabled: true
+    collapsible_sections:
+      "About This Step": |
+        PLLR (Probabilistic Linear Likelihood Ratio) extraction calculates pronunciation quality scores for each phoneme in your alignments.
+
+        Input: Existing alignments (TextGrids) from step Ⓒ
+        Output: CSV files with phoneme-level and frame-level probability scores
+
+        These scores can be used for clinical assessment, research analysis, or identifying pronunciation patterns.
+
+      "Ⓖ-① Choose a PLLR Dataset": |
+        What it does: Selects which dataset to analyze for pronunciation scoring.
+
+        Requirements: The dataset must have completed alignments from step Ⓒ.
+
+        What happens next: After selection, element ② will populate with available alignments for this dataset.
+
+      "Ⓖ-② Choose an Alignment": |
+        What it does: Selects which alignment provides the TextGrids for scoring.
+
+        Depends on: Your selection in Ⓖ-① (dataset). This dropdown only populates after selecting a dataset.
+
+        Shows: Engine ID, model name, alignment date, and status.
+
+        Multiple alignments: If you've aligned the same dataset with different models, you can extract PLLR scores from each to compare results.
+
+      "Ⓖ-③ Output Path": |
+        What it does: Specifies where to save the extracted score files.
+
+        Output files created:
+        phonewise_proba.csv: One score per phoneme instance
+        framewise_proba.csv: Frame-by-frame probability values
+
+        Browse button: Opens a directory picker to select the output location.
+
+        Recommendation: Use a dedicated output folder to keep results organized.
+
+      "Ⓖ-④ Start PLLR Extraction Button": |
+        What it does: Begins the PLLR score computation.
+
+        Processing: Each audio file is analyzed against its TextGrid alignment using a pronunciation scoring model (typically wav2vec2-based).
+
+        Duration: Processing time depends on dataset size and whether probability caches exist from previous runs.
+
+        On completion: CSV files are written to the specified output path.
+
+      "Settings (⚙️ Button)": |
+        What it does: Opens PLLR-specific configuration options.
+
+        Available settings:
+        Acoustic Model: HuggingFace model for probability computation
+        Phone Key: Key name for phone labels in model config
+        Recompute Probabilities: Whether to recalculate or use cached values
+        Likelihood Dict Path: Location for caching computed likelihoods
+        Aggregation Function: Method for combining frame scores into phoneme scores
+
+        When to adjust: Default settings work for standard English analysis. Adjust for different languages or specialized scoring needs.
 
 # ======
 # UI CONFIGURATION

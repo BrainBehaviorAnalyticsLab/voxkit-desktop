@@ -153,10 +153,27 @@ pipeline:
         exported as PNGs to a folder you choose.
 
   # ======
-  # PIPELINE STEP F: PLLR EXTRACTION
+  # PIPELINE STEP F: CORRECT ALIGNMENTS
+  # ======
+  - id: "correct_alignments"
+    label: "Ⓕ Correct Alignments"
+    stacker_class: "CorrectAlignmentsStacker"
+    enabled: true
+    collapsible_sections:
+      "About Correcting Alignments": |
+        Use this step to hand-correct an alignment's phone/word boundaries.
+        Select a dataset, a source alignment, then a speaker and file. Drag a
+        boundary on the TextGrid timeline to move it -- a phone boundary that
+        lines up with a word boundary moves both together. Saving creates a
+        new, separate alignment with your corrections; the source alignment
+        is never modified. Reload the file to discard unsaved edits (there is
+        no undo/redo).
+
+  # ======
+  # PIPELINE STEP G: PLLR EXTRACTION
   # ======
   - id: "pllr"
-    label: "Ⓕ Extract PLLR Scoring"
+    label: "Ⓖ Extract PLLR Scoring"
     stacker_class: "PLLRStacker"
     enabled: true
     collapsible_sections:
@@ -172,23 +189,6 @@ pipeline:
         1. Numbered item one
         2. Numbered item two
         3. Numbered item three
-
-  # ======
-  # PIPELINE STEP G: CORRECT ALIGNMENTS
-  # ======
-  - id: "correct_alignments"
-    label: "Ⓖ Correct Alignments"
-    stacker_class: "CorrectAlignmentsStacker"
-    enabled: true
-    collapsible_sections:
-      "About Correcting Alignments": |
-        Use this step to hand-correct an alignment's phone/word boundaries.
-        Select a dataset, a source alignment, then a speaker and file. Drag a
-        boundary on the TextGrid timeline to move it -- a phone boundary that
-        lines up with a word boundary moves both together. Saving creates a
-        new, separate alignment with your corrections; the source alignment
-        is never modified. Reload the file to discard unsaved edits (there is
-        no undo/redo).
 
 # ======
 # UI CONFIGURATION
