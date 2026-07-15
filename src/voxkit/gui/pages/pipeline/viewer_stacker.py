@@ -81,7 +81,7 @@ _SILENCE_LABELS = {"", "sp", "sil", "<eps>", "spn"}
 # ---------------------------------------------------------------------------
 
 
-def _parse_textgrid(filepath: str) -> list[dict]:
+def parse_textgrid(filepath: str) -> list[dict]:
     """Parse a Praat TextGrid file into a list of tier dicts.
 
     Each tier dict has keys: ``name``, ``class``, ``intervals`` (list of dicts
@@ -138,7 +138,7 @@ def _parse_textgrid(filepath: str) -> list[dict]:
 # ---------------------------------------------------------------------------
 
 
-def _find_textgrid(tg_root: Path, speaker: str, stem: str) -> Path | None:
+def find_textgrid(tg_root: Path, speaker: str, stem: str) -> Path | None:
     """Probe common TextGrid layouts and return the first match."""
     candidates = [
         tg_root / speaker / f"{stem}.TextGrid",
@@ -149,7 +149,7 @@ def _find_textgrid(tg_root: Path, speaker: str, stem: str) -> Path | None:
     return next((c for c in candidates if c.exists()), None)
 
 
-def _find_lab(data_root: Path, speaker: str, stem: str) -> Path | None:
+def find_lab(data_root: Path, speaker: str, stem: str) -> Path | None:
     """Return the transcript file (.lab or .txt) for the given audio stem."""
     for ext in (".lab", ".txt"):
         p = data_root / speaker / f"{stem}{ext}"
@@ -1649,8 +1649,8 @@ class ViewerStacker(BaseStacker):
 
         audio_path = self._current_data_path / speaker / filename
         tg_root = Path(self._current_alignment_meta["tg_path"])
-        lab_path = _find_lab(self._current_data_path, speaker, stem)
-        tg_path = _find_textgrid(tg_root, speaker, stem)
+        lab_path = find_lab(self._current_data_path, speaker, stem)
+        tg_path = find_textgrid(tg_root, speaker, stem)
 
         self._load_viewer(audio_path, lab_path, tg_path)
         self._viewer_section.setVisible(True)
@@ -1713,7 +1713,7 @@ class ViewerStacker(BaseStacker):
 
         if tg_path and tg_path.exists():
             try:
-                tiers = _parse_textgrid(str(tg_path))
+                tiers = parse_textgrid(str(tg_path))
                 if tiers:
                     # Derive duration from the last interval's end time
                     duration = 0.0
@@ -2041,4 +2041,12 @@ class ViewerStacker(BaseStacker):
         return lbl
 
 
-__all__ = ["SpectrogramPanel", "TextGridTimeline", "ViewerStacker", "WaveformPanel"]
+__all__ = [
+    "SpectrogramPanel",
+    "TextGridTimeline",
+    "ViewerStacker",
+    "WaveformPanel",
+    "find_lab",
+    "find_textgrid",
+    "parse_textgrid",
+]
