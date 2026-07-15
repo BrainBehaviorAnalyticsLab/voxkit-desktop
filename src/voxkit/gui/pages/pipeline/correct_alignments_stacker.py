@@ -136,6 +136,7 @@ class EditableTextGridTimeline(TextGridTimeline):
     """
 
     boundary_edited = pyqtSignal()  # fired once per completed drag-release edit
+    boundary_dragging = pyqtSignal(float)  # fired on every move step during a drag, with the time
 
     BOUNDARY_HIT_PX = 4
     _EPSILON = 1e-6
@@ -223,6 +224,7 @@ class EditableTextGridTimeline(TextGridTimeline):
                 intervals[i]["end"] = new_t
                 intervals[i + 1]["start"] = new_t
             self.update()
+            self.boundary_dragging.emit(new_t)
             return
 
         # Not dragging -- just hint that a boundary is grabbable nearby.
@@ -486,24 +488,23 @@ class CorrectAlignmentsStacker(BaseStacker):
         self._timeline = EditableTextGridTimeline()
         self._timeline.setStyleSheet(f"border: 1px solid {Colors.BORDER}; border-radius: 4px;")
         self._timeline.boundary_edited.connect(self._on_boundary_edited)
+        self._timeline.boundary_dragging.connect(self._on_boundary_dragging)
         view_col.addWidget(self._timeline)
 
         zoom_row = QHBoxLayout()
         zoom_row.setSpacing(6)
-        zoom_out_btn = QPushButton("−")
-        zoom_out_btn.setFixedWidth(28)
+        zoom_out_btn = QPushButton("Zoom Out")
+        zoom_out_btn.setFixedWidth(84)
         zoom_out_btn.setStyleSheet(Buttons.SECONDARY)
-        zoom_out_btn.setToolTip("Zoom out")
         zoom_out_btn.clicked.connect(lambda: self._zoom_by(1 / 1.5))
         zoom_row.addWidget(zoom_out_btn)
         self._time_scrollbar = QScrollBar(Qt.Orientation.Horizontal)
         self._time_scrollbar.setEnabled(False)
         self._time_scrollbar.valueChanged.connect(self._on_scrollbar_changed)
         zoom_row.addWidget(self._time_scrollbar, stretch=1)
-        zoom_in_btn = QPushButton("+")
-        zoom_in_btn.setFixedWidth(28)
+        zoom_in_btn = QPushButton("Zoom In")
+        zoom_in_btn.setFixedWidth(84)
         zoom_in_btn.setStyleSheet(Buttons.SECONDARY)
-        zoom_in_btn.setToolTip("Zoom in")
         zoom_in_btn.clicked.connect(lambda: self._zoom_by(1.5))
         zoom_row.addWidget(zoom_in_btn)
         view_col.addLayout(zoom_row)
@@ -1023,6 +1024,17 @@ class CorrectAlignmentsStacker(BaseStacker):
     def _on_boundary_edited(self) -> None:
         self._dirty = True
         self._update_dirty_indicator()
+        # Drag released -- clear the reference line now that the boundary
+        # has settled at its final position.
+        self._waveform.set_preview_time(None)
+        self._spectrogram.set_preview_time(None)
+
+    def _on_boundary_dragging(self, t: float) -> None:
+        """Mirror the boundary being dragged as a dashed reference line in
+        the waveform/spectrogram, so the exact position can be lined up
+        against spectral/amplitude detail while dragging."""
+        self._waveform.set_preview_time(t)
+        self._spectrogram.set_preview_time(t)
 
     def _update_dirty_indicator(self) -> None:
         self._dirty_label.setText("● Unsaved changes" if self._dirty else "")

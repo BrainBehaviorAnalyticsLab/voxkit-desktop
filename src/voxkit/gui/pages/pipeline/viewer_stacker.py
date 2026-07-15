@@ -281,21 +281,36 @@ class TimeAxisMixin:
         x2 = self._time_to_x(max(self._sel_start, self._sel_end))
         painter.fillRect(x1, 0, max(1, x2 - x1), height, QColor(52, 152, 219, 60))
 
+    _preview_time: float | None = None
+
+    def set_preview_time(self, t: float | None) -> None:
+        """Set (or clear) a dashed reference line at time ``t``.
+
+        Used while dragging a TextGrid boundary (see
+        EditableTextGridTimeline.boundary_dragging) so the waveform/
+        spectrogram show exactly where the boundary currently sits, for
+        precisely lining it up against a formant transition, burst, etc.
+        Deliberately a separate concept from the (solid, red) playhead --
+        a moving playhead line would read as a change in playback position.
+        """
+        self._preview_time = t
+        self.update()
+
+    def _draw_preview_line(self, painter: QPainter, height: int) -> None:
+        if self._preview_time is None or self._duration <= 0:
+            return
+        px = self._time_to_x(self._preview_time)
+        painter.setPen(QPen(QColor("#8e44ad"), 1.5, Qt.PenStyle.DashLine))
+        painter.drawLine(px, 0, px, height)
+
     # ── mouse / wheel interaction ────────────────────────────────────────────
 
-    def wheelEvent(self, event) -> None:
-        if self._duration <= 0:
-            return
-        delta = event.angleDelta().y()
-        if delta == 0:
-            return
-        factor = 1.15 if delta > 0 else 1 / 1.15
-        cursor_x = event.position().x()
-        anchor_time = self._x_to_time(cursor_x)
-        pixel_span = max(1, self.width() - self.LEFT_MARGIN - self.RIGHT_MARGIN)
-        anchor_fraction = max(0.0, min(1.0, (cursor_x - self.LEFT_MARGIN) / pixel_span))
-        self.zoom_requested.emit(anchor_time, anchor_fraction, factor)
-        event.accept()
+    # Zooming is deliberately button-only (see the +/- "Zoom In"/"Zoom Out"
+    # buttons each stacker wires to _zoom_by) -- wheel/touchpad-to-zoom was
+    # too easy to trigger by accident while just trying to scroll the page,
+    # so wheelEvent is intentionally NOT overridden here: leaving it
+    # unhandled lets the event propagate to the enclosing QScrollArea for
+    # normal page scrolling instead.
 
     def mousePressEvent(self, event) -> None:
         if self._duration <= 0:
@@ -584,6 +599,7 @@ class TextGridTimeline(TimeAxisMixin, QWidget):
         # ── Selection + Playhead ─────────────────────────────────────────────
         self._draw_selection(painter, h)
         self._draw_playhead(painter, self._current_time, h)
+        self._draw_preview_line(painter, h)
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
@@ -751,6 +767,7 @@ class WaveformPanel(TimeAxisMixin, QWidget):
 
         self._draw_selection(painter, h)
         self._draw_playhead(painter, self._current_time, h)
+        self._draw_preview_line(painter, h)
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
@@ -1079,6 +1096,7 @@ class SpectrogramPanel(TimeAxisMixin, QWidget):
 
         self._draw_selection(painter, h)
         self._draw_playhead(painter, self._current_time, h)
+        self._draw_preview_line(painter, h)
 
     def _live_source_rect(self) -> QRectF:
         """Map the *current* (possibly newer than the cached pixmap's) view
@@ -1383,10 +1401,9 @@ class ViewerStacker(BaseStacker):
         zoom_row = QHBoxLayout()
         zoom_row.setSpacing(6)
 
-        zoom_out_btn = QPushButton("−")
-        zoom_out_btn.setFixedWidth(28)
+        zoom_out_btn = QPushButton("Zoom Out")
+        zoom_out_btn.setFixedWidth(84)
         zoom_out_btn.setStyleSheet(Buttons.SECONDARY)
-        zoom_out_btn.setToolTip("Zoom out")
         zoom_out_btn.clicked.connect(lambda: self._zoom_by(1 / 1.5))
         zoom_row.addWidget(zoom_out_btn)
 
@@ -1395,10 +1412,9 @@ class ViewerStacker(BaseStacker):
         self._time_scrollbar.valueChanged.connect(self._on_scrollbar_changed)
         zoom_row.addWidget(self._time_scrollbar, stretch=1)
 
-        zoom_in_btn = QPushButton("+")
-        zoom_in_btn.setFixedWidth(28)
+        zoom_in_btn = QPushButton("Zoom In")
+        zoom_in_btn.setFixedWidth(84)
         zoom_in_btn.setStyleSheet(Buttons.SECONDARY)
-        zoom_in_btn.setToolTip("Zoom in")
         zoom_in_btn.clicked.connect(lambda: self._zoom_by(1.5))
         zoom_row.addWidget(zoom_in_btn)
 
