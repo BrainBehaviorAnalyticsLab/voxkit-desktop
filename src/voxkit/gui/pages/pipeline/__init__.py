@@ -40,6 +40,11 @@ Available Stackers
     Static content display. Renders markdown-formatted text for informational
     pages, tutorials, or documentation within the pipeline.
 
+**CorrectAlignmentsStacker** (``correct_alignments_stacker.py``)
+    Boundary-correction workflow. Lets a user drag phone/word interval
+    boundaries on a TextGrid timeline and save the corrections as a new,
+    fully-owned alignment -- the source alignment is never modified.
+
 Adding New Stackers
 -------------------
 1. Create a new file (e.g., ``my_stacker.py``)
@@ -93,6 +98,7 @@ if TYPE_CHECKING:
 
 from .base_stacker import BaseStacker
 from .comparison_stacker import ComparisonStacker
+from .correct_alignments_stacker import CorrectAlignmentsStacker
 from .markdown_stacker import MarkdownStacker
 from .pllr_stacker import PLLRStacker
 from .prediction_stacker import PredictionStacker
@@ -109,6 +115,7 @@ STACKER_REGISTRY = {
     "TranscriptionStacker": TranscriptionStacker,
     "ViewerStacker": ViewerStacker,
     "ComparisonStacker": ComparisonStacker,
+    "CorrectAlignmentsStacker": CorrectAlignmentsStacker,
 }
 
 
@@ -292,6 +299,10 @@ class PipelineFormStack(QWidget):
                 if hasattr(stacker_widget, "reload_datasets"):
                     stacker_widget.reload_datasets()
 
+            elif stacker_class == "CorrectAlignmentsStacker":
+                if hasattr(stacker_widget, "reload_datasets"):
+                    stacker_widget.reload_datasets()
+
     def change_page(self, index):
         """Change the displayed page based on menu selection with animation"""
         if index >= 0:  # Valid index
@@ -317,5 +328,6 @@ __all__ = [
     "MarkdownStacker",
     "ViewerStacker",
     "ComparisonStacker",
+    "CorrectAlignmentsStacker",
     "STACKER_REGISTRY",
 ]
