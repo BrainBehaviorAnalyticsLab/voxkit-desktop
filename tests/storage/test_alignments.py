@@ -107,7 +107,7 @@ class TestAlignments:
             assert isinstance(result, dict)
 
             # Verify all required keys are present
-            required_keys = set(AlignmentMetadata.__annotations__.keys())
+            required_keys = set(AlignmentMetadata.__required_keys__)
             assert required_keys.issubset(set(result.keys()))
 
             # Verify field values
@@ -192,7 +192,7 @@ class TestAlignments:
         assert isinstance(result, dict)
 
         # Verify all required keys are present
-        required_keys = set(AlignmentMetadata.__annotations__.keys())
+        required_keys = set(AlignmentMetadata.__required_keys__)
         assert required_keys.issubset(set(result.keys()))
 
         # Verify field values
@@ -206,6 +206,140 @@ class TestAlignments:
         tg_path = Path(result["tg_path"])
         alignment_root = tg_path.parent.parent
         assert alignment_root in tg_path.parents
+
+    class TestCreateCorrectedAlignment:
+        def test_create_corrected_alignment_cached_source(
+            self, monkeypatch, sample_dataset, sample_model
+        ):
+            from voxkit.storage import models
+            from voxkit.storage.alignments import (
+                AlignmentMetadata,
+                create_alignment,
+                create_corrected_alignment,
+            )
+
+            monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
+
+            dataset_id = sample_dataset["id"]
+            engine_id = sample_model["engine_id"]
+            model_id = sample_model["id"]
+
+            success, source_metadata = create_alignment(
+                dataset_id=dataset_id, engine_id=engine_id, model_id=model_id
+            )
+            assert success is True
+
+            # Put a fake TextGrid in the source alignment's tg_path so the
+            # baseline copy has something real to carry over.
+            source_tg_path = Path(source_metadata["tg_path"])
+            (source_tg_path / "participant_1").mkdir(parents=True, exist_ok=True)
+            source_file = source_tg_path / "participant_1" / "sample_0.TextGrid"
+            source_file.write_text("fake textgrid contents")
+
+            corrected_success, corrected_metadata = create_corrected_alignment(
+                dataset_id=dataset_id, source_alignment_id=source_metadata["id"]
+            )
+
+            assert corrected_success is True
+            assert isinstance(corrected_metadata, dict)
+
+            required_keys = set(AlignmentMetadata.__required_keys__)
+            assert required_keys.issubset(set(corrected_metadata.keys()))
+
+            assert corrected_metadata["local"] is True
+            assert corrected_metadata["source_alignment_id"] == source_metadata["id"]
+            assert corrected_metadata["id"] != source_metadata["id"]
+
+            # tg_path must live inside THIS alignment's own directory, never
+            # the source alignment's or the original dataset's directory.
+            corrected_tg_path = Path(corrected_metadata["tg_path"])
+            corrected_alignment_root = corrected_tg_path.parent
+            assert corrected_alignment_root.name == corrected_metadata["id"]
+            assert source_tg_path not in corrected_tg_path.parents
+            assert corrected_tg_path != source_tg_path
+
+            # Baseline copy landed and is byte-identical to the source.
+            copied_file = corrected_tg_path / "participant_1" / "sample_0.TextGrid"
+            assert copied_file.exists()
+            assert copied_file.read_text() == source_file.read_text()
+
+            # Source alignment's own TextGrids must be untouched.
+            assert source_file.read_text() == "fake textgrid contents"
+
+        def test_create_corrected_alignment_non_cached_source(self, monkeypatch, sample_model):
+            from voxkit.storage import datasets, models
+            from voxkit.storage.alignments import create_alignment, create_corrected_alignment
+            from voxkit.storage.datasets import create_dataset
+
+            monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
+            monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
+
+            dataset_path = mock_get_storage_root() / "fake_datasets" / "valid"
+            success, dataset_metadata = create_dataset(
+                name="test_dataset_non_cached_corrected",
+                description="A non-cached dataset for corrected-alignment tests",
+                original_path=str(dataset_path),
+                cached=False,
+                anonymize=False,
+                transcribed=True,
+            )
+            assert success is True
+
+            dataset_id = dataset_metadata["id"]
+            engine_id = sample_model["engine_id"]
+            model_id = sample_model["id"]
+
+            success, source_metadata = create_alignment(
+                dataset_id=dataset_id, engine_id=engine_id, model_id=model_id
+            )
+            assert success is True
+            # Non-cached source alignments point tg_path at the *original*
+            # dataset directory -- exactly the trap this function must avoid
+            # inheriting.
+            source_tg_path = Path(source_metadata["tg_path"])
+            source_tg_path.mkdir(parents=True, exist_ok=True)
+
+            corrected_success, corrected_metadata = create_corrected_alignment(
+                dataset_id=dataset_id, source_alignment_id=source_metadata["id"]
+            )
+
+            assert corrected_success is True
+            assert corrected_metadata["local"] is True
+
+            corrected_tg_path = Path(corrected_metadata["tg_path"])
+            assert corrected_tg_path != source_tg_path
+            assert dataset_path not in corrected_tg_path.parents
+            assert corrected_metadata["id"] in str(corrected_tg_path)
+
+        def test_create_corrected_alignment_invalid_source(self, monkeypatch, sample_dataset):
+            from voxkit.storage import datasets
+            from voxkit.storage.alignments import create_corrected_alignment
+
+            monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
+
+            dataset_id = sample_dataset["id"]
+
+            success, result = create_corrected_alignment(
+                dataset_id=dataset_id, source_alignment_id="NON_EXISTENT_ALIGNMENT"
+            )
+
+            assert success is False
+            assert isinstance(result, str)
+            assert "not found" in result
+
+        def test_create_corrected_alignment_invalid_dataset(self, monkeypatch):
+            from voxkit.storage import datasets
+            from voxkit.storage.alignments import create_corrected_alignment
+
+            monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
+
+            success, result = create_corrected_alignment(
+                dataset_id="NON_EXISTENT_DATASET", source_alignment_id="ANY_ALIGNMENT_ID"
+            )
+
+            assert success is False
+            assert isinstance(result, str)
+            assert "Dataset" in result
 
     class TestGetAlignmentMetadata:
         def test_get_alignment_metadata_success(self, monkeypatch, sample_dataset, sample_model):
