@@ -362,10 +362,17 @@ class PLLRStacker(QWidget):
             )
             return
 
-        is_cached = alignment_data["local"] == "True" or alignment_data["local"] is True
-        textgrid_path = (
-            alignment_data["tg_path"] + "/cache" if is_cached else alignment_data["tg_path"]
-        )
+        # tg_path is always the alignment's actual TextGrid directory --
+        # every alignment-creation path (create_alignment, create_hand_alignment,
+        # create_corrected_alignment) writes directly into it, never into a
+        # nested "cache" subfolder. That subfolder only exists for a *dataset's*
+        # cached audio (see get_dataset_data_path), a separate concept this
+        # used to incorrectly conflate with an alignment's `local` flag --
+        # which silently worked only because no alignment type previously had
+        # local=True without also being on a non-cached dataset; corrected
+        # alignments are always local=True regardless of the dataset's own
+        # cached flag, which is what exposed this.
+        textgrid_path = alignment_data["tg_path"]
         print(f"[DEBUG] TextGrid path from alignment: {textgrid_path}")
         print("[DEBUG] Checking if TextGrid path exists...")
 
