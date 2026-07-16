@@ -46,6 +46,7 @@ from voxkit.gui.pages.pipeline.viewer_stacker import (
     find_textgrid,
 )
 from voxkit.gui.styles import Buttons, Colors, Containers, Labels
+from voxkit.gui.workers.worker_thread import WorkerThread
 from voxkit.storage import alignments, datasets
 from voxkit.storage.constants import SUPERSET_AUDIO_EXTENSIONS
 
@@ -295,6 +296,8 @@ class CorrectAlignmentsStacker(BaseStacker):
         # save; reused for subsequent saves until the source alignment or
         # dataset selection changes (a new source starts a new session).
         self._corrected_alignment_meta: alignments.AlignmentMetadata | None = None
+        self._create_worker: WorkerThread | None = None
+        self._pending_create_result: tuple | None = None
 
         # Zoom/scroll/selection state, shared across all synced panels
         self._synced_panels: list = []
@@ -1104,30 +1107,55 @@ class CorrectAlignmentsStacker(BaseStacker):
             return
 
         if self._corrected_alignment_meta is None:
+            # First save of this session: creating the corrected alignment
+            # baseline-copies the *entire* source TextGrid tree, which can
+            # take a while for a large dataset -- run it on a background
+            # thread (BaseStacker's progress bar shows automatically via
+            # set_status(..., "working")) so the UI doesn't lock up, and
+            # write this file's correction once that finishes.
+            dataset_id = self._current_dataset_meta["id"]
+            source_id = self._current_alignment_meta["id"]
             engine_id = self._corrected_engine_input.text().strip() or None
             alignment_type = self._corrected_type_input.text().strip() or "corrected"
-            success, result = alignments.create_corrected_alignment(
-                self._current_dataset_meta["id"],
-                self._current_alignment_meta["id"],
-                engine_id=engine_id,
-                alignment_type=alignment_type,
-            )
-            if not success:
-                self.set_status(f"Failed to create corrected alignment: {result}", "error")
-                return
-            self._corrected_alignment_meta = result
-            # Lock both fields in for the rest of this session (a session is
-            # one dataset+source-alignment combo) and show what they resolved
-            # to, so re-opening this same corrected alignment later is
-            # recognizable rather than just another timestamped entry.
-            self._corrected_engine_input.setText(result["engine_id"])
-            self._corrected_engine_input.setEnabled(False)
-            self._corrected_type_input.setText(result["alignment_type"])
-            self._corrected_type_input.setEnabled(False)
-            self._corrected_path_label.setText(
-                f"Corrected alignment stored at: {result['tg_path']}"
-            )
 
+            self._save_btn.setEnabled(False)
+            self.set_status("Creating corrected alignment (copying TextGrids)...", "working")
+
+            def _create() -> str:
+                self._pending_create_result = alignments.create_corrected_alignment(
+                    dataset_id, source_id, engine_id=engine_id, alignment_type=alignment_type
+                )
+                return "done"
+
+            self._create_worker = WorkerThread(_create)
+            self._create_worker.finished.connect(self._on_corrected_alignment_created)
+            self._create_worker.start()
+            return
+
+        self._write_current_correction_file()
+
+    def _on_corrected_alignment_created(self, _success: bool, _message: str) -> None:
+        success, result = self._pending_create_result
+        self._pending_create_result = None
+        if not success:
+            self.set_status(f"Failed to create corrected alignment: {result}", "error")
+            self._update_dirty_indicator()  # re-enables Save; correction is still unsaved
+            return
+
+        self._corrected_alignment_meta = result
+        # Lock both fields in for the rest of this session (a session is one
+        # dataset+source-alignment combo) and show what they resolved to, so
+        # re-opening this same corrected alignment later is recognizable
+        # rather than just another timestamped entry.
+        self._corrected_engine_input.setText(result["engine_id"])
+        self._corrected_engine_input.setEnabled(False)
+        self._corrected_type_input.setText(result["alignment_type"])
+        self._corrected_type_input.setEnabled(False)
+        self._corrected_path_label.setText(f"Corrected alignment stored at: {result['tg_path']}")
+
+        self._write_current_correction_file()
+
+    def _write_current_correction_file(self) -> None:
         corrected_tg_root = Path(self._corrected_alignment_meta["tg_path"])
         target_path = find_textgrid(corrected_tg_root, self._current_speaker, self._current_stem)
         if target_path is None:
