@@ -1229,8 +1229,8 @@ class ViewerStacker(BaseStacker):
         self._alignment_dropdown = MultiColumnComboBox()
         self._alignment_dropdown.setStyleSheet(Containers.COMBOBOX_STANDARD)
         self._alignment_dropdown.set_data(
-            [{"id": None, "data": ("Select a dataset first", "", "", "")}],
-            ["Engine", "Model", "Date", "Status"],
+            [{"id": None, "data": ("Select a dataset first", "", "", "", "")}],
+            ["Engine", "Model", "Type", "Date", "Status"],
             placeholder="Select a dataset first",
         )
         self._alignment_dropdown.setEnabled(False)
@@ -1528,8 +1528,8 @@ class ViewerStacker(BaseStacker):
 
         if self._alignment_dropdown:
             self._alignment_dropdown.set_data(
-                [{"id": None, "data": ("Select a dataset first", "", "", "")}],
-                ["Engine", "Model", "Date", "Status"],
+                [{"id": None, "data": ("Select a dataset first", "", "", "", "")}],
+                ["Engine", "Model", "Type", "Date", "Status"],
                 placeholder="Select a dataset first",
             )
             self._alignment_dropdown.setEnabled(False)
@@ -1550,8 +1550,8 @@ class ViewerStacker(BaseStacker):
 
         if not dataset_id:
             self._alignment_dropdown.set_data(
-                [{"id": None, "data": ("Select a dataset first", "", "", "")}],
-                ["Engine", "Model", "Date", "Status"],
+                [{"id": None, "data": ("Select a dataset first", "", "", "", "")}],
+                ["Engine", "Model", "Type", "Date", "Status"],
                 placeholder="Select a dataset first",
             )
             self._alignment_dropdown.setEnabled(False)
@@ -1571,6 +1571,7 @@ class ViewerStacker(BaseStacker):
                     "data": (
                         a["engine_id"],
                         a["model_metadata"]["name"],
+                        alignments.get_alignment_type(a),
                         a["alignment_date"],
                         a["status"],
                     ),
@@ -1578,13 +1579,15 @@ class ViewerStacker(BaseStacker):
                 for a in al_list
             ]
             self._alignment_dropdown.set_data(
-                rows, ["Engine", "Model", "Date", "Status"], placeholder="Select an alignment"
+                rows,
+                ["Engine", "Model", "Type", "Date", "Status"],
+                placeholder="Select an alignment",
             )
             self._alignment_dropdown.setEnabled(True)
         else:
             self._alignment_dropdown.set_data(
-                [{"id": None, "data": ("No alignments found", "", "", "")}],
-                ["Engine", "Model", "Date", "Status"],
+                [{"id": None, "data": ("No alignments found", "", "", "", "")}],
+                ["Engine", "Model", "Type", "Date", "Status"],
                 placeholder="No alignments found",
             )
             self._alignment_dropdown.setEnabled(False)

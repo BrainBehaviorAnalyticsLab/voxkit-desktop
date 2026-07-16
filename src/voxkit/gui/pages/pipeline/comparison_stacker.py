@@ -539,8 +539,8 @@ class ComparisonStacker(BaseStacker):
         al_dd = MultiColumnComboBox()
         al_dd.setStyleSheet(Containers.COMBOBOX_STANDARD)
         al_dd.set_data(
-            [{"id": None, "data": ("Select a dataset first", "", "", "")}],
-            ["Engine", "Model", "Date", "Status"],
+            [{"id": None, "data": ("Select a dataset first", "", "", "", "")}],
+            ["Engine", "Model", "Type", "Date", "Status"],
             placeholder="Select a dataset first",
         )
         al_dd.setEnabled(False)
@@ -585,8 +585,8 @@ class ComparisonStacker(BaseStacker):
 
         for al_dd in (self._a_alignment_dropdown, self._b_alignment_dropdown):
             al_dd.set_data(
-                [{"id": None, "data": ("Select a dataset first", "", "", "")}],
-                ["Engine", "Model", "Date", "Status"],
+                [{"id": None, "data": ("Select a dataset first", "", "", "", "")}],
+                ["Engine", "Model", "Type", "Date", "Status"],
                 placeholder="Select a dataset first",
             )
             al_dd.setEnabled(False)
@@ -605,8 +605,8 @@ class ComparisonStacker(BaseStacker):
         if not dataset_id:
             for al_dd in (self._a_alignment_dropdown, self._b_alignment_dropdown):
                 al_dd.set_data(
-                    [{"id": None, "data": ("Select a dataset first", "", "", "")}],
-                    ["Engine", "Model", "Date", "Status"],
+                    [{"id": None, "data": ("Select a dataset first", "", "", "", "")}],
+                    ["Engine", "Model", "Type", "Date", "Status"],
                     placeholder="Select a dataset first",
                 )
                 al_dd.setEnabled(False)
@@ -626,6 +626,7 @@ class ComparisonStacker(BaseStacker):
                     "data": (
                         a["engine_id"],
                         a["model_metadata"]["name"],
+                        alignments.get_alignment_type(a),
                         a["alignment_date"],
                         a["status"],
                     ),
@@ -634,14 +635,16 @@ class ComparisonStacker(BaseStacker):
             ]
             for al_dd in (self._a_alignment_dropdown, self._b_alignment_dropdown):
                 al_dd.set_data(
-                    rows, ["Engine", "Model", "Date", "Status"], placeholder="Select an alignment"
+                    rows,
+                    ["Engine", "Model", "Type", "Date", "Status"],
+                    placeholder="Select an alignment",
                 )
                 al_dd.setEnabled(True)
         else:
             for al_dd in (self._a_alignment_dropdown, self._b_alignment_dropdown):
                 al_dd.set_data(
-                    [{"id": None, "data": ("No alignments found", "", "", "")}],
-                    ["Engine", "Model", "Date", "Status"],
+                    [{"id": None, "data": ("No alignments found", "", "", "", "")}],
+                    ["Engine", "Model", "Type", "Date", "Status"],
                     placeholder="No alignments found",
                 )
                 al_dd.setEnabled(False)

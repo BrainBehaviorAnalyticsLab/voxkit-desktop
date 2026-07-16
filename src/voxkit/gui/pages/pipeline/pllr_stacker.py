@@ -158,6 +158,7 @@ class PLLRStacker(QWidget):
                             "data": (
                                 alignment["engine_id"],
                                 alignment["model_metadata"]["name"],
+                                alignments.get_alignment_type(alignment),
                                 alignment["alignment_date"],
                                 alignment["status"],
                             ),
@@ -166,7 +167,7 @@ class PLLRStacker(QWidget):
 
                 self.pllr_alignment_dropdown.set_data(
                     rows,
-                    ["Engine ID", "Model Name", "Date Registered", "Status"],
+                    ["Engine ID", "Model Name", "Type", "Date Registered", "Status"],
                     placeholder="Click to select an alignment",
                 )
 

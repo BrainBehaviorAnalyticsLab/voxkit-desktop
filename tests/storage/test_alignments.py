@@ -249,6 +249,15 @@ class TestAlignments:
             assert corrected_metadata["local"] is True
             assert corrected_metadata["source_alignment_id"] == source_metadata["id"]
             assert corrected_metadata["id"] != source_metadata["id"]
+            assert corrected_metadata["alignment_type"] == "corrected"
+            # Real engine/model identity is preserved from the source (not
+            # replaced with a "corrected" placeholder), so dropdowns keep
+            # showing which engine actually produced the TextGrids.
+            assert corrected_metadata["engine_id"] == source_metadata["engine_id"]
+            assert (
+                corrected_metadata["model_metadata"]["name"]
+                == source_metadata["model_metadata"]["name"]
+            )
 
             # tg_path must live inside THIS alignment's own directory, never
             # the source alignment's or the original dataset's directory.
@@ -340,6 +349,64 @@ class TestAlignments:
             assert success is False
             assert isinstance(result, str)
             assert "Dataset" in result
+
+        def test_create_corrected_alignment_custom_name(
+            self, monkeypatch, sample_dataset, sample_model
+        ):
+            from voxkit.storage import models
+            from voxkit.storage.alignments import create_alignment, create_corrected_alignment
+
+            monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
+
+            dataset_id = sample_dataset["id"]
+            success, source_metadata = create_alignment(
+                dataset_id=dataset_id,
+                engine_id=sample_model["engine_id"],
+                model_id=sample_model["id"],
+            )
+            assert success is True
+
+            success, corrected_metadata = create_corrected_alignment(
+                dataset_id=dataset_id,
+                source_alignment_id=source_metadata["id"],
+                custom_name="Nina's pass 1",
+            )
+
+            assert success is True
+            assert corrected_metadata["model_metadata"]["name"] == "Nina's pass 1"
+            # Custom naming only overrides the display name -- engine identity
+            # and type are unaffected.
+            assert corrected_metadata["engine_id"] == source_metadata["engine_id"]
+            assert corrected_metadata["alignment_type"] == "corrected"
+
+    class TestGetAlignmentType:
+        def test_returns_stored_alignment_type(self):
+            from voxkit.storage.alignments import get_alignment_type
+
+            for t in ("automatic", "hand", "corrected"):
+                meta = {"engine_id": "mfa", "alignment_type": t}
+                assert get_alignment_type(meta) == t
+
+        def test_infers_hand_from_engine_id_when_field_missing(self):
+            from voxkit.storage.alignments import HAND_ALIGNMENT_SENTINEL, get_alignment_type
+
+            meta = {"engine_id": HAND_ALIGNMENT_SENTINEL}
+            assert get_alignment_type(meta) == "hand"
+
+        def test_infers_corrected_from_engine_id_when_field_missing(self):
+            from voxkit.storage.alignments import (
+                CORRECTED_ALIGNMENT_SENTINEL,
+                get_alignment_type,
+            )
+
+            meta = {"engine_id": CORRECTED_ALIGNMENT_SENTINEL}
+            assert get_alignment_type(meta) == "corrected"
+
+        def test_defaults_to_automatic_when_field_missing(self):
+            from voxkit.storage.alignments import get_alignment_type
+
+            meta = {"engine_id": "mfa"}
+            assert get_alignment_type(meta) == "automatic"
 
     class TestGetAlignmentMetadata:
         def test_get_alignment_metadata_success(self, monkeypatch, sample_dataset, sample_model):
