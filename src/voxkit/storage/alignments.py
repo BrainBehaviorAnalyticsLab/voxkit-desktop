@@ -366,7 +366,10 @@ def create_hand_alignment(
 
 
 def create_corrected_alignment(
-    dataset_id: str, source_alignment_id: str, custom_name: str | None = None
+    dataset_id: str,
+    source_alignment_id: str,
+    engine_id: str | None = None,
+    alignment_type: str = "corrected",
 ) -> tuple[Literal[True], AlignmentMetadata] | tuple[Literal[False], str]:
     """Create a new, fully-owned alignment for hand-correcting a source alignment's boundaries.
 
@@ -379,19 +382,17 @@ def create_corrected_alignment(
     corrected alignment is self-contained from the start. The source alignment's
     own TextGrids are never modified.
 
-    Preserves the source's real `engine_id`/`model_metadata` (rather than
-    replacing them with a "corrected" placeholder) so alignment dropdowns keep
-    showing which engine/model actually produced the underlying TextGrids --
-    `alignment_type="corrected"` is what distinguishes it from the source.
-
     Args:
         dataset_id: Identifier of the dataset
         source_alignment_id: Identifier of the alignment being corrected
-        custom_name: Optional user-facing name (e.g. "Nina's pass 1"), shown
-            in the Model column instead of the source's model name -- lets a
-            user recognize/resume the same corrected alignment later, including
-            from a different install of the app against the same dataset
-            storage. Falls back to the source's own model name if omitted.
+        engine_id: Value to store/display as this alignment's Engine. Defaults
+            to the source alignment's own engine_id (i.e. which engine actually
+            produced the underlying TextGrids) if omitted, but the GUI lets a
+            user override it -- e.g. to tag who corrected it, or distinguish
+            multiple correction passes.
+        alignment_type: Value to store/display as this alignment's Type
+            (normally "automatic"/"hand"/"corrected", but this is a free-form
+            string so a user can customize it, e.g. "corrected-v2").
 
     Returns:
         Tuple of (True, AlignmentMetadata) on success or (False, error_message) on failure
@@ -422,20 +423,16 @@ def create_corrected_alignment(
         if source_tg_root.exists():
             shutil.copytree(source_tg_root, tg_path, dirs_exist_ok=True)
 
-        model_metadata = dict(source_metadata["model_metadata"])
-        if custom_name:
-            model_metadata["name"] = custom_name
-
         metadata = AlignmentMetadata(
             id=now,
-            engine_id=source_metadata["engine_id"],
-            model_metadata=model_metadata,
+            engine_id=engine_id or source_metadata["engine_id"],
+            model_metadata=source_metadata["model_metadata"],
             local=True,
             tg_path=str(tg_path),
             alignment_date=alignment_date,
             status="completed",
             source_alignment_id=source_alignment_id,
-            alignment_type="corrected",
+            alignment_type=alignment_type,  # type: ignore[typeddict-item]
         )
 
         metadata_path = alignment_root / "voxkit_alignment.json"

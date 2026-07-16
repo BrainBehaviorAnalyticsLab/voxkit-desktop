@@ -350,7 +350,37 @@ class TestAlignments:
             assert isinstance(result, str)
             assert "Dataset" in result
 
-        def test_create_corrected_alignment_custom_name(
+        def test_create_corrected_alignment_defaults_engine_and_type(
+            self, monkeypatch, sample_dataset, sample_model
+        ):
+            from voxkit.storage import models
+            from voxkit.storage.alignments import create_alignment, create_corrected_alignment
+
+            monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
+
+            dataset_id = sample_dataset["id"]
+            success, source_metadata = create_alignment(
+                dataset_id=dataset_id,
+                engine_id=sample_model["engine_id"],
+                model_id=sample_model["id"],
+            )
+            assert success is True
+
+            success, corrected_metadata = create_corrected_alignment(
+                dataset_id=dataset_id, source_alignment_id=source_metadata["id"]
+            )
+
+            assert success is True
+            # With no overrides, engine_id falls back to the source's, and
+            # alignment_type defaults to "corrected".
+            assert corrected_metadata["engine_id"] == source_metadata["engine_id"]
+            assert corrected_metadata["alignment_type"] == "corrected"
+            assert (
+                corrected_metadata["model_metadata"]["name"]
+                == source_metadata["model_metadata"]["name"]
+            )
+
+        def test_create_corrected_alignment_custom_engine_and_type(
             self, monkeypatch, sample_dataset, sample_model
         ):
             from voxkit.storage import models
@@ -369,15 +399,18 @@ class TestAlignments:
             success, corrected_metadata = create_corrected_alignment(
                 dataset_id=dataset_id,
                 source_alignment_id=source_metadata["id"],
-                custom_name="Nina's pass 1",
+                engine_id="MFA (Nina)",
+                alignment_type="corrected-v2",
             )
 
             assert success is True
-            assert corrected_metadata["model_metadata"]["name"] == "Nina's pass 1"
-            # Custom naming only overrides the display name -- engine identity
-            # and type are unaffected.
-            assert corrected_metadata["engine_id"] == source_metadata["engine_id"]
-            assert corrected_metadata["alignment_type"] == "corrected"
+            assert corrected_metadata["engine_id"] == "MFA (Nina)"
+            assert corrected_metadata["alignment_type"] == "corrected-v2"
+            # Overriding engine/type doesn't touch the preserved model name.
+            assert (
+                corrected_metadata["model_metadata"]["name"]
+                == source_metadata["model_metadata"]["name"]
+            )
 
     class TestGetAlignmentType:
         def test_returns_stored_alignment_type(self):

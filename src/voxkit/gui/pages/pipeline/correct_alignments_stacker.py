@@ -277,7 +277,8 @@ class CorrectAlignmentsStacker(BaseStacker):
         self._audio_path_label: QLabel
         self._dirty_label: QLabel
         self._save_btn: QPushButton
-        self._corrected_name_input: QLineEdit
+        self._corrected_engine_input: QLineEdit
+        self._corrected_type_input: QLineEdit
         self._corrected_path_label: QLabel
 
         self._current_dataset_meta: datasets.DatasetMetadata | None = None
@@ -532,23 +533,35 @@ class CorrectAlignmentsStacker(BaseStacker):
         )
         view_col.addWidget(self._transcript_edit)
 
-        # Save row ────────────────────────────────────────────────────────────
-        save_row = QHBoxLayout()
-        save_row.setSpacing(8)
-        name_lbl = QLabel("Corrected Alignment Name:")
-        name_lbl.setStyleSheet(Labels.INFO_SMALL)
-        save_row.addWidget(name_lbl)
-        self._corrected_name_input = QLineEdit()
-        self._corrected_name_input.setPlaceholderText(
-            "optional -- e.g. \"Nina's pass 1\" (helps find/resume it later)"
-        )
-        self._corrected_name_input.setStyleSheet(
+        # Save section ────────────────────────────────────────────────────────
+        save_lbl = QLabel("Save corrected alignment to dataset")
+        save_lbl.setStyleSheet(Labels.SECTION_LABEL)
+        view_col.addWidget(save_lbl)
+
+        _field_style = (
             f"QLineEdit {{ border: 1px solid {Colors.BORDER}; border-radius: 4px; "
             f"padding: 4px 6px; font-size: 12px; background: white; }}"
             f"QLineEdit:focus {{ border-color: {Colors.PRIMARY}; }}"
             f"QLineEdit:disabled {{ background: #ecf0f1; color: {Colors.TEXT_SECONDARY}; }}"
         )
-        save_row.addWidget(self._corrected_name_input, stretch=1)
+
+        save_row = QHBoxLayout()
+        save_row.setSpacing(8)
+
+        engine_lbl = QLabel("Engine:")
+        engine_lbl.setStyleSheet(Labels.INFO_SMALL)
+        save_row.addWidget(engine_lbl)
+        self._corrected_engine_input = QLineEdit()
+        self._corrected_engine_input.setStyleSheet(_field_style)
+        save_row.addWidget(self._corrected_engine_input, stretch=1)
+
+        type_lbl = QLabel("Type:")
+        type_lbl.setStyleSheet(Labels.INFO_SMALL)
+        save_row.addWidget(type_lbl)
+        self._corrected_type_input = QLineEdit()
+        self._corrected_type_input.setStyleSheet(_field_style)
+        save_row.addWidget(self._corrected_type_input, stretch=1)
+
         self._save_btn = QPushButton("Save Corrections")
         self._save_btn.setStyleSheet(Buttons.PRIMARY)
         self._save_btn.setEnabled(False)
@@ -646,8 +659,10 @@ class CorrectAlignmentsStacker(BaseStacker):
         self._viewer_section.setVisible(False)
         self._alignment_dropdown.clear()
         self._corrected_alignment_meta = None
-        self._corrected_name_input.clear()
-        self._corrected_name_input.setEnabled(True)
+        self._corrected_engine_input.clear()
+        self._corrected_engine_input.setEnabled(True)
+        self._corrected_type_input.clear()
+        self._corrected_type_input.setEnabled(True)
         self._corrected_path_label.setText("")
 
         if not dataset_id:
@@ -702,8 +717,10 @@ class CorrectAlignmentsStacker(BaseStacker):
         # A different source alignment means any in-progress correction
         # session belongs to the old source -- start fresh.
         self._corrected_alignment_meta = None
-        self._corrected_name_input.clear()
-        self._corrected_name_input.setEnabled(True)
+        self._corrected_engine_input.clear()
+        self._corrected_engine_input.setEnabled(True)
+        self._corrected_type_input.clear()
+        self._corrected_type_input.setEnabled(True)
         self._corrected_path_label.setText("")
 
         if not alignment_id or not self._current_dataset_meta:
@@ -714,6 +731,11 @@ class CorrectAlignmentsStacker(BaseStacker):
             return
 
         self._current_alignment_meta = meta
+        # Prepopulate with the engine that actually produced this alignment
+        # and the default "corrected" type -- the user can still edit both
+        # before the first save.
+        self._corrected_engine_input.setText(meta["engine_id"])
+        self._corrected_type_input.setText("corrected")
         self._populate_speakers()
         self._selection_section.setVisible(True)
         self.set_status("Select a speaker and audio file to correct", "ready")
@@ -1082,22 +1104,26 @@ class CorrectAlignmentsStacker(BaseStacker):
             return
 
         if self._corrected_alignment_meta is None:
-            custom_name = self._corrected_name_input.text().strip() or None
+            engine_id = self._corrected_engine_input.text().strip() or None
+            alignment_type = self._corrected_type_input.text().strip() or "corrected"
             success, result = alignments.create_corrected_alignment(
                 self._current_dataset_meta["id"],
                 self._current_alignment_meta["id"],
-                custom_name=custom_name,
+                engine_id=engine_id,
+                alignment_type=alignment_type,
             )
             if not success:
                 self.set_status(f"Failed to create corrected alignment: {result}", "error")
                 return
             self._corrected_alignment_meta = result
-            # Lock the name in for the rest of this session (a session is one
-            # dataset+source-alignment combo) and show what it resolved to,
-            # so re-opening this same corrected alignment later is
+            # Lock both fields in for the rest of this session (a session is
+            # one dataset+source-alignment combo) and show what they resolved
+            # to, so re-opening this same corrected alignment later is
             # recognizable rather than just another timestamped entry.
-            self._corrected_name_input.setText(result["model_metadata"]["name"])
-            self._corrected_name_input.setEnabled(False)
+            self._corrected_engine_input.setText(result["engine_id"])
+            self._corrected_engine_input.setEnabled(False)
+            self._corrected_type_input.setText(result["alignment_type"])
+            self._corrected_type_input.setEnabled(False)
             self._corrected_path_label.setText(
                 f"Corrected alignment stored at: {result['tg_path']}"
             )
