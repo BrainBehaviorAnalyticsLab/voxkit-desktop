@@ -177,6 +177,13 @@ def build(args):
                 print(f"[INFO] Adding config folder to build assets")
                 opts.append(f'--add-data={config_dir}{sep}config')
 
+        # Add vendor folder if it exists (vendored micromamba binary, used to
+        # provision the bundled MFA environment -- see docs/BUILD.md)
+        vendor_dir = project_root / "vendor"
+        if vendor_dir.exists() and vendor_dir.is_dir():
+                print("[INFO] Adding vendor folder to build assets")
+                opts.append(f'--add-data={vendor_dir}{sep}vendor')
+
         for ad in args.add_data:
                 if sep in ad:
                         opts.append(f'--add-data={ad}')
