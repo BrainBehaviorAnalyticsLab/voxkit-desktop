@@ -35,7 +35,7 @@ from voxkit.gui.components.csv_viewer_dialog import CSVViewerDialog
 from voxkit.gui.styles import Buttons, Containers, Labels
 from voxkit.gui.workers import DatasetRegistrationWorker
 from voxkit.storage import alignments, datasets
-from voxkit.storage.alignments import HAND_ALIGNMENT_SENTINEL, AlignmentMetadata
+from voxkit.storage.alignments import HAND_ALIGNMENT_SENTINEL, AlignmentMetadata, get_alignment_type
 from voxkit.storage.datasets import DatasetMetadata
 
 # Virtual engine ids that are not registered in the engines registry but may
@@ -273,11 +273,12 @@ class DatasetsPage(QWidget):
 
         # Dataset table
         self.dataset_table = QTableWidget()
-        self.dataset_table.setColumnCount(7)
+        self.dataset_table.setColumnCount(8)
         self.dataset_table.setHorizontalHeaderLabels(
             [
                 "Name",
                 "Description",
+                "Location",
                 "Cached",
                 "De-identified",
                 "Transcribed",
@@ -291,10 +292,14 @@ class DatasetsPage(QWidget):
         if header is not None:
             header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
             header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
-            for i in range(2, 6):
+            header.setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
+            for i in range(3, 7):
                 header.setSectionResizeMode(i, QHeaderView.ResizeMode.ResizeToContents)
-            header.setSectionResizeMode(6, QHeaderView.ResizeMode.Fixed)
-        self.dataset_table.setColumnWidth(6, 100)
+            header.setSectionResizeMode(7, QHeaderView.ResizeMode.Fixed)
+        self.dataset_table.setColumnWidth(7, 100)
+        # Elide long paths (Location column) from the left so the distinguishing
+        # tail of the path stays visible instead of the shared "C:\Users\..." prefix.
+        self.dataset_table.setTextElideMode(Qt.TextElideMode.ElideLeft)
 
         self.dataset_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.dataset_table.setSelectionMode(QTableWidget.SelectionMode.SingleSelection)
@@ -374,9 +379,9 @@ class DatasetsPage(QWidget):
 
         # Alignments table
         self.alignments_table = QTableWidget()
-        self.alignments_table.setColumnCount(5)
+        self.alignments_table.setColumnCount(7)
         self.alignments_table.setHorizontalHeaderLabels(
-            ["Engine", "Model", "Date Aligned", "Status", "Actions"]
+            ["Engine", "Model", "Type", "Location", "Date Aligned", "Status", "Actions"]
         )
 
         # Configure alignments table
@@ -385,9 +390,14 @@ class DatasetsPage(QWidget):
             align_header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
             align_header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
             align_header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
-            align_header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
-            align_header.setSectionResizeMode(4, QHeaderView.ResizeMode.Fixed)
-        self.alignments_table.setColumnWidth(4, 150)
+            align_header.setSectionResizeMode(3, QHeaderView.ResizeMode.Stretch)
+            align_header.setSectionResizeMode(4, QHeaderView.ResizeMode.ResizeToContents)
+            align_header.setSectionResizeMode(5, QHeaderView.ResizeMode.ResizeToContents)
+            align_header.setSectionResizeMode(6, QHeaderView.ResizeMode.Fixed)
+        self.alignments_table.setColumnWidth(6, 150)
+        # Elide long paths (Location column) from the left so the distinguishing
+        # tail of the path stays visible instead of the shared "C:\Users\..." prefix.
+        self.alignments_table.setTextElideMode(Qt.TextElideMode.ElideLeft)
 
         # Disable selection and editing
         self.alignments_table.setSelectionMode(QTableWidget.SelectionMode.NoSelection)
@@ -501,10 +511,24 @@ class DatasetsPage(QWidget):
             model_item.setFont(font)
             self.alignments_table.setItem(row, 1, model_item)
 
+            # Type — provenance (automatic/hand/corrected), distinguishes a corrected
+            # alignment from the automatic one it was derived from, since they
+            # otherwise share the same engine/model.
+            type_item = QTableWidgetItem(get_alignment_type(alignment))
+            type_item.setFlags(type_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+            self.alignments_table.setItem(row, 2, type_item)
+
+            # Location — filesystem path to the alignment's TextGrid output
+            location = alignment.get("tg_path", "Unknown")
+            location_item = QTableWidgetItem(location)
+            location_item.setFlags(location_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+            location_item.setToolTip(location)
+            self.alignments_table.setItem(row, 3, location_item)
+
             # Date Aligned
             date_item = QTableWidgetItem(alignment["alignment_date"])
             date_item.setFlags(date_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
-            self.alignments_table.setItem(row, 2, date_item)
+            self.alignments_table.setItem(row, 4, date_item)
 
             # Status
             status_item = QTableWidgetItem(alignment.get("status", "Unknown"))
@@ -516,11 +540,11 @@ class DatasetsPage(QWidget):
                 status_item.setForeground(Qt.GlobalColor.darkYellow)
             elif status == "failed":
                 status_item.setForeground(Qt.GlobalColor.red)
-            self.alignments_table.setItem(row, 3, status_item)
+            self.alignments_table.setItem(row, 4, status_item)
 
             # Actions
             actions_widget = self._create_alignment_action_buttons(alignment)
-            self.alignments_table.setCellWidget(row, 4, actions_widget)
+            self.alignments_table.setCellWidget(row, 5, actions_widget)
 
         # Disconnect old connections and connect cell click for model column
         try:
@@ -806,29 +830,35 @@ class DatasetsPage(QWidget):
             desc_item.setToolTip(meta["description"])
             self.dataset_table.setItem(index, 1, desc_item)
 
+            # Location — original corpus filesystem path (always recorded, even when cached)
+            location = meta.get("original_path", "Unknown")
+            location_item = QTableWidgetItem(location)
+            location_item.setToolTip(location)
+            self.dataset_table.setItem(index, 2, location_item)
+
             # Cached
             self.dataset_table.setItem(
-                index, 2, QTableWidgetItem("Yes" if meta["cached"] else "No")
+                index, 3, QTableWidgetItem("Yes" if meta["cached"] else "No")
             )
 
             # Anonymized
             self.dataset_table.setItem(
-                index, 3, QTableWidgetItem("Yes" if meta["anonymize"] else "No")
+                index, 4, QTableWidgetItem("Yes" if meta["anonymize"] else "No")
             )
 
             self.dataset_table.setItem(
-                index, 4, QTableWidgetItem("Yes" if meta.get("transcribed", False) else "No")
+                index, 5, QTableWidgetItem("Yes" if meta.get("transcribed", False) else "No")
             )
 
             # Registration date
             reg_date = meta.get("registration_date", "Unknown")
             if reg_date != "Unknown":
                 reg_date = reg_date.split("T")[0]  # Show only date part
-            self.dataset_table.setItem(index, 5, QTableWidgetItem(reg_date))
+            self.dataset_table.setItem(index, 6, QTableWidgetItem(reg_date))
 
             # Actions - Details button
             actions_widget = self._create_dataset_action_buttons(meta)
-            self.dataset_table.setCellWidget(index, 6, actions_widget)
+            self.dataset_table.setCellWidget(index, 7, actions_widget)
 
     def _create_dataset_action_buttons(self, dataset_meta: DatasetMetadata):
         """Create action buttons for a dataset row.
