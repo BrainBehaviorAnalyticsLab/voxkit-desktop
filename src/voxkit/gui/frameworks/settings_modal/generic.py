@@ -278,7 +278,7 @@ class GenericDialog(QDialog):
             A container widget with the line edit and button side by side,
             or the original widget unchanged for other field types.
         """
-        if config.field_type != FieldType.DIRPATH:
+        if config.field_type != FieldType.DIRPATH or not isinstance(widget, QLineEdit):
             return widget
 
         container = QWidget()
