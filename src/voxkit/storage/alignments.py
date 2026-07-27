@@ -19,6 +19,7 @@ API
 - **create_alignment**: Create a new alignment entry in storage
 - **create_hand_alignment**: Create a new hand-annotated alignment entry in storage
 - **get_alignment_metadata**: Retrieve metadata for a specific alignment
+- **get_alignment_type**: Return an alignment's provenance (automatic/hand/corrected)
 - **update_alignment**: Update the status or details of an existing alignment
 - **list_alignments**: List all alignments for a given dataset
 - **delete_alignment**: Remove an alignment from storage
@@ -36,7 +37,7 @@ import json
 import os
 import shutil
 from pathlib import Path
-from typing import List, Literal, Tuple, TypedDict
+from typing import List, Literal, NotRequired, Tuple, TypedDict
 
 from .constants import ALIGNMENTS_ROOT, SUPERSET_AUDIO_EXTENSIONS
 from .datasets import _get_dataset_root, get_dataset_metadata
@@ -56,6 +57,10 @@ Values:
 """
 
 
+AlignmentType = Literal["automatic", "hand", "corrected"]
+"""Provenance of an alignment: model-generated, hand-annotated, or user-corrected."""
+
+
 class AlignmentMetadata(TypedDict):
     """Alignment metadata structure.
 
@@ -67,6 +72,9 @@ class AlignmentMetadata(TypedDict):
         alignment_date: Human-readable alignment creation timestamp.
         status: Current status of the alignment operation.
         tg_path: Path to the directory containing TextGrid output files.
+        alignment_type: Provenance of the alignment. Absent on alignments created
+            before this field existed -- use `get_alignment_type()` rather than
+            reading this key directly.
     """
 
     id: str
@@ -76,6 +84,21 @@ class AlignmentMetadata(TypedDict):
     alignment_date: str
     status: AlignmentStatus
     tg_path: str
+    alignment_type: NotRequired[AlignmentType]
+
+
+def get_alignment_type(meta: AlignmentMetadata) -> str:
+    """Return the alignment's type, inferring it for alignments predating this field.
+
+    Alignments written before `alignment_type` existed don't have the key in their
+    on-disk JSON at all -- infer "hand" from the legacy `engine_id` sentinel and
+    otherwise default to "automatic".
+    """
+    if "alignment_type" in meta:
+        return meta["alignment_type"]
+    if meta.get("engine_id") == HAND_ALIGNMENT_SENTINEL:
+        return "hand"
+    return "automatic"
 
 
 def _get_alignments_root(dataset_id: str) -> Path | None:

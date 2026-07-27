@@ -107,7 +107,7 @@ class TestAlignments:
             assert isinstance(result, dict)
 
             # Verify all required keys are present
-            required_keys = set(AlignmentMetadata.__annotations__.keys())
+            required_keys = set(AlignmentMetadata.__required_keys__)
             assert required_keys.issubset(set(result.keys()))
 
             # Verify field values
@@ -192,7 +192,7 @@ class TestAlignments:
         assert isinstance(result, dict)
 
         # Verify all required keys are present
-        required_keys = set(AlignmentMetadata.__annotations__.keys())
+        required_keys = set(AlignmentMetadata.__required_keys__)
         assert required_keys.issubset(set(result.keys()))
 
         # Verify field values
@@ -591,3 +591,26 @@ class TestAlignments:
 
             assert fetched_metadata is not None
             assert fetched_metadata["status"] == "failed"  # Should be lowercase
+
+
+class TestGetAlignmentType:
+    """get_alignment_type() must read the recorded field, and infer for legacy data
+    that predates the alignment_type field entirely."""
+
+    def test_returns_recorded_type(self):
+        from voxkit.storage.alignments import get_alignment_type
+
+        meta = {"engine_id": "MFAENGINE", "alignment_type": "corrected"}
+        assert get_alignment_type(meta) == "corrected"
+
+    def test_infers_hand_from_legacy_sentinel(self):
+        from voxkit.storage.alignments import HAND_ALIGNMENT_SENTINEL, get_alignment_type
+
+        meta = {"engine_id": HAND_ALIGNMENT_SENTINEL}
+        assert get_alignment_type(meta) == "hand"
+
+    def test_defaults_to_automatic_for_legacy_data(self):
+        from voxkit.storage.alignments import get_alignment_type
+
+        meta = {"engine_id": "MFAENGINE"}
+        assert get_alignment_type(meta) == "automatic"
