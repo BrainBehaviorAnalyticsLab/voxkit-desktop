@@ -1046,9 +1046,7 @@ class ComparisonStacker(BaseStacker):
 
     # ── File Inspector: zoom / scroll / selection ────────────────────────────
 
-    def _on_zoom_requested(
-        self, anchor_time: float, anchor_fraction: float, factor: float
-    ) -> None:
+    def _on_zoom_requested(self, anchor_time: float, anchor_fraction: float, factor: float) -> None:
         """Zoom the shared view in/out, keeping ``anchor_time`` under the cursor."""
         duration = self._timeline_a._duration
         if duration <= 0:

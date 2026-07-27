@@ -286,9 +286,7 @@ class TimeAxisMixin(_TimeAxisBase):
         ts = 5
         painter.setBrush(QColor("#e74c3c"))
         painter.setPen(Qt.PenStyle.NoPen)
-        painter.drawPolygon(
-            QPolygon([QPoint(px - ts, 0), QPoint(px + ts, 0), QPoint(px, ts * 2)])
-        )
+        painter.drawPolygon(QPolygon([QPoint(px - ts, 0), QPoint(px + ts, 0), QPoint(px, ts * 2)]))
 
     def _draw_selection(self, painter: QPainter, height: int) -> None:
         """Draw the shared translucent time-range selection, if any."""
@@ -714,9 +712,9 @@ class WaveformPanel(TimeAxisMixin, QWidget):
             # Normalize display to this file's own peak amplitude (Audacity/
             # Praat-style) — many recordings peak well under +/-1.0, and
             # without this a quiet file renders as a flat line.
-            self._pending_peak_abs = max(
-                (max(abs(mn), abs(mx)) for mn, mx in peaks), default=1.0
-            ) or 1.0
+            self._pending_peak_abs = (
+                max((max(abs(mn), abs(mx)) for mn, mx in peaks), default=1.0) or 1.0
+            )
             self._pending_samples = samples
             self._pending_sr = int(sr)  # librosa types sr as float; sample rates are always whole
             self._pending_token = token
@@ -1108,9 +1106,7 @@ class SpectrogramPanel(TimeAxisMixin, QWidget):
 
         if self._loading:
             painter.setPen(QColor("#7f8c8d"))
-            painter.drawText(
-                0, 0, w, h, Qt.AlignmentFlag.AlignCenter, "Computing spectrogram..."
-            )
+            painter.drawText(0, 0, w, h, Qt.AlignmentFlag.AlignCenter, "Computing spectrogram...")
         elif self._pixmap:
             painter.drawPixmap(QRectF(self.rect()), self._pixmap, self._live_source_rect())
 

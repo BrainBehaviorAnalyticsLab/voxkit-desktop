@@ -200,9 +200,7 @@ class EditableTextGridTimeline(TextGridTimeline):
             boundary_time = self._hit_test_boundary(event.position().x())
             if boundary_time is not None:
                 affected = self._boundaries_at_time(boundary_time)
-                clamp_lo = max(
-                    self._tiers[t_idx]["intervals"][i]["start"] for t_idx, i in affected
-                )
+                clamp_lo = max(self._tiers[t_idx]["intervals"][i]["start"] for t_idx, i in affected)
                 clamp_hi = min(
                     self._tiers[t_idx]["intervals"][i + 1]["end"] for t_idx, i in affected
                 )
