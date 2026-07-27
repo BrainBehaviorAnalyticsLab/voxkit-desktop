@@ -86,18 +86,43 @@ This is a developer maintenance task, not part of VoxKit's own release
 process -- it does not require conda or conda-lock, just the vendored
 micromamba binary.
 
+**Always pin kaldi to a CPU build (`kaldi=*=cpu*`).** conda-forge ships both
+CPU and CUDA variants of kaldi at the same version, and the solver picks
+between them based on the `__cuda` virtual package -- i.e. on whether the
+machine generating the lockfile happens to have an NVIDIA driver. Without
+the pin, a lockfile solved on a GPU machine bakes in `kaldi-*-cuda*`, whose
+`kaldi-cudamatrix.dll` links against `nvcuda.dll`. That DLL ships with the
+NVIDIA display driver, never in a conda package, so the environment fails
+to import for every user without an NVIDIA GPU:
+
+```
+ImportError: DLL load failed while importing _kalpy: The specified module could not be found.
+```
+
+The CUDA variant buys VoxKit nothing regardless: kaldi's CUDA components
+accelerate nnet3 online decoding, while `mfa align`/`mfa adapt` are
+GMM-based and CPU-only. Pinning CPU also drops ~12 CUDA packages
+(`libcublas`, `libcusolver`, `libmagma`, ...) from the installer.
+
 ```powershell
-# From the repo root, using the already-vendored micromamba binary:
-.\vendor\micromamba\micromamba.exe create -p .\_tmp-aligner -c conda-forge montreal-forced-aligner -y
+# From the repo root, using the already-vendored micromamba binary.
+# Note the kaldi CPU pin -- see above, do not drop it:
+.\vendor\micromamba\micromamba.exe create -p .\_tmp-aligner -c conda-forge montreal-forced-aligner "kaldi=*=cpu*" -y
 
 # Export the explicit, pinned lockfile:
 .\vendor\micromamba\micromamba.exe env export -p .\_tmp-aligner --explicit --md5 `
     | Out-File -Encoding ascii config\mfa-env\aligner-win-64.lock
 
+# Confirm no CUDA packages leaked into the lockfile (must print nothing):
+Select-String -Path config\mfa-env\aligner-win-64.lock -Pattern 'cuda|cublas|cusolver|cusparse|curand|cufft|nvrtc|magma'
+
 # Validate the round-trip before committing -- create a fresh env from just
 # the lockfile (no solve, pure download) and confirm `mfa` actually works:
 .\vendor\micromamba\micromamba.exe create -p .\_tmp-aligner-verify --file config\mfa-env\aligner-win-64.lock -y
 $env:MFA_ROOT_DIR = "C:\_tmp-mfa-root"
+# Import _kalpy explicitly: a CUDA-variant kaldi still passes `mfa version`
+# on a GPU machine but fails at import time on every machine without one.
+.\vendor\micromamba\micromamba.exe run -p .\_tmp-aligner-verify python -c "import _kalpy"
 .\vendor\micromamba\micromamba.exe run -p .\_tmp-aligner-verify python .\_tmp-aligner-verify\Scripts\mfa-script.py version
 
 # Clean up the local scratch environments (do not commit them):
