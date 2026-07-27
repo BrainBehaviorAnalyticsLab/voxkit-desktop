@@ -793,6 +793,7 @@ class ComparisonStacker(BaseStacker):
 
         data = self._pending_comparison_data
         self._pending_comparison_data = None
+        assert data is not None  # set by _compute() whenever success is True, same as meta
         bar_chart_cls, overlap_chart_cls, overlap_rate_cls, pair_scatter_cls = meta[
             "widget_classes"
         ]
@@ -980,6 +981,10 @@ class ComparisonStacker(BaseStacker):
     def _load_inspector(
         self, audio_path: Path, tg_path_a: Path | None, tg_path_b: Path | None
     ) -> None:
+        # Only called from _on_file_selected(), right after it's confirmed both
+        # are set.
+        assert self._a_alignment_meta is not None
+        assert self._b_alignment_meta is not None
         self._current_audio_path = audio_path
         self._audio_path_label.setText(str(audio_path))
 

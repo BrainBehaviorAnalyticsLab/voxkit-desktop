@@ -63,6 +63,7 @@ from voxkit.storage import alignments, datasets
 from voxkit.storage.constants import SUPERSET_AUDIO_EXTENSIONS
 
 if TYPE_CHECKING:
+    import numpy as np
     from PyQt6.QtMultimedia import QAudioOutput, QMediaPlayer
 
 try:
@@ -162,8 +163,16 @@ def find_lab(data_root: Path, speaker: str, stem: str) -> Path | None:
 # TimeAxisMixin
 # ---------------------------------------------------------------------------
 
+if TYPE_CHECKING:
+    # Concrete subclasses always also derive from QWidget (see class docstring)
+    # -- this makes mypy aware of update()/width() etc. on `self` without
+    # actually making the mixin a QWidget at runtime.
+    _TimeAxisBase = QWidget
+else:
+    _TimeAxisBase = object
 
-class TimeAxisMixin:
+
+class TimeAxisMixin(_TimeAxisBase):
     """Shared time <-> pixel mapping for timeline-synced panels.
 
     Multiple panels (TextGrid tiers, waveform, spectrogram) must map a given
@@ -187,6 +196,14 @@ class TimeAxisMixin:
 
     LEFT_MARGIN = 92  # space reserved for row/tier name labels
     RIGHT_MARGIN = 8
+
+    if TYPE_CHECKING:
+        # Declared here only for mypy -- concrete subclasses (see docstring
+        # above) actually define these as real pyqtSignals, since a Qt signal
+        # must live on a QObject-deriving class, which this mixin alone is not.
+        seek_requested: pyqtSignal
+        pan_requested: pyqtSignal
+        selection_changed: pyqtSignal
 
     _duration: float = 0.0
     _view_start: float = 0.0
@@ -649,7 +666,7 @@ class WaveformPanel(TimeAxisMixin, QWidget):
         self._current_time: float = 0.0
         self._peaks: list[tuple[float, float]] | None = None
         self._peak_abs: float = 1.0
-        self._samples = None  # raw mono samples for the loaded file, once ready
+        self._samples: np.ndarray | None = None  # raw mono samples, once loaded
         self._sr: int | None = None
         self._loading = False
         self._load_token = 0
@@ -701,7 +718,7 @@ class WaveformPanel(TimeAxisMixin, QWidget):
                 (max(abs(mn), abs(mx)) for mn, mx in peaks), default=1.0
             ) or 1.0
             self._pending_samples = samples
-            self._pending_sr = sr
+            self._pending_sr = int(sr)  # librosa types sr as float; sample rates are always whole
             self._pending_token = token
             return "Waveform loaded"
 
@@ -833,9 +850,9 @@ class SpectrogramPanel(TimeAxisMixin, QWidget):
         self._duration: float = 0.0
         self._current_time: float = 0.0
         self._loaded_path: Path | None = None
-        self._freqs = None
-        self._times = None
-        self._Sxx_db = None
+        self._freqs: np.ndarray | None = None
+        self._times: np.ndarray | None = None
+        self._Sxx_db: np.ndarray | None = None
         self._pixmap: QPixmap | None = None
         # The view window + axes placement self._pixmap was actually
         # rendered for -- used to stretch/crop it live during zoom/pan, so
@@ -1004,7 +1021,10 @@ class SpectrogramPanel(TimeAxisMixin, QWidget):
         (drawn using the fixed-pixel LEFT_MARGIN convention) to land on the
         correct column regardless of window width.
         """
-        if self._Sxx_db is None:
+        # _Sxx_db, _times, and _freqs are always set together by
+        # _on_spectrogram_ready -- guard all three since a missing one means
+        # none of them are ready yet.
+        if self._Sxx_db is None or self._times is None or self._freqs is None:
             return
 
         import numpy as np
@@ -1117,6 +1137,7 @@ class SpectrogramPanel(TimeAxisMixin, QWidget):
         view == the pixmap's own rendered view) this exactly reproduces the
         original full-pixmap blit.
         """
+        assert self._pixmap is not None  # only called from paintEvent's `elif self._pixmap:` branch
         pw, ph = self._pixmap.width(), self._pixmap.height()
         pixmap_span = max(1e-9, self._pixmap_view_end - self._pixmap_view_start)
         axes_frac = max(1e-9, self._pixmap_right_frac - self._pixmap_left_frac)

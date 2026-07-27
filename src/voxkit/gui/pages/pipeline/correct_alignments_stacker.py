@@ -170,7 +170,7 @@ class EditableTextGridTimeline(TextGridTimeline):
 
     def _hit_test_boundary(self, x: float) -> float | None:
         best_time = None
-        best_dist = self.BOUNDARY_HIT_PX + 1
+        best_dist: float = self.BOUNDARY_HIT_PX + 1
         for _, _, t in self._iter_interior_boundaries():
             dist = abs(self._time_to_x(t) - x)
             if dist < best_dist:
@@ -1135,6 +1135,7 @@ class CorrectAlignmentsStacker(BaseStacker):
         self._write_current_correction_file()
 
     def _on_corrected_alignment_created(self, _success: bool, _message: str) -> None:
+        assert self._pending_create_result is not None  # set by _create() just before this fires
         success, result = self._pending_create_result
         self._pending_create_result = None
         if not success:
@@ -1156,6 +1157,12 @@ class CorrectAlignmentsStacker(BaseStacker):
         self._write_current_correction_file()
 
     def _write_current_correction_file(self) -> None:
+        # Guaranteed by both callers: _save_corrections()'s own guard, and
+        # _on_corrected_alignment_created() setting _corrected_alignment_meta
+        # immediately before calling this.
+        assert self._corrected_alignment_meta is not None
+        assert self._current_speaker is not None
+        assert self._current_stem is not None
         corrected_tg_root = Path(self._corrected_alignment_meta["tg_path"])
         target_path = find_textgrid(corrected_tg_root, self._current_speaker, self._current_stem)
         if target_path is None:
