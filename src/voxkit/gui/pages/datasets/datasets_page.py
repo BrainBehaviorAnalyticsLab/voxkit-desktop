@@ -650,16 +650,16 @@ class DatasetsPage(QWidget):
         # Create settings config
         config = SettingsConfig(
             title="Register New Dataset",
-            dimensions=(500, 400),
+            dimensions=(500, 460),
             apply_blur=False,  # Disable blur to avoid parent issues
             store_file="dataset_registration_settings.json",
             fields=[
                 FieldConfig(
                     name="dataset_path",
                     label="Dataset Path",
-                    field_type=FieldType.LINEEDIT,
+                    field_type=FieldType.DIRPATH,
                     default_value="",
-                    placeholder="Browse for dataset directory...",
+                    placeholder="e.g., /home/corpora/timit_train",
                     tooltip="Root directory containing speaker subdirectories",
                 ),
                 FieldConfig(
@@ -710,9 +710,9 @@ class DatasetsPage(QWidget):
                 FieldConfig(
                     name="hand_alignments_path",
                     label="Hand Alignments Path",
-                    field_type=FieldType.LINEEDIT,
+                    field_type=FieldType.DIRPATH,
                     default_value="",
-                    placeholder="Optional: path to pre-existing TextGrids...",
+                    placeholder="Optional: directory of pre-existing TextGrids",
                     tooltip="Optional directory containing hand-annotated TextGrid files",
                 ),
             ],
@@ -782,13 +782,6 @@ class DatasetsPage(QWidget):
         self.registration_worker.progress.connect(self.show_progress)
         self.registration_worker.finished.connect(self.registration_complete)
         self.registration_worker.start()
-
-    def browse_dataset_path(self):
-        """Open directory picker for dataset path"""
-        directory = QFileDialog.getExistingDirectory(self, "Select Dataset Root Directory")
-        if directory:
-            return directory
-        return None
 
     def show_progress(self, message):
         """Show progress message"""
