@@ -41,7 +41,7 @@ def _bundle_root() -> Path:
     running as a built app, or the repo root in dev.
     """
     if getattr(sys, "frozen", False) and getattr(sys, "_MEIPASS", None):
-        return Path(sys._MEIPASS)
+        return Path(sys._MEIPASS)  # type: ignore[attr-defined]
     # src/voxkit/services/mfa_provision.py -> repo root is 4 parents up.
     return Path(__file__).resolve().parents[3]
 
