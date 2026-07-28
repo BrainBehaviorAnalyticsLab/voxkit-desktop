@@ -48,6 +48,7 @@ jobs:
         uses: astral-sh/setup-uv@v3
         with:
           enable-cache: true
+          cache-suffix: v2
 
       - name: Configure Git for private repos
         run: |

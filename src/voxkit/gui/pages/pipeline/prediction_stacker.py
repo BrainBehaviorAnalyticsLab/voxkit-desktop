@@ -18,6 +18,7 @@ from voxkit.gui.components import ModelSelectionPanel, MultiColumnComboBox
 from voxkit.gui.frameworks.settings_modal import GenericDialog
 from voxkit.gui.styles import Buttons, Containers, Labels
 from voxkit.gui.workers.worker_thread import WorkerThread
+from voxkit.services import mfa_provision
 from voxkit.storage import datasets
 
 from .base_stacker import BaseStacker
@@ -139,6 +140,14 @@ class PredictionStacker(BaseStacker):
         self.predict_btn.clicked.connect(self.on_predict_alignments)
         self.content_layout.addWidget(self.predict_btn)
 
+        # MFA sets itself up automatically on first launch; this is a manual
+        # escape hatch for retrying if that ever fails, without reinstalling
+        # the app. A no-op for any other engine.
+        self.repair_mfa_btn = QPushButton("Repair/Reinstall MFA Environment")
+        self.repair_mfa_btn.setStyleSheet(Buttons.SECONDARY)
+        self.repair_mfa_btn.clicked.connect(self.on_repair_mfa_environment)
+        self.content_layout.addWidget(self.repair_mfa_btn)
+
     def on_predict_alignments(self):
         """Handle Predict Alignments button click."""
         selected_dataset_id = self.predict_dataset_dropdown.current_id()
@@ -187,3 +196,41 @@ class PredictionStacker(BaseStacker):
         else:
             self.set_status("✗ Error occurred", "error")
             QMessageBox.critical(self, "Error", f"An error occurred:\n{message}")
+
+    def on_repair_mfa_environment(self):
+        """Handle the "Repair/Reinstall MFA Environment" button click."""
+        if self.model_panel.get_selected_engine() != "MFAENGINE":
+            QMessageBox.information(
+                self,
+                "Not Applicable",
+                "This only applies to the MFA engine -- select MFA above first.",
+            )
+            return
+
+        if mfa_provision.lockfile_path() is None:
+            QMessageBox.warning(
+                self,
+                "Not Available",
+                "No bundled MFA environment is available for this platform yet. "
+                "Configure 'Conda Path' in MFA settings to use your own conda + "
+                "aligner environment instead.",
+            )
+            return
+
+        self.repair_mfa_btn.setEnabled(False)
+        self.set_status("Setting up MFA environment (one-time, ~1-2GB)...", "working")
+
+        self.mfa_repair_worker = WorkerThread(mfa_provision.provision_aligner_env)
+        self.mfa_repair_worker.finished.connect(self.on_repair_mfa_finished)
+        self.mfa_repair_worker.start()
+
+    def on_repair_mfa_finished(self, success, message):
+        """Handle completion of the MFA environment repair operation."""
+        self.repair_mfa_btn.setEnabled(True)
+
+        if success:
+            self.set_status("✓ MFA environment ready", "success")
+            QMessageBox.information(self, "Success", "MFA environment is set up and ready.")
+        else:
+            self.set_status("✗ MFA environment setup failed", "error")
+            QMessageBox.critical(self, "Error", f"Failed to set up MFA environment:\n{message}")
