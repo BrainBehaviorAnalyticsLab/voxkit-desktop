@@ -1,6 +1,7 @@
 import time
 from typing import Callable, Literal
 
+from voxkit.services import mfa_provision
 from voxkit.services.mfa import download_acoustic_model
 from voxkit.storage import models
 from voxkit.storage.constants import MODELS_ROOT
@@ -77,7 +78,7 @@ def startup_routine():
     # Create folder for W2TG model
     w2tg_path = storage_root / "W2TGENGINE" / MODELS_ROOT
     w2tg_path.mkdir(parents=True, exist_ok=True)
-    success, metadata = models.create_model("W2TGENGINE", "prads_model")
+    success, metadata = models.create_model("W2TGENGINE", "default")
     if not success:
         print(f"[STARTUP] Failed to create model metadata. {metadata}")
         return
@@ -102,6 +103,20 @@ def startup_routine():
 
     except Exception as e:
         print(f"[STARTUP] Failed to download NLTK resources. Error: {e}")
+
+    # Provision VoxKit's own managed MFA ("aligner") environment, so most
+    # users never need conda installed or run a conda command themselves.
+    # Non-fatal like the other steps above -- a failure here shouldn't block
+    # W2TG (which doesn't need MFA) or the rest of first-run setup. Retriable
+    # afterward via the "Repair/Reinstall MFA Environment" action in the MFA
+    # engine's settings, so it's not tied to the whole first-launch flag.
+    if mfa_provision.lockfile_path() is not None and not mfa_provision.is_aligner_env_ready():
+        print("[STARTUP] Setting up the MFA alignment environment (one-time, ~1-2GB)...")
+        try:
+            mfa_provision.provision_aligner_env()
+            print("[STARTUP] MFA alignment environment ready.")
+        except Exception as e:
+            print(f"[STARTUP] Failed to set up the MFA alignment environment. Error: {e}")
 
     print("[STARTUP] Initialization complete!")
 

@@ -21,6 +21,7 @@ API
 - **create_corrected_alignment**: Create a new, fully-owned alignment for correcting
   another alignment's boundaries, without ever mutating the source
 - **get_alignment_metadata**: Retrieve metadata for a specific alignment
+- **get_alignment_type**: Return an alignment's provenance (automatic/hand/corrected)
 - **update_alignment**: Update the status or details of an existing alignment
 - **list_alignments**: List all alignments for a given dataset
 - **delete_alignment**: Remove an alignment from storage
@@ -65,6 +66,10 @@ AlignmentType = Literal["automatic", "hand", "corrected"]
 GUI alignment dropdowns, kept separate from ``engine_id`` so a corrected
 alignment can still show which real engine (mfa, w2tg, ...) it traces back
 to, rather than losing that in favor of a "corrected" placeholder."""
+
+
+AlignmentType = Literal["automatic", "hand", "corrected"]
+"""Provenance of an alignment: model-generated, hand-annotated, or user-corrected."""
 
 
 class AlignmentMetadata(TypedDict):
