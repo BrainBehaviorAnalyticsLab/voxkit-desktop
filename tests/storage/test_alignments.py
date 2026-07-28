@@ -207,6 +207,240 @@ class TestAlignments:
         alignment_root = tg_path.parent.parent
         assert alignment_root in tg_path.parents
 
+    class TestCreateCorrectedAlignment:
+        def test_create_corrected_alignment_cached_source(
+            self, monkeypatch, sample_dataset, sample_model
+        ):
+            from voxkit.storage import models
+            from voxkit.storage.alignments import (
+                AlignmentMetadata,
+                create_alignment,
+                create_corrected_alignment,
+            )
+
+            monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
+
+            dataset_id = sample_dataset["id"]
+            engine_id = sample_model["engine_id"]
+            model_id = sample_model["id"]
+
+            success, source_metadata = create_alignment(
+                dataset_id=dataset_id, engine_id=engine_id, model_id=model_id
+            )
+            assert success is True
+
+            # Put a fake TextGrid in the source alignment's tg_path so the
+            # baseline copy has something real to carry over.
+            source_tg_path = Path(source_metadata["tg_path"])
+            (source_tg_path / "participant_1").mkdir(parents=True, exist_ok=True)
+            source_file = source_tg_path / "participant_1" / "sample_0.TextGrid"
+            source_file.write_text("fake textgrid contents")
+
+            corrected_success, corrected_metadata = create_corrected_alignment(
+                dataset_id=dataset_id, source_alignment_id=source_metadata["id"]
+            )
+
+            assert corrected_success is True
+            assert isinstance(corrected_metadata, dict)
+
+            required_keys = set(AlignmentMetadata.__required_keys__)
+            assert required_keys.issubset(set(corrected_metadata.keys()))
+
+            assert corrected_metadata["local"] is True
+            assert corrected_metadata["source_alignment_id"] == source_metadata["id"]
+            assert corrected_metadata["id"] != source_metadata["id"]
+            assert corrected_metadata["alignment_type"] == "corrected"
+            # Real engine/model identity is preserved from the source (not
+            # replaced with a "corrected" placeholder), so dropdowns keep
+            # showing which engine actually produced the TextGrids.
+            assert corrected_metadata["engine_id"] == source_metadata["engine_id"]
+            assert (
+                corrected_metadata["model_metadata"]["name"]
+                == source_metadata["model_metadata"]["name"]
+            )
+
+            # tg_path must live inside THIS alignment's own directory, never
+            # the source alignment's or the original dataset's directory.
+            corrected_tg_path = Path(corrected_metadata["tg_path"])
+            corrected_alignment_root = corrected_tg_path.parent
+            assert corrected_alignment_root.name == corrected_metadata["id"]
+            assert source_tg_path not in corrected_tg_path.parents
+            assert corrected_tg_path != source_tg_path
+
+            # Baseline copy landed and is byte-identical to the source.
+            copied_file = corrected_tg_path / "participant_1" / "sample_0.TextGrid"
+            assert copied_file.exists()
+            assert copied_file.read_text() == source_file.read_text()
+
+            # Source alignment's own TextGrids must be untouched.
+            assert source_file.read_text() == "fake textgrid contents"
+
+        def test_create_corrected_alignment_non_cached_source(self, monkeypatch, sample_model):
+            from voxkit.storage import datasets, models
+            from voxkit.storage.alignments import create_alignment, create_corrected_alignment
+            from voxkit.storage.datasets import create_dataset
+
+            monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
+            monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
+
+            dataset_path = mock_get_storage_root() / "fake_datasets" / "valid"
+            success, dataset_metadata = create_dataset(
+                name="test_dataset_non_cached_corrected",
+                description="A non-cached dataset for corrected-alignment tests",
+                original_path=str(dataset_path),
+                cached=False,
+                anonymize=False,
+                transcribed=True,
+            )
+            assert success is True
+
+            dataset_id = dataset_metadata["id"]
+            engine_id = sample_model["engine_id"]
+            model_id = sample_model["id"]
+
+            success, source_metadata = create_alignment(
+                dataset_id=dataset_id, engine_id=engine_id, model_id=model_id
+            )
+            assert success is True
+            # Non-cached source alignments point tg_path at the *original*
+            # dataset directory -- exactly the trap this function must avoid
+            # inheriting.
+            source_tg_path = Path(source_metadata["tg_path"])
+            source_tg_path.mkdir(parents=True, exist_ok=True)
+
+            corrected_success, corrected_metadata = create_corrected_alignment(
+                dataset_id=dataset_id, source_alignment_id=source_metadata["id"]
+            )
+
+            assert corrected_success is True
+            assert corrected_metadata["local"] is True
+
+            corrected_tg_path = Path(corrected_metadata["tg_path"])
+            assert corrected_tg_path != source_tg_path
+            assert dataset_path not in corrected_tg_path.parents
+            assert corrected_metadata["id"] in str(corrected_tg_path)
+
+        def test_create_corrected_alignment_invalid_source(self, monkeypatch, sample_dataset):
+            from voxkit.storage import datasets
+            from voxkit.storage.alignments import create_corrected_alignment
+
+            monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
+
+            dataset_id = sample_dataset["id"]
+
+            success, result = create_corrected_alignment(
+                dataset_id=dataset_id, source_alignment_id="NON_EXISTENT_ALIGNMENT"
+            )
+
+            assert success is False
+            assert isinstance(result, str)
+            assert "not found" in result
+
+        def test_create_corrected_alignment_invalid_dataset(self, monkeypatch):
+            from voxkit.storage import datasets
+            from voxkit.storage.alignments import create_corrected_alignment
+
+            monkeypatch.setattr(datasets, "get_storage_root", mock_get_storage_root)
+
+            success, result = create_corrected_alignment(
+                dataset_id="NON_EXISTENT_DATASET", source_alignment_id="ANY_ALIGNMENT_ID"
+            )
+
+            assert success is False
+            assert isinstance(result, str)
+            assert "Dataset" in result
+
+        def test_create_corrected_alignment_defaults_engine_and_type(
+            self, monkeypatch, sample_dataset, sample_model
+        ):
+            from voxkit.storage import models
+            from voxkit.storage.alignments import create_alignment, create_corrected_alignment
+
+            monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
+
+            dataset_id = sample_dataset["id"]
+            success, source_metadata = create_alignment(
+                dataset_id=dataset_id,
+                engine_id=sample_model["engine_id"],
+                model_id=sample_model["id"],
+            )
+            assert success is True
+
+            success, corrected_metadata = create_corrected_alignment(
+                dataset_id=dataset_id, source_alignment_id=source_metadata["id"]
+            )
+
+            assert success is True
+            # With no overrides, engine_id falls back to the source's, and
+            # alignment_type defaults to "corrected".
+            assert corrected_metadata["engine_id"] == source_metadata["engine_id"]
+            assert corrected_metadata["alignment_type"] == "corrected"
+            assert (
+                corrected_metadata["model_metadata"]["name"]
+                == source_metadata["model_metadata"]["name"]
+            )
+
+        def test_create_corrected_alignment_custom_engine_and_type(
+            self, monkeypatch, sample_dataset, sample_model
+        ):
+            from voxkit.storage import models
+            from voxkit.storage.alignments import create_alignment, create_corrected_alignment
+
+            monkeypatch.setattr(models, "get_storage_root", mock_get_storage_root)
+
+            dataset_id = sample_dataset["id"]
+            success, source_metadata = create_alignment(
+                dataset_id=dataset_id,
+                engine_id=sample_model["engine_id"],
+                model_id=sample_model["id"],
+            )
+            assert success is True
+
+            success, corrected_metadata = create_corrected_alignment(
+                dataset_id=dataset_id,
+                source_alignment_id=source_metadata["id"],
+                engine_id="MFA (Nina)",
+                alignment_type="corrected-v2",
+            )
+
+            assert success is True
+            assert corrected_metadata["engine_id"] == "MFA (Nina)"
+            assert corrected_metadata["alignment_type"] == "corrected-v2"
+            # Overriding engine/type doesn't touch the preserved model name.
+            assert (
+                corrected_metadata["model_metadata"]["name"]
+                == source_metadata["model_metadata"]["name"]
+            )
+
+    class TestGetAlignmentType:
+        def test_returns_stored_alignment_type(self):
+            from voxkit.storage.alignments import get_alignment_type
+
+            for t in ("automatic", "hand", "corrected"):
+                meta = {"engine_id": "mfa", "alignment_type": t}
+                assert get_alignment_type(meta) == t
+
+        def test_infers_hand_from_engine_id_when_field_missing(self):
+            from voxkit.storage.alignments import HAND_ALIGNMENT_SENTINEL, get_alignment_type
+
+            meta = {"engine_id": HAND_ALIGNMENT_SENTINEL}
+            assert get_alignment_type(meta) == "hand"
+
+        def test_infers_corrected_from_engine_id_when_field_missing(self):
+            from voxkit.storage.alignments import (
+                CORRECTED_ALIGNMENT_SENTINEL,
+                get_alignment_type,
+            )
+
+            meta = {"engine_id": CORRECTED_ALIGNMENT_SENTINEL}
+            assert get_alignment_type(meta) == "corrected"
+
+        def test_defaults_to_automatic_when_field_missing(self):
+            from voxkit.storage.alignments import get_alignment_type
+
+            meta = {"engine_id": "mfa"}
+            assert get_alignment_type(meta) == "automatic"
+
     class TestGetAlignmentMetadata:
         def test_get_alignment_metadata_success(self, monkeypatch, sample_dataset, sample_model):
             from voxkit.storage import models

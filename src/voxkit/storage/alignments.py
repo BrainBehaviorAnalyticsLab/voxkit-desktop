@@ -18,6 +18,8 @@ API
 ---
 - **create_alignment**: Create a new alignment entry in storage
 - **create_hand_alignment**: Create a new hand-annotated alignment entry in storage
+- **create_corrected_alignment**: Create a new, fully-owned alignment for correcting
+  another alignment's boundaries, without ever mutating the source
 - **get_alignment_metadata**: Retrieve metadata for a specific alignment
 - **get_alignment_type**: Return an alignment's provenance (automatic/hand/corrected)
 - **update_alignment**: Update the status or details of an existing alignment
@@ -37,7 +39,7 @@ import json
 import os
 import shutil
 from pathlib import Path
-from typing import List, Literal, NotRequired, Tuple, TypedDict
+from typing import List, Literal, NotRequired, Tuple, TypeAlias, TypedDict
 
 from .constants import ALIGNMENTS_ROOT, SUPERSET_AUDIO_EXTENSIONS
 from .datasets import _get_dataset_root, get_dataset_metadata
@@ -47,7 +49,10 @@ from .utils import generate_unique_id, readable_from_unique_id
 HAND_ALIGNMENT_SENTINEL = "hand"
 """Sentinel value used for engine_id/model id on manually-created (hand) alignments."""
 
-AlignmentStatus = Literal["pending", "completed", "failed"]
+CORRECTED_ALIGNMENT_SENTINEL = "corrected"
+"""Sentinel value used for engine_id/model id on boundary-corrected alignments."""
+
+AlignmentStatus: TypeAlias = Literal["pending", "completed", "failed"]
 """Status of an alignment operation.
 
 Values:
@@ -56,9 +61,11 @@ Values:
     failed: Alignment processing failed.
 """
 
-
-AlignmentType = Literal["automatic", "hand", "corrected"]
-"""Provenance of an alignment: model-generated, hand-annotated, or user-corrected."""
+AlignmentType: TypeAlias = Literal["automatic", "hand", "corrected"]
+"""How an alignment's TextGrids were produced -- shown as its own column in
+GUI alignment dropdowns, kept separate from ``engine_id`` so a corrected
+alignment can still show which real engine (mfa, w2tg, ...) it traces back
+to, rather than losing that in favor of a "corrected" placeholder."""
 
 
 class AlignmentMetadata(TypedDict):
@@ -72,9 +79,12 @@ class AlignmentMetadata(TypedDict):
         alignment_date: Human-readable alignment creation timestamp.
         status: Current status of the alignment operation.
         tg_path: Path to the directory containing TextGrid output files.
-        alignment_type: Provenance of the alignment. Absent on alignments created
-            before this field existed -- use `get_alignment_type()` rather than
-            reading this key directly.
+        source_alignment_id: For corrected alignments, the id of the alignment
+            they were corrected from. Absent on all other alignment types.
+        alignment_type: How the alignment was produced ("automatic"/"hand"/
+            "corrected"). Absent on alignments created before this field
+            existed -- use ``get_alignment_type()`` rather than reading this
+            key directly, since that also handles the fallback.
     """
 
     id: str
@@ -84,20 +94,24 @@ class AlignmentMetadata(TypedDict):
     alignment_date: str
     status: AlignmentStatus
     tg_path: str
+    source_alignment_id: NotRequired[str]
     alignment_type: NotRequired[AlignmentType]
 
 
-def get_alignment_type(meta: AlignmentMetadata) -> str:
-    """Return the alignment's type, inferring it for alignments predating this field.
+def get_alignment_type(meta: AlignmentMetadata) -> AlignmentType:
+    """Return an alignment's type, inferring it for alignments that predate this field.
 
-    Alignments written before `alignment_type` existed don't have the key in their
-    on-disk JSON at all -- infer "hand" from the legacy `engine_id` sentinel and
-    otherwise default to "automatic".
+    Older alignments (including ones created by an earlier version of
+    ``create_corrected_alignment`` that used the "corrected" sentinel as its
+    own ``engine_id``) won't have ``alignment_type`` in their stored JSON --
+    fall back to the engine_id sentinels in that case.
     """
     if "alignment_type" in meta:
         return meta["alignment_type"]
-    if meta.get("engine_id") == HAND_ALIGNMENT_SENTINEL:
+    if meta["engine_id"] == HAND_ALIGNMENT_SENTINEL:
         return "hand"
+    if meta["engine_id"] == CORRECTED_ALIGNMENT_SENTINEL:
+        return "corrected"
     return "automatic"
 
 
@@ -198,6 +212,7 @@ def create_alignment(
             tg_path=str(tg_path),
             alignment_date=alignment_date,
             status="pending",
+            alignment_type="automatic",
         )
 
         # Fetch model metadata
@@ -336,6 +351,7 @@ def create_hand_alignment(
             tg_path=str(resolved_tg_path),
             alignment_date=alignment_date,
             status="completed",
+            alignment_type="hand",
         )
 
         metadata_path = alignment_root / "voxkit_alignment.json"
@@ -348,6 +364,88 @@ def create_hand_alignment(
         if os.path.exists(alignment_root):
             shutil.rmtree(alignment_root, ignore_errors=True)
         return False, f"Failed to create hand alignment metadata: {str(e)}"
+
+
+def create_corrected_alignment(
+    dataset_id: str,
+    source_alignment_id: str,
+    engine_id: str | None = None,
+    alignment_type: str = "corrected",
+) -> tuple[Literal[True], AlignmentMetadata] | tuple[Literal[False], str]:
+    """Create a new, fully-owned alignment for hand-correcting a source alignment's boundaries.
+
+    Unlike `create_hand_alignment`, this unconditionally creates and owns its own
+    `textgrids` directory (`local=True`), regardless of the source dataset's
+    `cached` flag -- `create_hand_alignment`'s non-cached branch points `tg_path`
+    at the *original dataset directory*, which is exactly the overwrite risk this
+    function exists to avoid. The full source TextGrid set is baseline-copied in
+    immediately, so files the user never touches stay byte-identical and the
+    corrected alignment is self-contained from the start. The source alignment's
+    own TextGrids are never modified.
+
+    Args:
+        dataset_id: Identifier of the dataset
+        source_alignment_id: Identifier of the alignment being corrected
+        engine_id: Value to store/display as this alignment's Engine. Defaults
+            to the source alignment's own engine_id (i.e. which engine actually
+            produced the underlying TextGrids) if omitted, but the GUI lets a
+            user override it -- e.g. to tag who corrected it, or distinguish
+            multiple correction passes.
+        alignment_type: Value to store/display as this alignment's Type
+            (normally "automatic"/"hand"/"corrected", but this is a free-form
+            string so a user can customize it, e.g. "corrected-v2").
+
+    Returns:
+        Tuple of (True, AlignmentMetadata) on success or (False, error_message) on failure
+    """
+    dataset_metadata = get_dataset_metadata(dataset_id)
+    if not dataset_metadata:
+        return False, f"Dataset '{dataset_id}' not found"
+
+    source_metadata = get_alignment_metadata(dataset_id, source_alignment_id)
+    if not source_metadata:
+        return False, f"Source alignment '{source_alignment_id}' not found"
+
+    alignments_root = _get_alignments_root(dataset_id)
+    if not alignments_root:
+        return False, f"Dataset '{dataset_id}' not found"
+
+    now = generate_unique_id()
+    alignment_date = readable_from_unique_id(now)
+    alignment_root = alignments_root / now
+
+    alignment_root.mkdir(parents=False, exist_ok=False)
+
+    try:
+        tg_path = alignment_root / "textgrids"
+        tg_path.mkdir(parents=False, exist_ok=True)
+
+        source_tg_root = Path(source_metadata["tg_path"])
+        if source_tg_root.exists():
+            shutil.copytree(source_tg_root, tg_path, dirs_exist_ok=True)
+
+        metadata = AlignmentMetadata(
+            id=now,
+            engine_id=engine_id or source_metadata["engine_id"],
+            model_metadata=source_metadata["model_metadata"],
+            local=True,
+            tg_path=str(tg_path),
+            alignment_date=alignment_date,
+            status="completed",
+            source_alignment_id=source_alignment_id,
+            alignment_type=alignment_type,  # type: ignore[typeddict-item]
+        )
+
+        metadata_path = alignment_root / "voxkit_alignment.json"
+        with open(metadata_path, "w", encoding="utf-8") as f:
+            json.dump(metadata, f, indent=4)
+
+        return True, metadata
+
+    except Exception as e:
+        if os.path.exists(alignment_root):
+            shutil.rmtree(alignment_root, ignore_errors=True)
+        return False, f"Failed to create corrected alignment metadata: {str(e)}"
 
 
 def get_alignment_metadata(dataset_id: str, alignment_id: str) -> AlignmentMetadata | None:

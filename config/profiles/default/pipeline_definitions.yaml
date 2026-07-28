@@ -40,6 +40,7 @@ pipeline:
       - **PredictionStacker**: Generate forced alignments using trained/pretrained models
       - **ViewerStacker**: Browse alignments by speaker/file; view TextGrid tiers, transcripts, and audio
       - **ComparisonStacker**: Compare two alignments with four phoneme-level plots; export as PNGs
+      - **CorrectAlignmentsStacker**: Drag phone/word boundaries to correct an alignment; saves as a new alignment
       - **PLLRStacker**: Extract Goodness of Pronunciation (PLLR) scores from alignments
       - **MarkdownStacker**: Display informational markdown content (this step)
 
@@ -152,10 +153,27 @@ pipeline:
         exported as PNGs to a folder you choose.
 
   # ======
-  # PIPELINE STEP F: PLLR EXTRACTION
+  # PIPELINE STEP F: CORRECT ALIGNMENTS
+  # ======
+  - id: "correct_alignments"
+    label: "Ⓕ Correct Alignments"
+    stacker_class: "CorrectAlignmentsStacker"
+    enabled: true
+    collapsible_sections:
+      "About Correcting Alignments": |
+        Use this step to hand-correct an alignment's phone/word boundaries.
+        Select a dataset, a source alignment, then a speaker and file. Drag a
+        boundary on the TextGrid timeline to move it -- a phone boundary that
+        lines up with a word boundary moves both together. Saving creates a
+        new, separate alignment with your corrections; the source alignment
+        is never modified. Reload the file to discard unsaved edits (there is
+        no undo/redo).
+
+  # ======
+  # PIPELINE STEP G: PLLR EXTRACTION
   # ======
   - id: "pllr"
-    label: "Ⓕ Extract PLLR Scoring"
+    label: "Ⓖ Extract PLLR Scoring"
     stacker_class: "PLLRStacker"
     enabled: true
     collapsible_sections:
