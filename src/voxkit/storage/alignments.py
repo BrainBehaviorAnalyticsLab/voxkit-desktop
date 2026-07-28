@@ -39,7 +39,7 @@ import json
 import os
 import shutil
 from pathlib import Path
-from typing import List, Literal, NotRequired, Tuple, TypedDict
+from typing import List, Literal, NotRequired, Tuple, TypeAlias, TypedDict
 
 from .constants import ALIGNMENTS_ROOT, SUPERSET_AUDIO_EXTENSIONS
 from .datasets import _get_dataset_root, get_dataset_metadata
@@ -52,7 +52,7 @@ HAND_ALIGNMENT_SENTINEL = "hand"
 CORRECTED_ALIGNMENT_SENTINEL = "corrected"
 """Sentinel value used for engine_id/model id on boundary-corrected alignments."""
 
-AlignmentStatus = Literal["pending", "completed", "failed"]
+AlignmentStatus: TypeAlias = Literal["pending", "completed", "failed"]
 """Status of an alignment operation.
 
 Values:
@@ -61,7 +61,7 @@ Values:
     failed: Alignment processing failed.
 """
 
-AlignmentType = Literal["automatic", "hand", "corrected"]
+AlignmentType: TypeAlias = Literal["automatic", "hand", "corrected"]
 """How an alignment's TextGrids were produced -- shown as its own column in
 GUI alignment dropdowns, kept separate from ``engine_id`` so a corrected
 alignment can still show which real engine (mfa, w2tg, ...) it traces back
