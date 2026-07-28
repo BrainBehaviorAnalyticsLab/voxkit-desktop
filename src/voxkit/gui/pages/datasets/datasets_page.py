@@ -650,8 +650,7 @@ class DatasetsPage(QWidget):
         # Build the Analysis Method tooltip from each analyzer's own description
         # so it stays accurate as analyzers are added or changed.
         analyzer_lines = [
-            f"<b>{a.name}:</b> {a.description}"
-            for a in ManageAnalyzers.get_analyzers().values()
+            f"<b>{a.name}:</b> {a.description}" for a in ManageAnalyzers.get_analyzers().values()
         ]
         analysis_tooltip = (
             "Chooses how the dataset summary CSV is generated. Options:<br>"
