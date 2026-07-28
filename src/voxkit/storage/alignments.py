@@ -68,10 +68,6 @@ alignment can still show which real engine (mfa, w2tg, ...) it traces back
 to, rather than losing that in favor of a "corrected" placeholder."""
 
 
-AlignmentType = Literal["automatic", "hand", "corrected"]
-"""Provenance of an alignment: model-generated, hand-annotated, or user-corrected."""
-
-
 class AlignmentMetadata(TypedDict):
     """Alignment metadata structure.
 
