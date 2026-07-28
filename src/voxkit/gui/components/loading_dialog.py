@@ -1,22 +1,101 @@
 """Splash screen / loading dialog for long-running operations."""
 
-from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, Qt, QTimer
-from PyQt6.QtWidgets import QDialog, QGraphicsOpacityEffect, QLabel, QVBoxLayout
+import math
+
+from PyQt6.QtCore import QEasingCurve, QPointF, QPropertyAnimation, Qt, QTimer
+from PyQt6.QtGui import QColor, QPainter, QPen
+from PyQt6.QtWidgets import (
+    QDialog,
+    QFrame,
+    QGraphicsOpacityEffect,
+    QLabel,
+    QSizePolicy,
+    QVBoxLayout,
+    QWidget,
+)
+
+from voxkit.gui.styles import Colors
+
+
+class _WaveformStrip(QWidget):
+    """Animated audio waveform, matching the toolbar's decorative strip.
+
+    Renders vertical bars radiating from a center line whose amplitudes are a
+    mix of sine frequencies (a homage to Wav2Vec). A steadily advancing phase
+    scrolls the pattern so it reads as a live audio meter.
+    """
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._phase = 0.0
+        self.setFixedHeight(56)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+
+    def advance(self, step: float = 0.18):
+        """Advance the animation by one frame and repaint."""
+        self._phase += step
+        self.update()
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+
+        width = self.width()
+        height = self.height()
+        center_y = height / 2
+
+        num_bars = max(40, int(width / 8))
+        bar_spacing = width / num_bars
+        max_amplitude = height * 0.4
+
+        # App primary blue (matches the border and palette), slightly translucent.
+        wave_color = QColor(Colors.PRIMARY)
+        wave_color.setAlpha(200)
+
+        pen = QPen(wave_color, max(1.5, bar_spacing * 0.6))
+        pen.setCapStyle(Qt.PenCapStyle.RoundCap)
+        painter.setPen(pen)
+
+        for i in range(num_bars):
+            x = i * bar_spacing + bar_spacing / 2
+
+            # Mix a few frequencies for a natural speech-like envelope, offset
+            # by the running phase so the waveform scrolls.
+            phase1 = (i / num_bars) * 4 * math.pi + self._phase
+            phase2 = (i / num_bars) * 7 * math.pi + 0.5 + self._phase
+            phase3 = (i / num_bars) * 11 * math.pi + 1.2 + self._phase
+
+            amplitude = 0.5 * math.sin(phase1) + 0.3 * math.sin(phase2) + 0.2 * math.sin(phase3)
+            amplitude *= 0.8 + 0.4 * math.sin(i * 0.7 + self._phase)
+
+            bar_height = abs(amplitude) * max_amplitude
+            painter.drawLine(QPointF(x, center_y - bar_height), QPointF(x, center_y + bar_height))
 
 
 class LoadingDialog(QDialog):
-    """A modal loading dialog with a message and spinner.
+    """A modal loading dialog / first-launch splash screen.
 
-    This dialog is used to display a loading message while a long-running
-    operation is in progress. It blocks user interaction with the main
+    Shows the VoxKit name so users can tell what has launched, an animated
+    audio waveform, the primary status message, and an optional subtitle to
+    explain long-running work. It blocks user interaction with the main
     application until the operation completes.
 
     Args:
-        message: The message to display in the dialog
+        message: The primary status message to display
         parent: Optional parent widget
+        title: Brand/heading text shown at the top (defaults to "VoxKit")
+        subtitle: Optional secondary hint shown below the message
     """
 
-    def __init__(self, message: str = "Loading...", parent=None):
+    def __init__(
+        self,
+        message: str = "Loading...",
+        parent=None,
+        *,
+        title: str = "VoxKit",
+        subtitle: str | None = None,
+    ):
         super().__init__(parent)
         self.setModal(True)
         self.setWindowFlags(
@@ -24,13 +103,12 @@ class LoadingDialog(QDialog):
             | Qt.WindowType.FramelessWindowHint
             | Qt.WindowType.WindowStaysOnTopHint
         )
+        # The window itself stays transparent; the visible card is painted by a
+        # child QFrame so the gradient/border/rounded corners render reliably
+        # (a stylesheet background on a translucent top-level window does not).
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
-        # Animation state
-        self._spinner_index = 0
-        self._spinner_frames = ["◐", "◓", "◑", "◒"]
-
-        self.init_ui(message)
+        self.init_ui(message, title, subtitle)
 
         # Center the dialog on screen
         self.center_on_screen()
@@ -44,64 +122,95 @@ class LoadingDialog(QDialog):
         self.fade_in_animation.setEndValue(1.0)
         self.fade_in_animation.setEasingCurve(QEasingCurve.Type.InOutQuad)
 
-        # Setup spinner animation timer
-        self.spinner_timer = QTimer(self)
-        self.spinner_timer.timeout.connect(self._update_spinner)
-        self.spinner_timer.start(150)  # Update every 150ms
+        # Drive the waveform animation
+        self.wave_timer = QTimer(self)
+        self.wave_timer.timeout.connect(self.waveform.advance)
+        self.wave_timer.start(50)  # ~20 fps
 
-    def init_ui(self, message: str):
+    def init_ui(self, message: str, title: str, subtitle: str | None):
         """Initialize the dialog UI."""
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(40, 40, 40, 40)
-        layout.setSpacing(20)
+        # Outer layout holds a single card; the window behind it is transparent.
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(0, 0, 0, 0)
 
-        # Message label
-        message_label = QLabel(message)
-        message_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        message_label.setStyleSheet(
-            """
-            QLabel {
-                color: #2c3e50;
-                font-size: 16px;
+        self._card = QFrame()
+        self._card.setObjectName("card")
+        outer.addWidget(self._card)
+
+        layout = QVBoxLayout(self._card)
+        layout.setContentsMargins(40, 32, 40, 32)
+        layout.setSpacing(16)
+
+        # Brand heading
+        self._brand_title_label = QLabel(title)
+        self._brand_title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._brand_title_label.setStyleSheet(
+            f"""
+            QLabel {{
+                color: {Colors.PRIMARY};
+                font-size: 26px;
                 font-weight: bold;
-                background-color: #ffffff;
-                padding: 20px;
-                border-radius: 10px;
-                border: 2px solid #3498db;
-            }
+                letter-spacing: 1px;
+                background-color: transparent;
+            }}
             """
         )
-        layout.addWidget(message_label)
+        layout.addWidget(self._brand_title_label)
 
-        # Progress indicator label (animated spinner)
-        self.progress_label = QLabel(self._spinner_frames[0])
-        self.progress_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.progress_label.setStyleSheet(
-            """
-            QLabel {
-                color: #3498db;
-                font-size: 32px;
-                background-color: #ffffff;
-                padding: 10px;
-                border-radius: 10px;
+        # Animated waveform (copied from the toolbar's decorative strip)
+        self.waveform = _WaveformStrip()
+        layout.addWidget(self.waveform)
+
+        # Primary status message
+        self.message_label = QLabel(message)
+        self.message_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.message_label.setWordWrap(True)
+        self.message_label.setStyleSheet(
+            f"""
+            QLabel {{
+                color: {Colors.TEXT_PRIMARY};
+                font-size: 15px;
                 font-weight: bold;
-            }
+                background-color: transparent;
+            }}
             """
         )
-        layout.addWidget(self.progress_label)
+        layout.addWidget(self.message_label)
 
-        # Set dialog background with shadow effect
-        self.setStyleSheet(
+        # Optional secondary hint (e.g. "VoxKit will start when this finishes")
+        self.subtitle_label = QLabel(subtitle or "")
+        self.subtitle_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.subtitle_label.setWordWrap(True)
+        self.subtitle_label.setStyleSheet(
+            f"""
+            QLabel {{
+                color: {Colors.TEXT_SECONDARY};
+                font-size: 12px;
+                background-color: transparent;
+            }}
             """
-            QDialog {
-                background-color: rgba(255, 255, 255, 250);
+        )
+        self.subtitle_label.setVisible(bool(subtitle))
+        layout.addWidget(self.subtitle_label)
+
+        # Card background: subtle vertical gradient (light tints of the app's
+        # primary blue) with a primary-blue rounded border. Painted on the child
+        # frame (not the translucent window) so it renders reliably.
+        self._card.setStyleSheet(
+            f"""
+            QFrame#card {{
+                background-color: qlineargradient(
+                    x1: 0, y1: 0, x2: 0, y2: 1,
+                    stop: 0 {Colors.WHITE},
+                    stop: 1 #dbeef9
+                );
                 border-radius: 15px;
-                border: 3px solid #3498db;
-            }
+                border: 3px solid {Colors.PRIMARY};
+            }}
             """
         )
 
-        self.setFixedSize(400, 250)
+        self.setFixedSize(420, 260)
 
     def center_on_screen(self):
         """Center the dialog on the primary screen."""
@@ -115,33 +224,31 @@ class LoadingDialog(QDialog):
             dialog_rect.moveCenter(center_point)
             self.move(dialog_rect.topLeft())
 
-    def _update_spinner(self):
-        """Update the spinner animation."""
-        self._spinner_index = (self._spinner_index + 1) % len(self._spinner_frames)
-        self.progress_label.setText(self._spinner_frames[self._spinner_index])
-
     def showEvent(self, event):
         """Override show event to trigger fade-in animation."""
         super().showEvent(event)
         self.fade_in_animation.start()
 
     def update_message(self, message: str):
-        """Update the message displayed in the dialog.
+        """Update the primary status message displayed in the dialog.
 
         Args:
             message: The new message to display
         """
-        layout = self.layout()
-        if layout and layout.itemAt(0):
-            item = layout.itemAt(0)
-            if item:
-                label = item.widget()
-                if isinstance(label, QLabel):
-                    label.setText(message)
+        self.message_label.setText(message)
+
+    def update_subtitle(self, subtitle: str):
+        """Update the secondary hint line, showing or hiding it as needed.
+
+        Args:
+            subtitle: The new subtitle text (empty string hides the line)
+        """
+        self.subtitle_label.setText(subtitle)
+        self.subtitle_label.setVisible(bool(subtitle))
 
     def close_gracefully(self):
         """Close the dialog with a fade-out animation."""
-        self.spinner_timer.stop()
+        self.wave_timer.stop()
         fade_out = QPropertyAnimation(self.opacity_effect, b"opacity")
         fade_out.setDuration(200)
         fade_out.setStartValue(1.0)

@@ -1,6 +1,4 @@
-from PyQt6.QtWidgets import QLabel
-
-from voxkit.gui.components.loading_dialog import LoadingDialog
+from voxkit.gui.components.loading_dialog import LoadingDialog, _WaveformStrip
 
 
 class TestLoadingDialog:
@@ -8,25 +6,13 @@ class TestLoadingDialog:
         dialog = LoadingDialog()
         qtbot.addWidget(dialog)
 
-        layout = dialog.layout()
-        assert layout is not None
-        item = layout.itemAt(0)
-        assert item is not None
-        label = item.widget()
-        assert isinstance(label, QLabel)
-        assert label.text() == "Loading..."
+        assert dialog.message_label.text() == "Loading..."
 
     def test_custom_message(self, qtbot):
         dialog = LoadingDialog(message="Please wait...")
         qtbot.addWidget(dialog)
 
-        layout = dialog.layout()
-        assert layout is not None
-        item = layout.itemAt(0)
-        assert item is not None
-        label = item.widget()
-        assert isinstance(label, QLabel)
-        assert label.text() == "Please wait..."
+        assert dialog.message_label.text() == "Please wait..."
 
     def test_update_message(self, qtbot):
         dialog = LoadingDialog(message="Step 1")
@@ -34,36 +20,51 @@ class TestLoadingDialog:
 
         dialog.update_message("Step 2")
 
-        layout = dialog.layout()
-        assert layout is not None
-        item = layout.itemAt(0)
-        assert item is not None
-        label = item.widget()
-        assert isinstance(label, QLabel)
-        assert label.text() == "Step 2"
+        assert dialog.message_label.text() == "Step 2"
 
-    def test_spinner_frames_cycle(self, qtbot):
+    def test_default_title_is_voxkit(self, qtbot):
         dialog = LoadingDialog()
         qtbot.addWidget(dialog)
 
-        initial = dialog.progress_label.text()
-        assert initial == dialog._spinner_frames[0]
+        # The VoxKit brand name must appear so users know what launched.
+        assert dialog._brand_title_label.text() == "VoxKit"
 
-        dialog._update_spinner()
-        assert dialog.progress_label.text() == dialog._spinner_frames[1]
+    def test_subtitle_hidden_by_default(self, qtbot):
+        dialog = LoadingDialog(message="Loading...")
+        qtbot.addWidget(dialog)
 
-        dialog._update_spinner()
-        assert dialog.progress_label.text() == dialog._spinner_frames[2]
+        assert dialog.subtitle_label.text() == ""
+        assert dialog.subtitle_label.isVisible() is False
 
-    def test_spinner_wraps_around(self, qtbot):
+    def test_subtitle_shown_when_provided(self, qtbot):
+        dialog = LoadingDialog(message="Loading...", subtitle="Almost there")
+        qtbot.addWidget(dialog)
+
+        assert dialog.subtitle_label.text() == "Almost there"
+
+    def test_update_subtitle(self, qtbot):
+        dialog = LoadingDialog(message="Loading...", subtitle="Downloading")
+        qtbot.addWidget(dialog)
+
+        dialog.update_subtitle("")
+        assert dialog.subtitle_label.text() == ""
+
+        dialog.update_subtitle("Finishing up")
+        assert dialog.subtitle_label.text() == "Finishing up"
+
+    def test_has_waveform(self, qtbot):
         dialog = LoadingDialog()
         qtbot.addWidget(dialog)
 
-        for _ in range(len(dialog._spinner_frames)):
-            dialog._update_spinner()
+        assert isinstance(dialog.waveform, _WaveformStrip)
 
-        # Should be back to frame 0
-        assert dialog.progress_label.text() == dialog._spinner_frames[0]
+    def test_waveform_advances_phase(self, qtbot):
+        dialog = LoadingDialog()
+        qtbot.addWidget(dialog)
+
+        before = dialog.waveform._phase
+        dialog.waveform.advance()
+        assert dialog.waveform._phase > before
 
     def test_is_modal(self, qtbot):
         dialog = LoadingDialog()
@@ -73,13 +74,13 @@ class TestLoadingDialog:
     def test_fixed_size(self, qtbot):
         dialog = LoadingDialog()
         qtbot.addWidget(dialog)
-        assert dialog.width() == 400
-        assert dialog.height() == 250
+        assert dialog.width() == 420
+        assert dialog.height() == 260
 
     def test_close_gracefully_stops_timer(self, qtbot):
         dialog = LoadingDialog()
         qtbot.addWidget(dialog)
 
-        assert dialog.spinner_timer.isActive()
+        assert dialog.wave_timer.isActive()
         dialog.close_gracefully()
-        assert dialog.spinner_timer.isActive() is False
+        assert dialog.wave_timer.isActive() is False
