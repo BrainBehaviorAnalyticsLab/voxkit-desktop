@@ -70,8 +70,14 @@ def execute_startup_script(script: Callable[[], None] | None, app: QApplication)
 
     logger.info("First launch detected, executing startup script")
 
-    # Create and show the loading dialog
-    loading_dialog = LoadingDialog("Retrieving assets...")
+    # Create and show the loading dialog / first-launch splash screen
+    loading_dialog = LoadingDialog(
+        "Downloading models and assets…",
+        subtitle=(
+            "First-time setup — this only happens once. "
+            "VoxKit will start automatically when it finishes."
+        ),
+    )
     loading_dialog.show()
 
     # Process events multiple times to ensure the dialog is fully rendered
@@ -90,7 +96,8 @@ def execute_startup_script(script: Callable[[], None] | None, app: QApplication)
     # Connect signals
     def on_finished():
         mark_first_launch_complete()
-        loading_dialog.update_message("Complete!")
+        loading_dialog.update_message("Setup complete — starting VoxKit…")
+        loading_dialog.update_subtitle("")
         app.processEvents()
         loading_dialog.close_gracefully()
 
