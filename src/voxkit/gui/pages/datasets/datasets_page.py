@@ -123,12 +123,6 @@ class DatasetsPage(QWidget):
         main_layout.setSpacing(20)
         main_layout.setContentsMargins(0, 0, 0, 0)
 
-        # === Footer Credit ===
-        credit = QLabel("VoxKit by BrainBehaviorAnalyticsLab")
-        credit.setStyleSheet("color: #999; font-size: 10px; padding: 5px;")
-        credit.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        main_layout.addWidget(credit)
-
     def refresh_page(self):
         """Refresh the entire page content"""
         self.dataset_table.clearSelection()
