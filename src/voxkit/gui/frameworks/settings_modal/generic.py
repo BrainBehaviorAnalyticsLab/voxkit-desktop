@@ -264,7 +264,12 @@ class GenericDialog(QDialog):
             widget = self._create_field_widget(field_config)
             self.field_widgets[field_config.name] = widget
             row_widget = self._wrap_with_browse_button(widget, field_config)
-            self.form_layout.addRow(field_config.label, row_widget)
+            # Use an explicit label so the tooltip is also shown when hovering the
+            # field's label text, not just its input widget.
+            label = QLabel(field_config.label)
+            if field_config.tooltip:
+                label.setToolTip(field_config.tooltip)
+            self.form_layout.addRow(label, row_widget)
 
     def _wrap_with_browse_button(self, widget: QWidget, config: FieldConfig) -> QWidget:
         """

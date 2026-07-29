@@ -647,6 +647,16 @@ class DatasetsPage(QWidget):
             SettingsConfig,
         )
 
+        # Build the Analysis Method tooltip from each analyzer's own description
+        # so it stays accurate as analyzers are added or changed.
+        analyzer_lines = [
+            f"<b>{a.name}:</b> {a.description}" for a in ManageAnalyzers.get_analyzers().values()
+        ]
+        analysis_tooltip = (
+            "Chooses how the dataset summary CSV is generated. Options:<br>"
+            + "<br>".join(analyzer_lines)
+        )
+
         # Create settings config
         config = SettingsConfig(
             title="Register New Dataset",
@@ -660,7 +670,15 @@ class DatasetsPage(QWidget):
                     field_type=FieldType.DIRPATH,
                     default_value="",
                     placeholder="e.g., /home/corpora/timit_train",
-                    tooltip="Root directory containing speaker subdirectories",
+                    tooltip=(
+                        "Root folder with one subfolder per speaker. Each speaker "
+                        "folder holds that speaker's audio files (e.g. .wav).<br>"
+                        "If <i>Transcribed</i> is enabled, every audio file needs a "
+                        "matching .lab transcript with the same name.<br><br>"
+                        "speaker_01/<br>"
+                        "&nbsp;&nbsp;utt_001.wav<br>"
+                        "&nbsp;&nbsp;utt_001.lab"
+                    ),
                 ),
                 FieldConfig(
                     name="dataset_name",
@@ -684,28 +702,40 @@ class DatasetsPage(QWidget):
                     field_type=FieldType.COMBOBOX,
                     default_value=self.analysis_methods[0] if self.analysis_methods else "Default",
                     options=self.analysis_methods,
-                    tooltip="Select the analysis method for generating the dataset summary CSV",
+                    tooltip=analysis_tooltip,
                 ),
                 FieldConfig(
                     name="cache",
                     label="Cache Dataset",
                     field_type=FieldType.CHECKBOX,
                     default_value=False,
-                    tooltip="Copy entire dataset to storage (recommended for remote datasets)",
+                    tooltip=(
+                        "Copy the entire dataset into VoxKit's storage now. "
+                        "Recommended for remote or temporary datasets so processing "
+                        "no longer depends on the original files staying in place."
+                    ),
                 ),
                 FieldConfig(
                     name="anonymize",
                     label="De-identified",
                     field_type=FieldType.CHECKBOX,
                     default_value=False,
-                    tooltip="Has personally identifiable information been removed?",
+                    tooltip=(
+                        "Mark that personally identifiable information (e.g. speaker "
+                        "names) has already been removed from this dataset. This is a "
+                        "label only — it does not modify your files."
+                    ),
                 ),
                 FieldConfig(
                     name="transcribed",
                     label="Transcribed",
                     field_type=FieldType.CHECKBOX,
                     default_value=False,
-                    tooltip="Mark as already containing transcriptions",
+                    tooltip=(
+                        "The dataset already includes transcripts. Each audio file "
+                        "must have a matching .lab text file with the same name in "
+                        "the same folder."
+                    ),
                 ),
                 FieldConfig(
                     name="hand_alignments_path",
@@ -713,7 +743,11 @@ class DatasetsPage(QWidget):
                     field_type=FieldType.DIRPATH,
                     default_value="",
                     placeholder="Optional: directory of pre-existing TextGrids",
-                    tooltip="Optional directory containing hand-annotated TextGrid files",
+                    tooltip=(
+                        "Optional. Folder of pre-existing hand-annotated TextGrid "
+                        "files to compare against or correct alignments with. Leave "
+                        "empty if you don't have them."
+                    ),
                 ),
             ],
         )
