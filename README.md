@@ -5,11 +5,12 @@
 <p align="center">
   <a href="https://github.com/BrainBehaviorAnalyticsLab/PyPLLR_GUI/releases/latest"><img src="https://img.shields.io/github/v/release/BrainBehaviorAnalyticsLab/PyPLLR_GUI?label=Release&style=flat-square" alt="Release"></a>
   <a href="https://github.com/BrainBehaviorAnalyticsLab/PyPLLR_GUI/releases"><img src="https://img.shields.io/github/downloads/BrainBehaviorAnalyticsLab/PyPLLR_GUI/total?style=flat-square" alt="Downloads"></a>
-  <a href="https://github.com/WISCLab/shred-guard"><img src="https://img.shields.io/badge/ShredGuard-ON-06B6D4?logo=git&logoColor=white&style=flat-square" alt="ShredGuard"></a>
-  <a href="https://voxkit.atlassian.net/jira/software/projects/VOX/boards/2/"><img src="https://img.shields.io/badge/Project-Jira-0052CC?logo=jira&style=flat-square" alt="Jira"></a>
+  <a href="https://voxkit.atlassian.net/jira/software/projects/VOX/boards/2/"><img src="https://img.shields.io/badge/Jira-Product%20Planning-0052CC?logo=jira&logoColor=white&style=flat-square" alt="Jira - Product Planning"></a>
+  <a href="https://github.com/orgs/BrainBehaviorAnalyticsLab/projects/1"><img src="https://img.shields.io/badge/GitHub-Code%20Planning-181717?logo=github&logoColor=white&style=flat-square" alt="GitHub - Code Planning"></a>
 </p>
 
 <p align="center">
+<a href="https://github.com/WISCLab/shred-guard"><img src="https://img.shields.io/badge/ShredGuard-ON-06B6D4?logo=git&logoColor=white&style=flat-square" alt="ShredGuard"></a>
   <a href="https://github.com/BrainBehaviorAnalyticsLab/PyPLLR_GUI/actions/workflows/tests-ubuntu.yml"><img src="https://img.shields.io/github/actions/workflow/status/BrainBehaviorAnalyticsLab/PyPLLR_GUI/tests-ubuntu.yml?branch=main&label=Ubuntu&logo=ubuntu&style=flat-square" alt="Ubuntu Tests"></a>
   <a href="https://github.com/BrainBehaviorAnalyticsLab/PyPLLR_GUI/actions/workflows/tests-macos.yml"><img src="https://img.shields.io/github/actions/workflow/status/BrainBehaviorAnalyticsLab/PyPLLR_GUI/tests-macos.yml?branch=main&label=macOS&logo=apple&style=flat-square" alt="macOS Tests"></a>
   <a href="https://github.com/BrainBehaviorAnalyticsLab/PyPLLR_GUI/actions/workflows/tests-windows.yml"><img src="https://img.shields.io/github/actions/workflow/status/BrainBehaviorAnalyticsLab/PyPLLR_GUI/tests-windows.yml?branch=main&label=Windows&logo=windows&style=flat-square" alt="Windows Tests"></a>
