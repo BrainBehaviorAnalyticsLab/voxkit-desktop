@@ -158,6 +158,26 @@ class PredictionStacker(BaseStacker):
             )
             return
 
+        selected_engine = self.model_panel.get_selected_engine()
+        if not selected_engine:
+            QMessageBox.warning(
+                self, "No Engine Selected", "Please select an alignment engine first."
+            )
+            return
+
+        # Guard against an unselected/empty model so the user gets an actionable
+        # message instead of a raw "Model 'None' for engine ... not found" error.
+        if not self.model_panel.get_selected_model_id():
+            engine_label = self.engines.get_engine(selected_engine).name()
+            QMessageBox.warning(
+                self,
+                "No Model Selected",
+                f"No model is selected for the {engine_label} engine.\n\n"
+                "Choose a model from the dropdown next to the engine. If the list "
+                "is empty, download or import a model from the Models page first.",
+            )
+            return
+
         print("Predict Alignments clicked!")
         print(f"Engine: {self.model_panel.get_selected_engine()}")
 
