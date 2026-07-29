@@ -188,6 +188,21 @@ ToolBarStyle = """
     QToolBar#globalToolbar QToolButton:disabled {
         color: #7f8c8d;
     }
+    QToolBar#globalToolbar QToolButton#feedbackButton {
+        color: #f0c674;
+        background: transparent;
+        border: 1px solid #d9a441;
+        font-weight: bold;
+        padding: 6px 14px;
+    }
+    QToolBar#globalToolbar QToolButton#feedbackButton:hover {
+        background: #3b4252;
+        border-color: #f0c674;
+    }
+    QToolBar#globalToolbar QToolButton#feedbackButton:pressed {
+        background: #2b323d;
+        border-color: #f0c674;
+    }
     """
 
 
@@ -238,7 +253,7 @@ class VoxKitGUI(QMainWindow):
         toolbar.setStyleSheet(ToolBarStyle)
 
         # Helper to add an action and apply some per-button properties
-        def _add_button(text, callback, tooltip=None, icon=QIcon()):
+        def _add_button(text, callback, tooltip=None, icon=QIcon(), object_name=None):
             action = QAction(icon, text, self)
             if tooltip:
                 action.setToolTip(tooltip)
@@ -249,6 +264,12 @@ class VoxKitGUI(QMainWindow):
 
             if widget is not None:
                 widget.setCursor(widget.cursor())  # ensure widget exists; can set more props here
+                if object_name:
+                    # Naming the widget lets ToolBarStyle target it individually;
+                    # re-polish so the new rule is applied to the already-styled toolbar.
+                    widget.setObjectName(object_name)
+                    widget.style().unpolish(widget)
+                    widget.style().polish(widget)
             return action
 
         # Store actions for Pipeline, Datasets, Manage so we can update their styles
@@ -261,7 +282,6 @@ class VoxKitGUI(QMainWindow):
         self.manage_action = _add_button(
             "Models", self.open_preferences, tooltip="Manage Aligner Models"
         )
-        _add_button("Feedback", self.open_feedback, tooltip="Send Feedback")
         # Help button
         _add_button("Help", self.open_help, tooltip="Get Help")
 
@@ -278,6 +298,15 @@ class VoxKitGUI(QMainWindow):
         # Add decorative DNA strand widget
         self.dna_widget = DNAStrandWidget()
         toolbar.addWidget(self.dna_widget)
+
+        # Prominent, standalone Feedback button pinned to the far right so it
+        # stands apart from the page-navigation tabs and is impossible to miss.
+        _add_button(
+            "💬 Send Feedback",
+            self.open_feedback,
+            tooltip="Send Feedback — tell us what's working or what's not",
+            object_name="feedbackButton",
+        )
 
     def update_active_tab_style(self, active_button):
         """Update the styling to show which tab is active"""
