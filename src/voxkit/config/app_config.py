@@ -113,6 +113,7 @@ class AppConfig:
     description: str
     introduction: str
     help_url: str | None = None
+    feedback_email: str | None = None
     release_date: Optional[str] = None
     release_notes: Optional[str] = None
     log_max_bytes: int = 5 * 1024 * 1024
@@ -136,7 +137,8 @@ class AppConfig:
             raise FileNotFoundError(f"App config file not found: {config_path}")
 
         with open(config_path, "r", encoding="utf-8") as f:
-            data = yaml.safe_load(f)
+            data = yaml.safe_load(f) or {}
+        contact_info = data.get("contact_info", {})
 
         # Version is sourced from config/VERSION (single source of truth),
         # not from per-profile YAML.
@@ -149,6 +151,7 @@ class AppConfig:
             description=data.get("description", ""),
             introduction=data.get("introduction", ""),
             help_url=data.get("help_url", DEFAULT_HELP_URL),
+            feedback_email=data.get("feedback_email") or contact_info.get("email_support"),
             release_date=data.get("release_date"),
             release_notes=data.get("release_notes"),
             log_max_bytes=int(data.get("log_max_bytes", 5 * 1024 * 1024)),
