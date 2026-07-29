@@ -23,6 +23,7 @@ Notes
 import logging
 import webbrowser
 from typing import Optional
+from urllib.parse import quote
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QAction, QIcon
@@ -44,6 +45,30 @@ from voxkit.gui.pages.models import ManageAlignersWidget
 from voxkit.gui.pages.pipeline import PipelineFormStack as PipelineContainer
 
 logger = logging.getLogger(__name__)
+
+FEEDBACK_SUBJECT = "VoxKit Feedback"
+FEEDBACK_BODY_TEMPLATE = (
+    "Please share your feedback below.\n\n"
+    "What were you trying to do?\n"
+    "- \n\n"
+    "What happened?\n"
+    "- \n\n"
+    "What did you expect instead?\n"
+    "- \n\n"
+    "Additional context:\n"
+    "- \n"
+)
+
+
+def build_feedback_mailto_url(
+    recipient: str,
+    subject: str = FEEDBACK_SUBJECT,
+    body: str = FEEDBACK_BODY_TEMPLATE,
+) -> str:
+    encoded_subject = quote(subject, safe="")
+    encoded_body = quote(body, safe="")
+    return f"mailto:{recipient}?subject={encoded_subject}&body={encoded_body}"
+
 
 GlobalStyleSheet = """
     QMainWindow {
@@ -236,6 +261,7 @@ class VoxKitGUI(QMainWindow):
         self.manage_action = _add_button(
             "Models", self.open_preferences, tooltip="Manage Aligner Models"
         )
+        _add_button("Feedback", self.open_feedback, tooltip="Send Feedback")
         # Help button
         _add_button("Help", self.open_help, tooltip="Get Help")
 
@@ -347,6 +373,14 @@ class VoxKitGUI(QMainWindow):
         logger.info("Opening help URL: %s", self.app_config.help_url)
         webbrowser.open(self.app_config.help_url)
 
+    def open_feedback(self):
+        if not self.app_config.feedback_email:
+            logger.warning("Feedback email is not configured")
+            return
+        mailto_url = build_feedback_mailto_url(self.app_config.feedback_email)
+        logger.info("Opening feedback email compose window")
+        webbrowser.open(mailto_url)
+
     def init_ui(self):
         self.setWindowTitle(self.app_config.app_name)
         self.setMinimumSize(1200, 800)
@@ -449,4 +483,4 @@ class VoxKitGUI(QMainWindow):
             self._log_viewer.activateWindow()
 
 
-__all__ = ["VoxKitGUI"]
+__all__ = ["VoxKitGUI", "build_feedback_mailto_url"]

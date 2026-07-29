@@ -48,16 +48,19 @@ class TestAppConfig:
         assert config.description == "Test description"
         assert config.introduction == "Test intro"
         assert config.help_url is None
+        assert config.feedback_email is None
         config = AppConfig(
             app_name="TestApp",
             version="2.0.0",
             description="Desc",
             introduction="Intro",
             help_url="http://example.com/help",
+            feedback_email="feedback@example.com",
             release_date="2024-01-01",
             release_notes="Initial release",
         )
         assert config.help_url == "http://example.com/help"
+        assert config.feedback_email == "feedback@example.com"
         assert config.release_date == "2024-01-01"
         assert config.release_notes == "Initial release"
 
@@ -71,6 +74,8 @@ introduction: Welcome to MyApp
 help_url: http://myapp.com/help
 release_date: "2024-06-01"
 release_notes: Bug fixes and improvements
+contact_info:
+  email_support: feedback@example.com
 """
         config_file = tmp_path / "app_info.yaml"
         config_file.write_text(yaml_content)
@@ -81,6 +86,7 @@ release_notes: Bug fixes and improvements
         assert config.description == "My application description"
         assert config.introduction == "Welcome to MyApp"
         assert config.help_url == "http://myapp.com/help"
+        assert config.feedback_email == "feedback@example.com"
         assert config.release_date == "2024-06-01"
         assert config.release_notes == "Bug fixes and improvements"
 
@@ -96,6 +102,7 @@ release_notes: Bug fixes and improvements
         assert config.description == ""
         assert config.introduction == ""
         assert config.help_url == "https://voxkit-web.vercel.app/help"
+        assert config.feedback_email is None
         nonexistent_file = tmp_path / "nonexistent.yaml"
 
         with pytest.raises(FileNotFoundError) as exc_info:
@@ -106,6 +113,7 @@ release_notes: Bug fixes and improvements
     def test_from_yaml_partial_config(self, tmp_path):
         yaml_content = """
 app_name: PartialApp
+feedback_email: support@example.com
 """
         config_file = tmp_path / "app_info.yaml"
         config_file.write_text(yaml_content)
@@ -115,6 +123,7 @@ app_name: PartialApp
         assert config.app_name == "PartialApp"
         assert config.description == ""
         assert config.introduction == ""
+        assert config.feedback_email == "support@example.com"
 
 
 class TestVersionFile:
