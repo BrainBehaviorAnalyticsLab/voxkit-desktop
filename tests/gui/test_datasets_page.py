@@ -1,6 +1,7 @@
 from unittest.mock import patch
 
 import pytest
+from PyQt6.QtWidgets import QMessageBox
 
 from voxkit.gui.pages.datasets.datasets_page import DatasetsPage
 
@@ -167,3 +168,41 @@ class TestDisplayAlignments:
         datasets_page._display_alignments([sample_alignment])
 
         assert datasets_page.alignments_table.item(0, 2).text() == "hand"
+
+
+class TestDatasetDeletionConfirmation:
+    def test_on_delete_cancels_when_confirmation_is_no(self, datasets_page):
+        datasets_page.selected_dataset = "ds-1"
+
+        with (
+            patch(
+                "voxkit.gui.pages.datasets.datasets_page.QMessageBox.question",
+                return_value=QMessageBox.StandardButton.No,
+            ),
+            patch("voxkit.gui.pages.datasets.datasets_page.datasets.delete_dataset") as mock_delete,
+        ):
+            datasets_page.on_delete()
+
+        mock_delete.assert_not_called()
+        assert datasets_page.selected_dataset == "ds-1"
+
+    def test_on_delete_deletes_when_confirmation_is_yes(self, datasets_page):
+        datasets_page.selected_dataset = "ds-1"
+
+        with (
+            patch(
+                "voxkit.gui.pages.datasets.datasets_page.QMessageBox.question",
+                return_value=QMessageBox.StandardButton.Yes,
+            ),
+            patch(
+                "voxkit.gui.pages.datasets.datasets_page.datasets.delete_dataset",
+                return_value=(True, "Deleted dataset."),
+            ) as mock_delete,
+            patch("voxkit.gui.pages.datasets.datasets_page.QMessageBox.information"),
+            patch.object(datasets_page, "refresh_page") as mock_refresh,
+        ):
+            datasets_page.on_delete()
+
+        mock_delete.assert_called_once_with("ds-1")
+        mock_refresh.assert_called_once()
+        assert datasets_page.selected_dataset is None

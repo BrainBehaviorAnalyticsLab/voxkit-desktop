@@ -228,13 +228,22 @@ class DatasetsPage(QWidget):
         if not self.selected_dataset:
             QMessageBox.warning(self, "No Dataset Selected", "Please select a dataset to delete.")
             return
-        else:
+
+        reply = QMessageBox.question(
+            self,
+            "Confirm Deletion",
+            "Are you sure you want to delete the selected dataset?\n\n"
+            "This action cannot be undone.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+
+        if reply == QMessageBox.StandardButton.Yes:
             success, message = datasets.delete_dataset(self.selected_dataset)
             if success:
                 QMessageBox.information(self, "Deleted", message)
                 self.selected_dataset = None
                 self.refresh_page()
-
             else:
                 QMessageBox.critical(self, "Delete Failed", message)
 
