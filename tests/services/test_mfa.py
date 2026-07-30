@@ -4,6 +4,10 @@ Only the pure ``_find_conda`` resolution logic is covered here; the subprocess
 wrappers shell out to MFA and conda and are exercised by integration runs.
 """
 
+import subprocess
+
+import pytest
+
 from voxkit.services import mfa
 
 
@@ -106,3 +110,115 @@ class TestMfaInvocation:
         prefix, _ = mfa._mfa_invocation(conda_path="/some/explicit/conda")
 
         assert "conda" not in prefix[0]
+
+
+class TestEnsureMfaServerRunning:
+    """The server commands must never have their output piped.
+
+    Regression guard for a permanent app freeze: ``mfa server start`` has
+    pg_ctl spawn a detached Postgres daemon that inherits our stdout/stderr
+    handles and outlives the call. If those are pipes, they never reach EOF
+    while the server is up, and ``subprocess.run`` blocks forever -- past its
+    own ``timeout=``, because on Windows a TimeoutExpired makes ``run`` call
+    ``communicate()`` a second time with no timeout. Only reproducible when no
+    server is already running, which is what made it easy to miss.
+    """
+
+    def _calls(self, monkeypatch, tmp_path):
+        monkeypatch.setattr(mfa.sys, "platform", "win32")
+        monkeypatch.setattr(mfa.mfa_provision, "is_aligner_env_ready", lambda: True)
+        monkeypatch.setattr(
+            mfa.mfa_provision, "vendored_micromamba_path", lambda: tmp_path / "mm.exe"
+        )
+        monkeypatch.setattr(mfa.mfa_provision, "bundled_env_path", lambda: tmp_path / "env")
+        monkeypatch.setattr(mfa.mfa_provision, "mfa_root_dir", lambda: tmp_path / "root")
+
+        calls = []
+        monkeypatch.setattr(mfa.subprocess, "run", lambda cmd, **kw: calls.append((cmd, kw)))
+        mfa._ensure_mfa_server_running()
+        return calls
+
+    def test_output_is_discarded_not_captured(self, monkeypatch, tmp_path):
+        calls = self._calls(monkeypatch, tmp_path)
+
+        assert calls, "expected server init/start to be invoked on win32"
+        for cmd, kwargs in calls:
+            assert not kwargs.get("capture_output"), f"{cmd[-2:]} must not pipe its output"
+            assert kwargs["stdout"] is subprocess.DEVNULL
+            assert kwargs["stderr"] is subprocess.DEVNULL
+
+    def test_enables_postgres_before_starting_the_server(self, monkeypatch, tmp_path):
+        """Starting the server is useless without flipping ``use_postgres``.
+
+        MFA defaults that setting to False and picks its backend from it when
+        it opens the corpus database, so without this it runs on SQLite --
+        and the race this whole function exists to dodge stays live while
+        `server start` still reports success.
+        """
+        calls = self._calls(monkeypatch, tmp_path)
+
+        assert [cmd[-2:] for cmd, _ in calls] == [
+            ["configure", "--enable_use_postgres"],
+            ["server", "init"],
+            ["server", "start"],
+        ]
+
+    def test_noop_off_windows(self, monkeypatch, tmp_path):
+        monkeypatch.setattr(mfa.sys, "platform", "darwin")
+        monkeypatch.setattr(
+            mfa.subprocess, "run", lambda *a, **k: pytest.fail("must not shell out off win32")
+        )
+
+        mfa._ensure_mfa_server_running()
+
+
+# NTSTATUS STATUS_ACCESS_VIOLATION as surfaced in a Windows exit code. Kept in
+# hex because the decimal form is ten digits, which the PHI scanner flags as a
+# phone number.
+ACCESS_VIOLATION = 0xC0000005
+
+
+class TestDescribeProcessFailure:
+    """A crashed process reports no output; the exit code must not be dropped.
+
+    Regression guard for the micromamba/MSVCP140 access violation, which
+    surfaced as a bare "Download failed with: " because only ``stderr`` --
+    empty, because the OS killed the process -- was reported.
+    """
+
+    def _result(self, returncode, stdout="", stderr=""):
+        return subprocess.CompletedProcess(
+            args=["micromamba"], returncode=returncode, stdout=stdout, stderr=stderr
+        )
+
+    def test_windows_crash_code_is_named_as_a_crash(self, monkeypatch):
+        monkeypatch.setattr(mfa.sys, "platform", "win32")
+
+        described = mfa.describe_process_failure(self._result(ACCESS_VIOLATION))
+
+        assert "crashed" in described
+        assert "0xC0000005" in described
+
+    def test_ordinary_exit_code_is_reported_plainly(self, monkeypatch):
+        monkeypatch.setattr(mfa.sys, "platform", "win32")
+
+        described = mfa.describe_process_failure(self._result(1, stderr="boom"))
+
+        assert "exit 1" in described
+        assert "stderr: boom" in described
+        assert "crashed" not in described
+
+    def test_non_windows_never_reports_a_crash(self, monkeypatch):
+        monkeypatch.setattr(mfa.sys, "platform", "linux")
+
+        described = mfa.describe_process_failure(self._result(ACCESS_VIOLATION))
+
+        assert f"exit {ACCESS_VIOLATION}" in described
+        assert "crashed" not in described
+
+    def test_empty_streams_are_omitted(self, monkeypatch):
+        monkeypatch.setattr(mfa.sys, "platform", "win32")
+
+        described = mfa.describe_process_failure(self._result(ACCESS_VIOLATION, stdout="  \n"))
+
+        assert "stdout" not in described

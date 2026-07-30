@@ -14,6 +14,28 @@ def _no_window() -> dict:
     return {}
 
 
+def describe_process_failure(result: subprocess.CompletedProcess) -> str:
+    """Render a failed subprocess in a form that survives a hard crash.
+
+    A process killed by the OS produces no stdout/stderr at all, so reporting
+    only ``stderr`` yields an empty message that reads like an ordinary "not
+    found" -- which is exactly how a micromamba access violation used to
+    surface (see `mfa_provision.vendored_micromamba_path`). Always lead with
+    the exit code, and name it as a crash when it looks like an NTSTATUS.
+    """
+    code = result.returncode
+    if sys.platform == "win32" and code is not None and code & 0xC0000000 == 0xC0000000:
+        summary = f"the process crashed (0x{code & 0xFFFFFFFF:08X}) without producing output"
+    else:
+        summary = f"exit {code}"
+
+    for label, stream in (("stderr", result.stderr), ("stdout", result.stdout)):
+        text = (stream or "").strip()
+        if text:
+            summary += f"\n{label}: {text}"
+    return summary
+
+
 def _mfa_invocation(conda_path: str | None = None) -> tuple[list[str], dict]:
     """Return (command_prefix, extra_env) for invoking `mfa <subcommand> ...`.
 
@@ -143,8 +165,9 @@ def ensure_dictionary_downloaded(
             list_cmd, capture_output=True, text=True, env=run_env, **_no_window()
         )
         assert dictionary_name in list_result.stdout, (
-            f"Dictionary '{dictionary_name}' is not available. "
-            f"Download failed with: {result.stderr}"
+            f"Dictionary '{dictionary_name}' is not available.\n"
+            f"Download failed: {describe_process_failure(result)}\n"
+            f"Listing dictionaries also failed: {describe_process_failure(list_result)}"
         )
         print(f"[mfa] Dictionary '{dictionary_name}' already available.")
     else:
@@ -161,23 +184,50 @@ def _ensure_mfa_server_running(conda_path: str | None = None) -> None:
     in the aligner conda env) does not have this race. macOS and Linux are
     not affected by the SQLite race in practice, so this is gated to win32
     to avoid changing their behavior.
+
+    Starting the server is not sufficient on its own: MFA picks its backend
+    from the ``use_postgres`` key in its global config, which **defaults to
+    False**. Without `configure --enable_use_postgres` it ignores the running
+    server and uses SQLite anyway, so the race above stays live while
+    everything looks healthy -- `server init`/`start` both report success and
+    a real Postgres server sits there unused. Configure first, then start,
+    since MFA reads the setting when it opens the corpus database.
     """
     if sys.platform != "win32":
         return
 
     prefix, extra_env = _mfa_invocation(conda_path)
     run_env = {**os.environ, **extra_env}
-    # Both calls are idempotent: `init` errors if the server dir already exists,
-    # `start` errors if it's already running. Either error state is the goal,
-    # so we ignore returncodes and only guard against true failures (timeout,
+    # All three calls are idempotent: `configure` just rewrites a key in the
+    # global config, `init` errors if the server dir already exists, `start`
+    # errors if it's already running. Either error state is the goal, so we
+    # ignore returncodes and only guard against true failures (timeout,
     # missing conda). If the server genuinely can't come up, alignment will
     # fall back to SQLite and surface its own error via the existing path.
-    for sub in (("server", "init"), ("server", "start")):
+    #
+    # Discard the output via DEVNULL rather than capturing it -- this must not
+    # create pipes. `server start` has `pg_ctl` spawn a *detached* Postgres
+    # daemon that outlives this call and inherits whatever stdout/stderr
+    # handles we hand it. With `capture_output=True` those are pipe write
+    # ends, so the pipes never reach EOF while the server is up and
+    # `communicate()` blocks indefinitely. `timeout=` does not save us: on
+    # Windows `subprocess.run` responds to TimeoutExpired by killing the child
+    # and calling `communicate()` a second time *with no timeout* to drain the
+    # reader threads, which hangs forever on the handle Postgres still holds --
+    # inside `subprocess.run`, before the `except` below can ever run. Observed
+    # as the app freezing permanently the first time it starts the server, and
+    # easy to miss afterwards because a server left running from a previous
+    # attempt makes `start` return immediately without spawning anything.
+    for sub in (
+        ("configure", "--enable_use_postgres"),
+        ("server", "init"),
+        ("server", "start"),
+    ):
         try:
             subprocess.run(
                 [*prefix, *sub],
-                capture_output=True,
-                text=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
                 timeout=60,
                 env=run_env,
                 **_no_window(),

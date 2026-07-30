@@ -72,6 +72,23 @@ feature, not theoretical:
   to a VoxKit-owned directory (`~/.voxkit/mfa-root`, via
   `mfa_provision.mfa_root_dir()`) keeps the bundled environment's MFA state
   fully separate from any pre-existing user setup.
+- **Never capture the output of `mfa server init`/`start`.** `pg_ctl` spawns
+  the Postgres daemon with inheritable handles, so it takes ownership of
+  whatever stdout/stderr it is given and keeps them open for as long as the
+  server runs. Under `capture_output=True` those are pipe write ends, the
+  pipes never reach EOF, and `subprocess.run` blocks forever -- the app
+  freezes permanently with no output, no error, and no crash. A `timeout=`
+  does **not** rescue it: on Windows `subprocess.run` handles TimeoutExpired
+  by killing the child and calling `communicate()` a second time *with no
+  timeout* to drain its reader threads (see CPython `subprocess.py`), which
+  blocks on the handle Postgres still holds -- so the hang happens inside
+  `subprocess.run`, before any `except TimeoutExpired` can run.
+  `_ensure_mfa_server_running()` passes `stdout`/`stderr=DEVNULL` for exactly
+  this reason; it discards the output anyway. This only reproduces when no
+  server is already running, and a stray server from an earlier attempt
+  outlives the app that started it -- so once you hit it, the *next* run
+  succeeds and hides the bug. To retest, stop it first:
+  `micromamba run -p ~/.voxkit/mfa-env python ~/.voxkit/mfa-env/Scripts/mfa-script.py server stop`.
 - **PostgreSQL's Unix-domain socket path has a hard 107-byte limit.**
   `mfa server init`/`start` (the Windows SQLite-race workaround) fails
   outright with a deeply nested `MFA_ROOT_DIR` -- confirmed via
