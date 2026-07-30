@@ -14,6 +14,9 @@ Notes
 - Outputs phonewise and framewise probability CSVs
 """
 
+import csv
+import re
+from datetime import datetime
 from pathlib import Path
 
 from pypllrcomputer import compute_pllr
@@ -25,6 +28,7 @@ from PyQt6.QtWidgets import (
     QLabel,
     QLineEdit,
     QMessageBox,
+    QProgressBar,
     QPushButton,
     QVBoxLayout,
     QWidget,
@@ -110,6 +114,66 @@ def get_pllr_settings_config() -> SettingsConfig:
     )
 
 
+def _append_run_metadata_to_csv(csv_path: str, run_metadata: dict[str, str]) -> None:
+    """Append run metadata columns to every row of a GOP output CSV, in place.
+
+    Why: compute_pllr() (external pypllrcomputer package) writes phonewise/
+    framewise CSVs with no provenance info, making it impossible to trace a
+    results file back to the corpus, engine, and model that produced it once
+    it's been moved or shared. Appending columns here avoids touching the
+    external package.
+
+    Args:
+        csv_path: Path to the CSV file to enrich. No-op if it doesn't exist.
+        run_metadata: Column name -> value pairs appended to every row.
+    """
+    path = Path(csv_path)
+    if not path.exists():
+        return
+
+    with open(path, "r", encoding="utf-8", newline="") as f:
+        rows = list(csv.reader(f))
+
+    if not rows:
+        return
+
+    header, *data_rows = rows
+    metadata_columns = list(run_metadata.keys())
+    metadata_values = [run_metadata[key] for key in metadata_columns]
+
+    with open(path, "w", encoding="utf-8", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(header + metadata_columns)
+        writer.writerows(row + metadata_values for row in data_rows)
+
+
+def _sanitize_filename_part(text: str) -> str:
+    """Make a string safe to embed in a filename across platforms."""
+    cleaned = re.sub(r"[^A-Za-z0-9_-]+", "_", text.strip())
+    return cleaned.strip("_") or "unknown"
+
+
+def _rename_with_run_metadata(
+    csv_path: str, corpus_name: str, engine_id: str, date_stamp: str
+) -> str:
+    """Rename a GOP output CSV to embed corpus/engine/date, returning the new path.
+
+    Why: the appended metadata columns identify a file's provenance once
+    opened, but don't help distinguish files at a glance in a file browser
+    when working across multiple corpora, engines, or runs.
+    """
+    path = Path(csv_path)
+    if not path.exists():
+        return csv_path
+
+    suffix = "_".join(
+        _sanitize_filename_part(part) for part in (corpus_name, engine_id, date_stamp)
+    )
+    new_path = path.with_name(f"{path.stem}_{suffix}{path.suffix}")
+    path.rename(new_path)
+    return str(new_path)
+
+
 class PLLRStacker(QWidget):
     """PLLR extraction pipeline page.
 
@@ -158,6 +222,7 @@ class PLLRStacker(QWidget):
                             "data": (
                                 alignment["engine_id"],
                                 alignment["model_metadata"]["name"],
+                                alignments.get_alignment_type(alignment),
                                 alignment["alignment_date"],
                                 alignment["status"],
                             ),
@@ -166,7 +231,7 @@ class PLLRStacker(QWidget):
 
                 self.pllr_alignment_dropdown.set_data(
                     rows,
-                    ["Engine ID", "Model Name", "Date Registered", "Status"],
+                    ["Engine ID", "Model Name", "Type", "Date Registered", "Status"],
                     placeholder="Click to select an alignment",
                 )
 
@@ -299,6 +364,15 @@ class PLLRStacker(QWidget):
         self.extract_status.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(self.extract_status)
 
+        # Indeterminate (busy) bar: range (0, 0) makes Qt render a bouncing
+        # bar instead of a percentage, since work here has no known progress.
+        self.extract_progress = QProgressBar()
+        self.extract_progress.setRange(0, 0)
+        self.extract_progress.setTextVisible(False)
+        self.extract_progress.setStyleSheet(Containers.PROGRESS_BAR)
+        self.extract_progress.setVisible(False)
+        layout.addWidget(self.extract_progress)
+
         layout.addStretch()
         return self
 
@@ -361,10 +435,17 @@ class PLLRStacker(QWidget):
             )
             return
 
-        is_cached = alignment_data["local"] == "True" or alignment_data["local"] is True
-        textgrid_path = (
-            alignment_data["tg_path"] + "/cache" if is_cached else alignment_data["tg_path"]
-        )
+        # tg_path is always the alignment's actual TextGrid directory --
+        # every alignment-creation path (create_alignment, create_hand_alignment,
+        # create_corrected_alignment) writes directly into it, never into a
+        # nested "cache" subfolder. That subfolder only exists for a *dataset's*
+        # cached audio (see get_dataset_data_path), a separate concept this
+        # used to incorrectly conflate with an alignment's `local` flag --
+        # which silently worked only because no alignment type previously had
+        # local=True without also being on a non-cached dataset; corrected
+        # alignments are always local=True regardless of the dataset's own
+        # cached flag, which is what exposed this.
+        textgrid_path = alignment_data["tg_path"]
         print(f"[DEBUG] TextGrid path from alignment: {textgrid_path}")
         print("[DEBUG] Checking if TextGrid path exists...")
 
@@ -386,14 +467,7 @@ class PLLRStacker(QWidget):
             QMessageBox.warning(self, "Invalid Dataset", "Could not find dataset metadata.")
             return
 
-        wavlab_path: Path | str | None = None
-        if not (dataset_meta["cached"] == "True" or dataset_meta["cached"] is True):
-            wavlab_path = dataset_meta["original_path"]
-
-        else:
-            dataset_root = datasets._get_dataset_root(selected_dataset_id)
-            if dataset_root:
-                wavlab_path = dataset_root / "cache"
+        wavlab_path: Path | str | None = datasets.get_dataset_data_path(dataset_meta)
 
         print(f"[DEBUG] Dataset root path: {wavlab_path}")
 
@@ -436,19 +510,24 @@ class PLLRStacker(QWidget):
         # Update UI
         self.extract_status.setText("Processing...")
         self.extract_status.setStyleSheet("color: #f39c12; font-size: 12px; margin-top: 5px;")
+        self.extract_progress.setVisible(True)
         self.extract_btn.setEnabled(False)
 
         print("[DEBUG] Starting worker thread...")
 
         # Start worker thread
         self.worker = WorkerThread(
-            lambda: self.extract_pllr_logic(textgrid_path, wavlab_path, output_path)
+            lambda: self.extract_pllr_logic(
+                textgrid_path, wavlab_path, output_path, dataset_meta, alignment_data
+            )
         )
         self.worker.finished.connect(self.on_extract_finished)
         self.worker.start()
         print("[DEBUG] Worker thread started")
 
-    def extract_pllr_logic(self, textgrid_path, wavlab_path, output_path):
+    def extract_pllr_logic(
+        self, textgrid_path, wavlab_path, output_path, dataset_meta=None, alignment_data=None
+    ):
         """Actual PLLR extraction logic"""
 
         print("\n=== EXTRACT PLLR LOGIC ===")
@@ -544,6 +623,46 @@ class PLLRStacker(QWidget):
                 aggregation_function=agg_fn,
             )
             print("[LOGIC] compute_pllr() completed successfully")
+
+            model_metadata = (alignment_data or {}).get("model_metadata") or {}
+            now = datetime.now()
+            run_metadata = {
+                "run_datetime": now.isoformat(timespec="seconds"),
+                "corpus_name": (dataset_meta or {}).get("name", ""),
+                "corpus_id": (dataset_meta or {}).get("id", ""),
+                "engine_id": (alignment_data or {}).get("engine_id", ""),
+                "model_name": model_metadata.get("name", ""),
+                "model_id": model_metadata.get("id", ""),
+            }
+            # Full timestamp (not just date) so multiple runs on the same day
+            # against the same corpus/engine never collide on rename below.
+            date_stamp = now.strftime("%Y%m%d_%H%M%S")
+
+            # compute_pllr() writes phonewise_path verbatim only when the
+            # aggregation function returns a single DataFrame. Aggregations
+            # like aggregate_by_phoneme_occurrence return a dict of
+            # per-statistic DataFrames instead, written to
+            # "{stem}_{method}.csv" (e.g. phonewise_proba_mean.csv) — so glob
+            # for every variant rather than assuming the literal filename.
+            phonewise_stem = Path(phonewise_path).stem
+            phonewise_outputs = list(Path(phonewise_path).parent.glob(f"{phonewise_stem}*.csv"))
+            if not phonewise_outputs:
+                print(f"[WARN] No phonewise output CSVs found matching {phonewise_stem}*.csv")
+
+            output_paths = [*phonewise_outputs, Path(framewise_path)]
+            renamed_paths = []
+            for csv_path in output_paths:
+                _append_run_metadata_to_csv(str(csv_path), run_metadata)
+                renamed_paths.append(
+                    _rename_with_run_metadata(
+                        str(csv_path),
+                        run_metadata["corpus_name"],
+                        run_metadata["engine_id"],
+                        date_stamp,
+                    )
+                )
+            print(f"[LOGIC] Appended run metadata and renamed output CSVs: {renamed_paths}")
+
             return "PLLR extracted successfully"
         except Exception as e:
             print(f"[ERROR] Exception in compute_pllr(): {type(e).__name__}")
@@ -560,6 +679,7 @@ class PLLRStacker(QWidget):
         print(f"[FINISHED] Message: {message}")
 
         self.extract_btn.setEnabled(True)
+        self.extract_progress.setVisible(False)
 
         if success:
             print("[FINISHED] Extraction completed successfully")

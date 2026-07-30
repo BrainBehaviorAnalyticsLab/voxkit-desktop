@@ -6,7 +6,6 @@ from voxkit.config.app_config import (
     AppConfig,
     get_active_profile,
     get_app_config,
-    get_config_path,
     get_config_root,
     get_profile_config_path,
 )
@@ -35,10 +34,6 @@ class TestConfigPaths:
         # Should be config/profiles/<profile_name>
         assert result.parent.name == "profiles"
 
-    def test_get_config_path_is_alias_for_profile_path(self):
-        # get_config_path is now an alias for get_profile_config_path
-        assert get_config_path() == get_profile_config_path()
-
 
 class TestAppConfig:
     def test_dataclass_fields(self):
@@ -52,17 +47,20 @@ class TestAppConfig:
         assert config.version == "1.0.0"
         assert config.description == "Test description"
         assert config.introduction == "Test intro"
-        assert config.help_url == "https://voxkit-web.vercel.app/help"
+        assert config.help_url is None
+        assert config.feedback_email is None
         config = AppConfig(
             app_name="TestApp",
             version="2.0.0",
             description="Desc",
             introduction="Intro",
             help_url="http://example.com/help",
+            feedback_email="feedback@example.com",
             release_date="2024-01-01",
             release_notes="Initial release",
         )
         assert config.help_url == "http://example.com/help"
+        assert config.feedback_email == "feedback@example.com"
         assert config.release_date == "2024-01-01"
         assert config.release_notes == "Initial release"
 
@@ -71,12 +69,13 @@ class TestAppConfigFromYaml:
     def test_from_yaml_success(self, tmp_path):
         yaml_content = """
 app_name: MyApp
-version: 1.2.3
 description: My application description
 introduction: Welcome to MyApp
 help_url: http://myapp.com/help
 release_date: "2024-06-01"
 release_notes: Bug fixes and improvements
+contact_info:
+  email_support: feedback@example.com
 """
         config_file = tmp_path / "app_info.yaml"
         config_file.write_text(yaml_content)
@@ -84,10 +83,10 @@ release_notes: Bug fixes and improvements
         config = AppConfig.from_yaml(config_file)
 
         assert config.app_name == "MyApp"
-        assert config.version == "1.2.3"
         assert config.description == "My application description"
         assert config.introduction == "Welcome to MyApp"
         assert config.help_url == "http://myapp.com/help"
+        assert config.feedback_email == "feedback@example.com"
         assert config.release_date == "2024-06-01"
         assert config.release_notes == "Bug fixes and improvements"
 
@@ -100,10 +99,10 @@ release_notes: Bug fixes and improvements
         config = AppConfig.from_yaml(config_file)
 
         assert config.app_name == "VoxKit"
-        assert config.version == "0.0.0"
         assert config.description == ""
         assert config.introduction == ""
         assert config.help_url == "https://voxkit-web.vercel.app/help"
+        assert config.feedback_email is None
         nonexistent_file = tmp_path / "nonexistent.yaml"
 
         with pytest.raises(FileNotFoundError) as exc_info:
@@ -114,7 +113,7 @@ release_notes: Bug fixes and improvements
     def test_from_yaml_partial_config(self, tmp_path):
         yaml_content = """
 app_name: PartialApp
-version: 0.1.0
+feedback_email: support@example.com
 """
         config_file = tmp_path / "app_info.yaml"
         config_file.write_text(yaml_content)
@@ -122,9 +121,25 @@ version: 0.1.0
         config = AppConfig.from_yaml(config_file)
 
         assert config.app_name == "PartialApp"
-        assert config.version == "0.1.0"
         assert config.description == ""
         assert config.introduction == ""
+        assert config.feedback_email == "support@example.com"
+
+
+class TestVersionFile:
+    """Verify the canonical version source (config/VERSION)."""
+
+    def test_version_file_exists(self):
+        version_file = get_config_root() / "VERSION"
+        assert version_file.exists(), f"Expected canonical version file at {version_file}"
+
+    def test_version_file_has_nonempty_version(self):
+        version = (get_config_root() / "VERSION").read_text(encoding="utf-8").strip()
+        assert version, "config/VERSION is empty"
+        # Loose sanity check: at least one digit and a dot (e.g. "0.4.1").
+        assert any(ch.isdigit() for ch in version) and "." in version, (
+            f"config/VERSION does not look like a version string: {version!r}"
+        )
 
 
 class TestAppConfigLoadDefault:

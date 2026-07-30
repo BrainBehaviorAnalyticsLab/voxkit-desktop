@@ -9,8 +9,7 @@ API
 
 from typing import Any
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QDialog, QLabel, QMessageBox
+from PyQt6.QtWidgets import QDialog, QMessageBox
 
 from voxkit.gui.frameworks.categorical_table.categorical_table import CategoricalTableWidget
 from voxkit.gui.frameworks.settings_modal import (
@@ -81,12 +80,6 @@ class ManageAlignersWidget(CategoricalTableWidget):
 
         self.layout().setSpacing(20)
         self.layout().setContentsMargins(0, 0, 0, 0)
-
-        # === Footer Credit ===
-        credit = QLabel("VoxKit by BrainBehaviorAnalyticsLab")
-        credit.setStyleSheet("color: #999; font-size: 10px; padding: 5px;")
-        credit.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.layout().addWidget(credit)
 
     def get_engines(self) -> list:
         """Return engines that have 'align' or 'train' tools available."""
@@ -193,16 +186,16 @@ class ManageAlignersWidget(CategoricalTableWidget):
         # Create settings config
         config = SettingsConfig(
             title="Register New Model",
-            dimensions=(400, 250),
+            dimensions=(400, 320),
             apply_blur=False,
             store_file="model_registration_settings.json",
             fields=[
                 FieldConfig(
                     name="model_path",
                     label="Model Path",
-                    field_type=FieldType.LINEEDIT,
+                    field_type=FieldType.DIRPATH,
                     default_value="",
-                    placeholder="Browse for model directory...",
+                    placeholder="e.g., /home/acoustic-models",
                     tooltip="Path to the model directory or file",
                 ),
                 FieldConfig(

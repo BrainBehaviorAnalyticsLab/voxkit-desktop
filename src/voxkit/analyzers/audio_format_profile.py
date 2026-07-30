@@ -18,6 +18,8 @@ from collections import Counter
 from pathlib import Path
 from typing import Any, Dict, List
 
+from voxkit.storage.constants import SUPERSET_AUDIO_EXTENSIONS
+
 from .base import DatasetAnalyzer
 
 logger = logging.getLogger(__name__)
@@ -38,7 +40,7 @@ class AudioFormatProfileAnalyzer(DatasetAnalyzer):
         import torchaudio
 
         results = []
-        audio_extensions = {".wav", ".flac", ".mp3", ".ogg", ".m4a"}
+        audio_extensions = SUPERSET_AUDIO_EXTENSIONS
 
         try:
             for entry in os.scandir(dataset_path):

@@ -14,6 +14,8 @@ from typing import Optional
 
 import yaml
 
+from voxkit.config.constants import DEFAULT_HELP_URL
+
 
 def get_config_root() -> Path:
     """Get the path to the config root directory.
@@ -96,28 +98,10 @@ def resolve_config_file(filename: str) -> Path:
     if default_path.exists():
         return default_path
 
-    # Fall back to legacy location (config root)
-    legacy_path = config_root / filename
-    if legacy_path.exists():
-        return legacy_path
-
+    # Throw error if not found in either location
     raise FileNotFoundError(
-        f"Config file '{filename}' not found in profile '{profile}', "
-        f"default profile, or config root"
+        f"Config file '{filename}' not found in profile '{profile}' or default profile"
     )
-
-
-# Legacy alias for backwards compatibility
-def get_config_path() -> Path:
-    """Get the path to the config directory.
-
-    Deprecated: Use get_profile_config_path() for profile-aware loading,
-    or get_config_root() for the config root directory.
-
-    Returns:
-        Path to the active profile's config directory
-    """
-    return get_profile_config_path()
 
 
 @dataclass
@@ -128,7 +112,8 @@ class AppConfig:
     version: str
     description: str
     introduction: str
-    help_url: str = "https://voxkit-web.vercel.app/help"
+    help_url: str | None = None
+    feedback_email: str | None = None
     release_date: Optional[str] = None
     release_notes: Optional[str] = None
     log_max_bytes: int = 5 * 1024 * 1024
@@ -152,14 +137,21 @@ class AppConfig:
             raise FileNotFoundError(f"App config file not found: {config_path}")
 
         with open(config_path, "r", encoding="utf-8") as f:
-            data = yaml.safe_load(f)
+            data = yaml.safe_load(f) or {}
+        contact_info = data.get("contact_info", {})
+
+        # Version is sourced from config/VERSION (single source of truth),
+        # not from per-profile YAML.
+        version_file = get_config_root() / "VERSION"
+        version = version_file.read_text(encoding="utf-8").strip()
 
         return cls(
             app_name=data.get("app_name", "VoxKit"),
-            version=data.get("version", "0.0.0"),
+            version=version,
             description=data.get("description", ""),
             introduction=data.get("introduction", ""),
-            help_url=data.get("help_url", "https://voxkit-web.vercel.app/help"),
+            help_url=data.get("help_url", DEFAULT_HELP_URL),
+            feedback_email=data.get("feedback_email") or contact_info.get("email_support"),
             release_date=data.get("release_date"),
             release_notes=data.get("release_notes"),
             log_max_bytes=int(data.get("log_max_bytes", 5 * 1024 * 1024)),

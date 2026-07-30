@@ -40,7 +40,7 @@ from typing import Literal, Tuple, TypedDict
 
 from voxkit.storage.utils import generate_unique_id, get_storage_root, readable_from_unique_id
 
-from .config import MODELS_ROOT
+from .constants import MODELS_ROOT
 
 
 class ModelMetadata(TypedDict):

@@ -4,6 +4,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from voxkit.services import mfa_provision
+
 
 def _no_window() -> dict:
     """Return creationflags to suppress console windows on Windows."""
@@ -12,8 +14,91 @@ def _no_window() -> dict:
     return {}
 
 
-def _find_conda() -> str:
-    """Return the conda executable path, checking common install locations on Windows."""
+def describe_process_failure(result: subprocess.CompletedProcess) -> str:
+    """Render a failed subprocess in a form that survives a hard crash.
+
+    A process killed by the OS produces no stdout/stderr at all, so reporting
+    only ``stderr`` yields an empty message that reads like an ordinary "not
+    found" -- which is exactly how a micromamba access violation used to
+    surface (see `mfa_provision.vendored_micromamba_path`). Always lead with
+    the exit code, and name it as a crash when it looks like an NTSTATUS.
+    """
+    code = result.returncode
+    if sys.platform == "win32" and code is not None and code & 0xC0000000 == 0xC0000000:
+        summary = f"the process crashed (0x{code & 0xFFFFFFFF:08X}) without producing output"
+    else:
+        summary = f"exit {code}"
+
+    for label, stream in (("stderr", result.stderr), ("stdout", result.stdout)):
+        text = (stream or "").strip()
+        if text:
+            summary += f"\n{label}: {text}"
+    return summary
+
+
+def _mfa_invocation(conda_path: str | None = None) -> tuple[list[str], dict]:
+    """Return (command_prefix, extra_env) for invoking `mfa <subcommand> ...`.
+
+    Prefers VoxKit's own bundled/provisioned aligner environment
+    (`mfa_provision`) when it's ready, so most users never need conda
+    installed at all. Falls back to exactly the previous behavior --
+    `_find_conda(conda_path)` + `conda run -n aligner mfa` -- for anyone
+    with their own pre-existing conda + `aligner` environment, with zero
+    change to that path.
+
+    The bundled environment is invoked as `micromamba run -p <env> python
+    <env>/Scripts/mfa-script.py`, not the `mfa`/`mfa.exe` entry-point stub
+    directly -- confirmed via real-world testing that the stub can fail to
+    launch ("failed to create process") on a machine where invoking Python
+    with the underlying script directly, inside the same activated
+    environment, works correctly. `micromamba run -p <env>` still performs
+    full environment activation (PATH/DLL search paths Kaldi and the
+    bundled Postgres server need), just naming the interpreter explicitly
+    rather than relying on the stub.
+    """
+    # is_aligner_env_ready() only ever returns True on win32 in v1 (the only
+    # platform with a bundled lockfile today), so the Windows-specific
+    # env-layout paths below (Scripts/, python.exe) are always correct here.
+    if mfa_provision.is_aligner_env_ready():
+        micromamba = str(mfa_provision.vendored_micromamba_path())
+        env_path = mfa_provision.bundled_env_path()
+        python = str(env_path / "python.exe")
+        script = str(env_path / "Scripts" / "mfa-script.py")
+        prefix = [micromamba, "run", "-p", str(env_path), python, script]
+        extra_env = {"MFA_ROOT_DIR": str(mfa_provision.mfa_root_dir())}
+        return prefix, extra_env
+
+    conda = _find_conda(conda_path)
+    return [conda, "run", "-n", "aligner", "mfa"], {}
+
+
+def _find_conda(conda_path: str | None = None) -> str:
+    """Return the conda executable path.
+
+    Resolution order:
+        1. ``conda_path`` argument, when it points to an existing file. This is
+           the path a user configures in the MFA engine settings, primarily so
+           Windows users with a non-standard Anaconda/Miniconda install can
+           point VoxKit straight at their ``conda.exe``.
+        2. The ``VOXKIT_CONDA_PATH`` environment variable, when it points to an
+           existing file.
+        3. ``conda`` on the system PATH.
+        4. Common install locations on Windows.
+
+    Args:
+        conda_path: Optional user-configured path to the conda executable.
+
+    Raises:
+        FileNotFoundError: If conda cannot be located through any of the above.
+    """
+    # User-configured path (settings dialog) or environment override take
+    # precedence over auto-detection so a deliberate choice always wins.
+    for candidate in (conda_path, os.environ.get("VOXKIT_CONDA_PATH")):
+        if candidate:
+            resolved = Path(candidate).expanduser()
+            if resolved.exists():
+                return str(resolved)
+
     # Fast path: conda is already on PATH
     if shutil.which("conda"):
         return "conda"
@@ -44,60 +129,52 @@ def _find_conda() -> str:
     raise FileNotFoundError(
         "conda not found. Install Miniconda from https://docs.conda.io/en/latest/miniconda.html "
         "and create the aligner environment with: "
-        "conda create -n aligner -c conda-forge montreal-forced-aligner"
+        "conda create -n aligner -c conda-forge montreal-forced-aligner. "
+        "If conda is installed but not on PATH (common on Windows), set its full path in the "
+        "MFA engine settings ('Conda Path') or via the VOXKIT_CONDA_PATH environment variable."
     )
 
 
-def ensure_dictionary_downloaded(dictionary_name: str = "english_us_arpa") -> None:
+def ensure_dictionary_downloaded(
+    dictionary_name: str = "english_us_arpa", conda_path: str | None = None
+) -> None:
     """Ensure the specified MFA dictionary is downloaded.
 
     Args:
         dictionary_name: Name of the dictionary to download (default: "english_us_arpa").
+        conda_path: Optional user-configured path to the conda executable.
 
     Raises:
         AssertionError: If dictionary download fails and dictionary is not available.
     """
-    conda = _find_conda()
-    download_cmd = [
-        conda,
-        "run",
-        "-n",
-        "aligner",
-        "mfa",
-        "model",
-        "download",
-        "dictionary",
-        dictionary_name,
-    ]
+    prefix, extra_env = _mfa_invocation(conda_path)
+    run_env = {**os.environ, **extra_env}
+    download_cmd = [*prefix, "model", "download", "dictionary", dictionary_name]
 
     print(f"[mfa] Ensuring dictionary '{dictionary_name}' is downloaded...")
-    result = subprocess.run(download_cmd, capture_output=True, text=True, **_no_window())
+    result = subprocess.run(
+        download_cmd, capture_output=True, text=True, env=run_env, **_no_window()
+    )
 
     # Check if dictionary is available (either just downloaded or already present)
     # MFA returns success if already downloaded, or downloads successfully
     if result.returncode != 0:
         # Try to list dictionaries to check if it's already available
-        list_cmd = [
-            conda,
-            "run",
-            "-n",
-            "aligner",
-            "mfa",
-            "model",
-            "list",
-            "dictionary",
-        ]
-        list_result = subprocess.run(list_cmd, capture_output=True, text=True, **_no_window())
+        list_cmd = [*prefix, "model", "list", "dictionary"]
+        list_result = subprocess.run(
+            list_cmd, capture_output=True, text=True, env=run_env, **_no_window()
+        )
         assert dictionary_name in list_result.stdout, (
-            f"Dictionary '{dictionary_name}' is not available. "
-            f"Download failed with: {result.stderr}"
+            f"Dictionary '{dictionary_name}' is not available.\n"
+            f"Download failed: {describe_process_failure(result)}\n"
+            f"Listing dictionaries also failed: {describe_process_failure(list_result)}"
         )
         print(f"[mfa] Dictionary '{dictionary_name}' already available.")
     else:
         print(f"[mfa] Dictionary '{dictionary_name}' is ready.")
 
 
-def _ensure_mfa_server_running() -> None:
+def _ensure_mfa_server_running(conda_path: str | None = None) -> None:
     """Start MFA's bundled Postgres server on Windows. No-op elsewhere.
 
     Why: MFA 3.3.x's SQLite backend has a multiprocessing race in
@@ -107,23 +184,52 @@ def _ensure_mfa_server_running() -> None:
     in the aligner conda env) does not have this race. macOS and Linux are
     not affected by the SQLite race in practice, so this is gated to win32
     to avoid changing their behavior.
+
+    Starting the server is not sufficient on its own: MFA picks its backend
+    from the ``use_postgres`` key in its global config, which **defaults to
+    False**. Without `configure --enable_use_postgres` it ignores the running
+    server and uses SQLite anyway, so the race above stays live while
+    everything looks healthy -- `server init`/`start` both report success and
+    a real Postgres server sits there unused. Configure first, then start,
+    since MFA reads the setting when it opens the corpus database.
     """
     if sys.platform != "win32":
         return
 
-    conda = _find_conda()
-    # Both calls are idempotent: `init` errors if the server dir already exists,
-    # `start` errors if it's already running. Either error state is the goal,
-    # so we ignore returncodes and only guard against true failures (timeout,
+    prefix, extra_env = _mfa_invocation(conda_path)
+    run_env = {**os.environ, **extra_env}
+    # All three calls are idempotent: `configure` just rewrites a key in the
+    # global config, `init` errors if the server dir already exists, `start`
+    # errors if it's already running. Either error state is the goal, so we
+    # ignore returncodes and only guard against true failures (timeout,
     # missing conda). If the server genuinely can't come up, alignment will
     # fall back to SQLite and surface its own error via the existing path.
-    for sub in (("server", "init"), ("server", "start")):
+    #
+    # Discard the output via DEVNULL rather than capturing it -- this must not
+    # create pipes. `server start` has `pg_ctl` spawn a *detached* Postgres
+    # daemon that outlives this call and inherits whatever stdout/stderr
+    # handles we hand it. With `capture_output=True` those are pipe write
+    # ends, so the pipes never reach EOF while the server is up and
+    # `communicate()` blocks indefinitely. `timeout=` does not save us: on
+    # Windows `subprocess.run` responds to TimeoutExpired by killing the child
+    # and calling `communicate()` a second time *with no timeout* to drain the
+    # reader threads, which hangs forever on the handle Postgres still holds --
+    # inside `subprocess.run`, before the `except` below can ever run. Observed
+    # as the app freezing permanently the first time it starts the server, and
+    # easy to miss afterwards because a server left running from a previous
+    # attempt makes `start` return immediately without spawning anything.
+    for sub in (
+        ("configure", "--enable_use_postgres"),
+        ("server", "init"),
+        ("server", "start"),
+    ):
         try:
             subprocess.run(
-                [conda, "run", "-n", "aligner", "mfa", *sub],
-                capture_output=True,
-                text=True,
+                [*prefix, *sub],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
                 timeout=60,
+                env=run_env,
                 **_no_window(),
             )
         except (subprocess.TimeoutExpired, FileNotFoundError):
@@ -131,7 +237,12 @@ def _ensure_mfa_server_running() -> None:
 
 
 def run_mfa_align(
-    corpus_dir, model_path, output_dir, dictionary_name="english_us_arpa", eval_dir=None
+    corpus_dir,
+    model_path,
+    output_dir,
+    dictionary_name="english_us_arpa",
+    eval_dir=None,
+    conda_path=None,
 ) -> None:
     """
     Run MFA align command with the provided arguments.
@@ -142,29 +253,18 @@ def run_mfa_align(
         output_dir: Path to output TextGrids.
         dictionary_name: MFA dictionary name (default: "english_us_arpa").
         eval_dir: Optional path to reference alignments for evaluation.
+        conda_path: Optional user-configured path to the conda executable.
 
     Raises:
         AssertionError: If dictionary is not available.
         subprocess.CalledProcessError: If MFA alignment fails.
     """
     # Ensure dictionary is downloaded
-    ensure_dictionary_downloaded(dictionary_name)
-    _ensure_mfa_server_running()
+    ensure_dictionary_downloaded(dictionary_name, conda_path=conda_path)
+    _ensure_mfa_server_running(conda_path=conda_path)
 
-    conda = _find_conda()
-    cmd = [
-        conda,
-        "run",
-        "-n",
-        "aligner",
-        "mfa",
-        "align",
-        corpus_dir,
-        dictionary_name,
-        model_path,
-        output_dir,
-        "--clean",  # Add clean flag to avoid cache issues
-    ]
+    prefix, extra_env = _mfa_invocation(conda_path)
+    cmd = [*prefix, "align", corpus_dir, dictionary_name, model_path, output_dir, "--clean"]
 
     if eval_dir:
         cmd.append("--reference_alignments")
@@ -172,7 +272,14 @@ def run_mfa_align(
 
     try:
         print(f"[mfa.run_mfa_align] Running MFA align with command: {' '.join(cmd)}")
-        subprocess.run(cmd, check=True, capture_output=True, text=True, **_no_window())
+        subprocess.run(
+            cmd,
+            check=True,
+            capture_output=True,
+            text=True,
+            env={**os.environ, **extra_env},
+            **_no_window(),
+        )
         print("[mfa.run_mfa_align] MFA alignment completed successfully.")
     except subprocess.CalledProcessError as e:
         stderr_msg = e.stderr.strip() if e.stderr else "(no output captured)"
@@ -186,6 +293,7 @@ def run_mfa_adapt(
     output_model_path,
     dictionary_name="english_us_arpa",
     num_iterations=1,
+    conda_path=None,
 ) -> None:
     """
     Run MFA adapt command with the provided arguments.
@@ -196,22 +304,19 @@ def run_mfa_adapt(
         output_model_path (str): Path where the adapted model will be saved.
         dictionary_name (str): Name of the dictionary to use (default: "english_us_arpa").
         num_iterations (int): Number of adaptation iterations.
+        conda_path (str | None): Optional user-configured path to the conda executable.
 
     Raises:
         AssertionError: If dictionary is not available.
         subprocess.CalledProcessError: If MFA adaptation fails.
     """
     # Ensure dictionary is downloaded
-    ensure_dictionary_downloaded(dictionary_name)
-    _ensure_mfa_server_running()
+    ensure_dictionary_downloaded(dictionary_name, conda_path=conda_path)
+    _ensure_mfa_server_running(conda_path=conda_path)
 
-    conda = _find_conda()
+    prefix, extra_env = _mfa_invocation(conda_path)
     cmd = [
-        conda,
-        "run",
-        "-n",
-        "aligner",
-        "mfa",
+        *prefix,
         "adapt",
         corpus_dir,
         dictionary_name,
@@ -224,7 +329,14 @@ def run_mfa_adapt(
 
     try:
         print(f"[mfa.run_mfa_adapt] Running MFA adapt with command: {' '.join(cmd)}")
-        subprocess.run(cmd, check=True, capture_output=True, text=True, **_no_window())
+        subprocess.run(
+            cmd,
+            check=True,
+            capture_output=True,
+            text=True,
+            env={**os.environ, **extra_env},
+            **_no_window(),
+        )
         print("[mfa.run_mfa_adapt] MFA adaptation completed successfully.")
     except subprocess.CalledProcessError as e:
         print(f"[mfa.run_mfa_adapt] MFA adaptation failed with error: {e}")

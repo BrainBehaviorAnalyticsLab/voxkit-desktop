@@ -2978,7 +2978,6 @@ wheels = [
 
 [[package]]
 name = "pypllr-gui"
-version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "accelerate" },
@@ -2986,6 +2985,8 @@ dependencies = [
     { name = "datasets" },
     { name = "faster-whisper" },
     { name = "keyring" },
+    { name = "librosa" },
+    { name = "matplotlib" },
     { name = "numba" },
     { name = "pre-commit" },
     { name = "pydantic" },
@@ -3028,6 +3029,8 @@ requires-dist = [
     { name = "datasets", specifier = ">=4.3.0" },
     { name = "faster-whisper", specifier = ">=1.1.0" },
     { name = "keyring", specifier = ">=25.6.0" },
+    { name = "librosa", specifier = ">=0.10.0" },
+    { name = "matplotlib", specifier = ">=3.8.0" },
     { name = "numba", specifier = ">=0.59.0" },
     { name = "pre-commit", specifier = ">=4.3.0" },
     { name = "pydantic", specifier = ">=2.12.3" },

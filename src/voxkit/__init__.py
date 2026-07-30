@@ -10,11 +10,23 @@ Subpackages
 - **config**: Application and pipeline configuration
 """
 
-__version__ = "0.4.0"
-__author__ = "Beckett Frey - code@beckettfrey.com"
+import sys
+from pathlib import Path
 
 # Import subpackages for pdoc discoverability (not re-exported in __all__)
 from . import analyzers, config, engines, gui, storage
+
+
+def _read_version() -> str:
+    if getattr(sys, "_MEIPASS", None):
+        root = Path(getattr(sys, "_MEIPASS")) / "config"
+    else:
+        root = Path(__file__).resolve().parents[2] / "config"
+    return (root / "VERSION").read_text(encoding="utf-8").strip()
+
+
+__version__ = _read_version()
+__author__ = "Beckett Frey - code@beckettfrey.com"
 
 __all__ = [
     "__version__",

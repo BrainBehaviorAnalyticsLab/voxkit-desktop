@@ -113,7 +113,7 @@ if getattr(sys, 'frozen', False):
 from PyQt6.QtWidgets import QApplication
 from voxkit.config import STARTUP_SCRIPT
 from voxkit.gui import VoxKitGUI
-from voxkit.gui.workers.startup import execute_startup_script
+from voxkit.gui.workers.startup import execute_mfa_provisioning, execute_startup_script
 
 def main():
     # Initialize logging as early as possible so startup work is captured.
@@ -139,6 +139,10 @@ def main():
     # Execute startup script on first launch (before GUI initialization)
     log.info("Running startup script")
     execute_startup_script(STARTUP_SCRIPT, app)
+
+    # Gated on the environment being missing rather than on first launch, so a
+    # failed or interrupted setup is retried instead of being lost forever.
+    execute_mfa_provisioning(app)
 
     app_config = None
     pipeline_config = None

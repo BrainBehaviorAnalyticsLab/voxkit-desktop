@@ -14,6 +14,8 @@ class FieldType(Enum):
         CHECKBOX: Boolean toggle field (ToggleSwitch)
         LINEEDIT: Text input field (QLineEdit)
         COMBOBOX: Dropdown selection field (QComboBox)
+        DIRPATH: Text input field (QLineEdit) with a "Browse..." button that
+            opens a native directory picker and fills in the selected path.
     """
 
     SPINBOX = "spinbox"
@@ -21,6 +23,7 @@ class FieldType(Enum):
     CHECKBOX = "checkbox"
     LINEEDIT = "lineedit"
     COMBOBOX = "combobox"
+    DIRPATH = "dirpath"
 
 
 @dataclass

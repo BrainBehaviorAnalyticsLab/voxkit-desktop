@@ -35,7 +35,7 @@ from voxkit.gui.components.csv_viewer_dialog import CSVViewerDialog
 from voxkit.gui.styles import Buttons, Containers, Labels
 from voxkit.gui.workers import DatasetRegistrationWorker
 from voxkit.storage import alignments, datasets
-from voxkit.storage.alignments import HAND_ALIGNMENT_SENTINEL, AlignmentMetadata
+from voxkit.storage.alignments import HAND_ALIGNMENT_SENTINEL, AlignmentMetadata, get_alignment_type
 from voxkit.storage.datasets import DatasetMetadata
 
 # Virtual engine ids that are not registered in the engines registry but may
@@ -122,12 +122,6 @@ class DatasetsPage(QWidget):
 
         main_layout.setSpacing(20)
         main_layout.setContentsMargins(0, 0, 0, 0)
-
-        # === Footer Credit ===
-        credit = QLabel("VoxKit by BrainBehaviorAnalyticsLab")
-        credit.setStyleSheet("color: #999; font-size: 10px; padding: 5px;")
-        credit.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        main_layout.addWidget(credit)
 
     def refresh_page(self):
         """Refresh the entire page content"""
@@ -228,13 +222,22 @@ class DatasetsPage(QWidget):
         if not self.selected_dataset:
             QMessageBox.warning(self, "No Dataset Selected", "Please select a dataset to delete.")
             return
-        else:
+
+        reply = QMessageBox.question(
+            self,
+            "Confirm Deletion",
+            "Are you sure you want to delete the selected dataset?\n\n"
+            "This action cannot be undone.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+
+        if reply == QMessageBox.StandardButton.Yes:
             success, message = datasets.delete_dataset(self.selected_dataset)
             if success:
                 QMessageBox.information(self, "Deleted", message)
                 self.selected_dataset = None
                 self.refresh_page()
-
             else:
                 QMessageBox.critical(self, "Delete Failed", message)
 
@@ -273,11 +276,12 @@ class DatasetsPage(QWidget):
 
         # Dataset table
         self.dataset_table = QTableWidget()
-        self.dataset_table.setColumnCount(7)
+        self.dataset_table.setColumnCount(8)
         self.dataset_table.setHorizontalHeaderLabels(
             [
                 "Name",
                 "Description",
+                "Location",
                 "Cached",
                 "De-identified",
                 "Transcribed",
@@ -291,10 +295,14 @@ class DatasetsPage(QWidget):
         if header is not None:
             header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
             header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
-            for i in range(2, 6):
+            header.setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
+            for i in range(3, 7):
                 header.setSectionResizeMode(i, QHeaderView.ResizeMode.ResizeToContents)
-            header.setSectionResizeMode(6, QHeaderView.ResizeMode.Fixed)
-        self.dataset_table.setColumnWidth(6, 100)
+            header.setSectionResizeMode(7, QHeaderView.ResizeMode.Fixed)
+        self.dataset_table.setColumnWidth(7, 100)
+        # Elide long paths (Location column) from the left so the distinguishing
+        # tail of the path stays visible instead of the shared "C:\Users\..." prefix.
+        self.dataset_table.setTextElideMode(Qt.TextElideMode.ElideLeft)
 
         self.dataset_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.dataset_table.setSelectionMode(QTableWidget.SelectionMode.SingleSelection)
@@ -374,9 +382,9 @@ class DatasetsPage(QWidget):
 
         # Alignments table
         self.alignments_table = QTableWidget()
-        self.alignments_table.setColumnCount(5)
+        self.alignments_table.setColumnCount(7)
         self.alignments_table.setHorizontalHeaderLabels(
-            ["Engine", "Model", "Date Aligned", "Status", "Actions"]
+            ["Engine", "Model", "Type", "Location", "Date Aligned", "Status", "Actions"]
         )
 
         # Configure alignments table
@@ -385,9 +393,14 @@ class DatasetsPage(QWidget):
             align_header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
             align_header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
             align_header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
-            align_header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
-            align_header.setSectionResizeMode(4, QHeaderView.ResizeMode.Fixed)
-        self.alignments_table.setColumnWidth(4, 150)
+            align_header.setSectionResizeMode(3, QHeaderView.ResizeMode.Stretch)
+            align_header.setSectionResizeMode(4, QHeaderView.ResizeMode.ResizeToContents)
+            align_header.setSectionResizeMode(5, QHeaderView.ResizeMode.ResizeToContents)
+            align_header.setSectionResizeMode(6, QHeaderView.ResizeMode.Fixed)
+        self.alignments_table.setColumnWidth(6, 150)
+        # Elide long paths (Location column) from the left so the distinguishing
+        # tail of the path stays visible instead of the shared "C:\Users\..." prefix.
+        self.alignments_table.setTextElideMode(Qt.TextElideMode.ElideLeft)
 
         # Disable selection and editing
         self.alignments_table.setSelectionMode(QTableWidget.SelectionMode.NoSelection)
@@ -501,10 +514,24 @@ class DatasetsPage(QWidget):
             model_item.setFont(font)
             self.alignments_table.setItem(row, 1, model_item)
 
+            # Type — provenance (automatic/hand/corrected), distinguishes a corrected
+            # alignment from the automatic one it was derived from, since they
+            # otherwise share the same engine/model.
+            type_item = QTableWidgetItem(get_alignment_type(alignment))
+            type_item.setFlags(type_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+            self.alignments_table.setItem(row, 2, type_item)
+
+            # Location — filesystem path to the alignment's TextGrid output
+            location = alignment.get("tg_path", "Unknown")
+            location_item = QTableWidgetItem(location)
+            location_item.setFlags(location_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+            location_item.setToolTip(location)
+            self.alignments_table.setItem(row, 3, location_item)
+
             # Date Aligned
             date_item = QTableWidgetItem(alignment["alignment_date"])
             date_item.setFlags(date_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
-            self.alignments_table.setItem(row, 2, date_item)
+            self.alignments_table.setItem(row, 4, date_item)
 
             # Status
             status_item = QTableWidgetItem(alignment.get("status", "Unknown"))
@@ -516,11 +543,11 @@ class DatasetsPage(QWidget):
                 status_item.setForeground(Qt.GlobalColor.darkYellow)
             elif status == "failed":
                 status_item.setForeground(Qt.GlobalColor.red)
-            self.alignments_table.setItem(row, 3, status_item)
+            self.alignments_table.setItem(row, 5, status_item)
 
             # Actions
             actions_widget = self._create_alignment_action_buttons(alignment)
-            self.alignments_table.setCellWidget(row, 4, actions_widget)
+            self.alignments_table.setCellWidget(row, 6, actions_widget)
 
         # Disconnect old connections and connect cell click for model column
         try:
@@ -623,20 +650,38 @@ class DatasetsPage(QWidget):
             SettingsConfig,
         )
 
+        # Build the Analysis Method tooltip from each analyzer's own description
+        # so it stays accurate as analyzers are added or changed.
+        analyzer_lines = [
+            f"<b>{a.name}:</b> {a.description}" for a in ManageAnalyzers.get_analyzers().values()
+        ]
+        analysis_tooltip = (
+            "Chooses how the dataset summary CSV is generated. Options:<br>"
+            + "<br>".join(analyzer_lines)
+        )
+
         # Create settings config
         config = SettingsConfig(
             title="Register New Dataset",
-            dimensions=(500, 400),
+            dimensions=(500, 500),
             apply_blur=False,  # Disable blur to avoid parent issues
             store_file="dataset_registration_settings.json",
             fields=[
                 FieldConfig(
                     name="dataset_path",
                     label="Dataset Path",
-                    field_type=FieldType.LINEEDIT,
+                    field_type=FieldType.DIRPATH,
                     default_value="",
-                    placeholder="Browse for dataset directory...",
-                    tooltip="Root directory containing speaker subdirectories",
+                    placeholder="e.g., /home/corpora/timit_train",
+                    tooltip=(
+                        "Root folder with one subfolder per speaker. Each speaker "
+                        "folder holds that speaker's audio files (e.g. .wav).<br>"
+                        "If <i>Transcribed</i> is enabled, every audio file needs a "
+                        "matching .lab transcript with the same name.<br><br>"
+                        "speaker_01/<br>"
+                        "&nbsp;&nbsp;utt_001.wav<br>"
+                        "&nbsp;&nbsp;utt_001.lab"
+                    ),
                 ),
                 FieldConfig(
                     name="dataset_name",
@@ -660,36 +705,52 @@ class DatasetsPage(QWidget):
                     field_type=FieldType.COMBOBOX,
                     default_value=self.analysis_methods[0] if self.analysis_methods else "Default",
                     options=self.analysis_methods,
-                    tooltip="Select the analysis method for generating the dataset summary CSV",
+                    tooltip=analysis_tooltip,
                 ),
                 FieldConfig(
                     name="cache",
                     label="Cache Dataset",
                     field_type=FieldType.CHECKBOX,
                     default_value=False,
-                    tooltip="Copy entire dataset to storage (recommended for remote datasets)",
+                    tooltip=(
+                        "Copy the entire dataset into VoxKit's storage now. "
+                        "Recommended for remote or temporary datasets so processing "
+                        "no longer depends on the original files staying in place."
+                    ),
                 ),
                 FieldConfig(
                     name="anonymize",
                     label="De-identified",
                     field_type=FieldType.CHECKBOX,
                     default_value=False,
-                    tooltip="Has personally identifiable information been removed?",
+                    tooltip=(
+                        "Mark that personally identifiable information (e.g. speaker "
+                        "names) has already been removed from this dataset. This is a "
+                        "label only — it does not modify your files."
+                    ),
                 ),
                 FieldConfig(
                     name="transcribed",
                     label="Transcribed",
                     field_type=FieldType.CHECKBOX,
                     default_value=False,
-                    tooltip="Mark as already containing transcriptions",
+                    tooltip=(
+                        "The dataset already includes transcripts. Each audio file "
+                        "must have a matching .lab text file with the same name in "
+                        "the same folder."
+                    ),
                 ),
                 FieldConfig(
                     name="hand_alignments_path",
                     label="Hand Alignments Path",
-                    field_type=FieldType.LINEEDIT,
+                    field_type=FieldType.DIRPATH,
                     default_value="",
-                    placeholder="Optional: path to pre-existing TextGrids...",
-                    tooltip="Optional directory containing hand-annotated TextGrid files",
+                    placeholder="Optional: directory of pre-existing TextGrids",
+                    tooltip=(
+                        "Optional. Folder of pre-existing hand-annotated TextGrid "
+                        "files to compare against or correct alignments with. Leave "
+                        "empty if you don't have them."
+                    ),
                 ),
             ],
         )
@@ -759,13 +820,6 @@ class DatasetsPage(QWidget):
         self.registration_worker.finished.connect(self.registration_complete)
         self.registration_worker.start()
 
-    def browse_dataset_path(self):
-        """Open directory picker for dataset path"""
-        directory = QFileDialog.getExistingDirectory(self, "Select Dataset Root Directory")
-        if directory:
-            return directory
-        return None
-
     def show_progress(self, message):
         """Show progress message"""
         print(message)
@@ -806,29 +860,35 @@ class DatasetsPage(QWidget):
             desc_item.setToolTip(meta["description"])
             self.dataset_table.setItem(index, 1, desc_item)
 
+            # Location — original corpus filesystem path (always recorded, even when cached)
+            location = meta.get("original_path", "Unknown")
+            location_item = QTableWidgetItem(location)
+            location_item.setToolTip(location)
+            self.dataset_table.setItem(index, 2, location_item)
+
             # Cached
             self.dataset_table.setItem(
-                index, 2, QTableWidgetItem("Yes" if meta["cached"] else "No")
+                index, 3, QTableWidgetItem("Yes" if meta["cached"] else "No")
             )
 
             # Anonymized
             self.dataset_table.setItem(
-                index, 3, QTableWidgetItem("Yes" if meta["anonymize"] else "No")
+                index, 4, QTableWidgetItem("Yes" if meta["anonymize"] else "No")
             )
 
             self.dataset_table.setItem(
-                index, 4, QTableWidgetItem("Yes" if meta.get("transcribed", False) else "No")
+                index, 5, QTableWidgetItem("Yes" if meta.get("transcribed", False) else "No")
             )
 
             # Registration date
             reg_date = meta.get("registration_date", "Unknown")
             if reg_date != "Unknown":
                 reg_date = reg_date.split("T")[0]  # Show only date part
-            self.dataset_table.setItem(index, 5, QTableWidgetItem(reg_date))
+            self.dataset_table.setItem(index, 6, QTableWidgetItem(reg_date))
 
             # Actions - Details button
             actions_widget = self._create_dataset_action_buttons(meta)
-            self.dataset_table.setCellWidget(index, 6, actions_widget)
+            self.dataset_table.setCellWidget(index, 7, actions_widget)
 
     def _create_dataset_action_buttons(self, dataset_meta: DatasetMetadata):
         """Create action buttons for a dataset row.

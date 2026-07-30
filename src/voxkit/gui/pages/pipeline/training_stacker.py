@@ -92,6 +92,7 @@ class TrainingStacker(BaseStacker):
                         "data": (
                             a["engine_id"],
                             a["model_metadata"]["name"],
+                            alignments.get_alignment_type(a),
                             a["alignment_date"],
                             a["status"],
                         ),
@@ -99,7 +100,7 @@ class TrainingStacker(BaseStacker):
                 )
             self.train_alignment_dropdown.set_data(
                 data,
-                ["Method", "Model", "Date", "Status"],
+                ["Method", "Model", "Type", "Date", "Status"],
                 placeholder="Click to select an alignment",
             )
             self.train_alignment_dropdown.setEnabled(True)
@@ -143,10 +144,7 @@ class TrainingStacker(BaseStacker):
             )
             return
 
-        if bool(dataset_metadata["cached"]):
-            audio_path = datasets._get_dataset_root(selected_dataset_id)
-        else:
-            audio_path = Path(dataset_metadata["original_path"])
+        audio_path = datasets.get_dataset_data_path(dataset_metadata)
 
         if not audio_path or not Path(audio_path).exists():
             QMessageBox.warning(
