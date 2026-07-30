@@ -1,12 +1,16 @@
+import logging
+import subprocess
 import time
 from typing import Callable, Literal
 
 from voxkit.services import mfa_provision
-from voxkit.services.mfa import download_acoustic_model
+from voxkit.services.mfa import describe_process_failure, download_acoustic_model
 from voxkit.storage import models
 from voxkit.storage.constants import MODELS_ROOT
 from voxkit.storage.models import download_and_copy_huggingface_model
 from voxkit.storage.utils import get_storage_root
+
+log = logging.getLogger(__name__)
 
 AppName = "VoxKit"
 Dimensions = {"min_width": 200, "min_height": 800, "max_width": 500, "max_height": None}
@@ -104,21 +108,51 @@ def startup_routine():
     except Exception as e:
         print(f"[STARTUP] Failed to download NLTK resources. Error: {e}")
 
-    # Provision VoxKit's own managed MFA ("aligner") environment, so most
-    # users never need conda installed or run a conda command themselves.
-    # Non-fatal like the other steps above -- a failure here shouldn't block
-    # W2TG (which doesn't need MFA) or the rest of first-run setup. Retriable
-    # afterward via the "Repair/Reinstall MFA Environment" action in the MFA
-    # engine's settings, so it's not tied to the whole first-launch flag.
-    if mfa_provision.lockfile_path() is not None and not mfa_provision.is_aligner_env_ready():
-        print("[STARTUP] Setting up the MFA alignment environment (one-time, ~1-2GB)...")
-        try:
-            mfa_provision.provision_aligner_env()
-            print("[STARTUP] MFA alignment environment ready.")
-        except Exception as e:
-            print(f"[STARTUP] Failed to set up the MFA alignment environment. Error: {e}")
-
     print("[STARTUP] Initialization complete!")
+
+
+def ensure_mfa_environment() -> bool:
+    """Provision VoxKit's own managed MFA ("aligner") environment if needed.
+
+    Deliberately *not* part of `startup_routine` and not gated on the
+    first-launch flag: readiness is its own gate. Provisioning used to live
+    inside the first-launch routine, where a failure was swallowed, the flag
+    was marked complete anyway, and the step then never ran again -- leaving
+    MFA permanently unavailable with nothing in the log to say why. This is
+    idempotent and cheap when the environment is ready, and micromamba
+    resumes from its package cache when a previous attempt was interrupted,
+    so running it on every launch costs nothing once setup has succeeded.
+
+    Logs rather than prints: in a `--windowed` PyInstaller build `sys.stdout`
+    is redirected to devnull (see `main.py`), so `print()` diagnostics from
+    this path are discarded exactly when they are most needed.
+
+    Returns:
+        True if the environment is ready (already, or after provisioning).
+    """
+    if mfa_provision.lockfile_path() is None:
+        log.info(
+            "No bundled MFA environment for this platform; "
+            "MFA will use the user-managed conda fallback."
+        )
+        return False
+
+    if mfa_provision.is_aligner_env_ready():
+        return True
+
+    log.info("Setting up the MFA alignment environment (one-time, ~1-2GB)...")
+    try:
+        mfa_provision.provision_aligner_env()
+    except subprocess.CalledProcessError as e:
+        # CalledProcessError carries the same returncode/stdout/stderr trio.
+        log.error("MFA environment setup failed: %s", describe_process_failure(e))  # type: ignore[arg-type]
+        return False
+    except Exception:
+        log.exception("MFA environment setup failed.")
+        return False
+
+    log.info("MFA alignment environment ready.")
+    return True
 
 
 # Startup script configuration

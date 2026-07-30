@@ -72,6 +72,23 @@ feature, not theoretical:
   to a VoxKit-owned directory (`~/.voxkit/mfa-root`, via
   `mfa_provision.mfa_root_dir()`) keeps the bundled environment's MFA state
   fully separate from any pre-existing user setup.
+- **Never capture the output of `mfa server init`/`start`.** `pg_ctl` spawns
+  the Postgres daemon with inheritable handles, so it takes ownership of
+  whatever stdout/stderr it is given and keeps them open for as long as the
+  server runs. Under `capture_output=True` those are pipe write ends, the
+  pipes never reach EOF, and `subprocess.run` blocks forever -- the app
+  freezes permanently with no output, no error, and no crash. A `timeout=`
+  does **not** rescue it: on Windows `subprocess.run` handles TimeoutExpired
+  by killing the child and calling `communicate()` a second time *with no
+  timeout* to drain its reader threads (see CPython `subprocess.py`), which
+  blocks on the handle Postgres still holds -- so the hang happens inside
+  `subprocess.run`, before any `except TimeoutExpired` can run.
+  `_ensure_mfa_server_running()` passes `stdout`/`stderr=DEVNULL` for exactly
+  this reason; it discards the output anyway. This only reproduces when no
+  server is already running, and a stray server from an earlier attempt
+  outlives the app that started it -- so once you hit it, the *next* run
+  succeeds and hides the bug. To retest, stop it first:
+  `micromamba run -p ~/.voxkit/mfa-env python ~/.voxkit/mfa-env/Scripts/mfa-script.py server stop`.
 - **PostgreSQL's Unix-domain socket path has a hard 107-byte limit.**
   `mfa server init`/`start` (the Windows SQLite-race workaround) fails
   outright with a deeply nested `MFA_ROOT_DIR` -- confirmed via
@@ -151,6 +168,44 @@ curl -L -o vendor\micromamba\micromamba.exe `
 
 Re-run the lockfile validation steps above afterward to confirm the new
 binary still provisions and invokes correctly.
+
+### The MSVC runtime DLLs beside it
+
+`vendor/micromamba/` also holds `msvcp140.dll`, `vcruntime140.dll` and
+`vcruntime140_1.dll`. **These are required -- the frozen build crashes
+without them**, and only the frozen build; dev runs are unaffected, which is
+what makes the failure easy to miss.
+
+PyInstaller's onefile bootloader calls `SetDllDirectory(sys._MEIPASS)`. That
+directory is inherited by every child process the app spawns, so `_MEIPASS`
+is searched *ahead of* `System32`. PyInstaller bundles its own MSVC runtime
+there (14.29.x, for CPython 3.11/PyQt6), while micromamba is built against
+14.4x. Left alone, micromamba loads the older `MSVCP140.dll` and is killed
+instantly with an access violation -- exit `0xC0000005`, no
+stdout, no stderr. That takes out provisioning *and* every `micromamba run`
+in `services/mfa.py` (align, adapt, dictionary download, server init).
+
+Windows searches an executable's own directory first, so a matching runtime
+sitting next to `micromamba.exe` wins over the inherited `_MEIPASS`. Relocating
+the binary is *not* a fix -- the inherited DLL directory follows it anywhere.
+
+To refresh them, take the x64 files from the
+[Microsoft Visual C++ Redistributable](https://aka.ms/vs/17/release/vc_redist.x64.exe)
+(or `%SystemRoot%\System32`, which is where its installer puts them) at a
+version **at least as new as** the toolchain micromamba was built with:
+
+```powershell
+foreach ($n in 'msvcp140.dll','vcruntime140.dll','vcruntime140_1.dll') {
+    Copy-Item "$env:SystemRoot\System32\$n" vendor\micromamba\$n -Force
+}
+Get-ChildItem vendor\micromamba\*.dll |
+    ForEach-Object { '{0}  {1}' -f $_.Name, $_.VersionInfo.FileVersion }
+```
+
+Verify after any micromamba bump by building and running an actual alignment
+from `dist/VoxKit.exe` -- not from dev, which cannot reproduce the fault. If
+it regresses, `Get-WinEvent -ProviderName 'Application Error'` names the
+faulting module and the `_MEI*` path it was loaded from.
 
 ## Building the VoxKit executable
 

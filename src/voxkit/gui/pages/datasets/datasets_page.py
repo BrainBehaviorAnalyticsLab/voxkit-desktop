@@ -543,11 +543,11 @@ class DatasetsPage(QWidget):
                 status_item.setForeground(Qt.GlobalColor.darkYellow)
             elif status == "failed":
                 status_item.setForeground(Qt.GlobalColor.red)
-            self.alignments_table.setItem(row, 4, status_item)
+            self.alignments_table.setItem(row, 5, status_item)
 
             # Actions
             actions_widget = self._create_alignment_action_buttons(alignment)
-            self.alignments_table.setCellWidget(row, 5, actions_widget)
+            self.alignments_table.setCellWidget(row, 6, actions_widget)
 
         # Disconnect old connections and connect cell click for model column
         try:
