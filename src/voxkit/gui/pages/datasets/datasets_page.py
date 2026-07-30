@@ -663,7 +663,7 @@ class DatasetsPage(QWidget):
         # Create settings config
         config = SettingsConfig(
             title="Register New Dataset",
-            dimensions=(500, 460),
+            dimensions=(500, 500),
             apply_blur=False,  # Disable blur to avoid parent issues
             store_file="dataset_registration_settings.json",
             fields=[
