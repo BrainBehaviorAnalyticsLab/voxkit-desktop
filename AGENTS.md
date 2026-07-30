@@ -90,3 +90,16 @@ To bump the version, edit `config/VERSION` and nothing else. Do not reintroduce 
 - Engines and services wrap external binaries; changes there are hard to unit-test and are omitted from coverage by design.
 - Dependencies pin `torch==2.8.0` and pull several packages from Git SHAs — don't loosen these casually.
 - PyInstaller bundles `config/` via `scripts/build.py` (`--add-data`); anything new in `config/` that the runtime needs will ship automatically, but custom paths outside `config/` will not.
+
+### MFA runtime state on Windows
+
+Two failure modes here are environmental, not code bugs. Both surface as an opaque `MFA alignment failed (exit 1)` in the GUI, so check these before debugging VoxKit.
+
+**A half-deleted Postgres data directory deadlocks alignment permanently.** `mfa server start` spawns a *detached* Postgres that outlives the app, so it still holds handles under `~/.voxkit/mfa-root/pg_mfa_global/`. Deleting `~/.voxkit` while it runs strips the contents but cannot unlink the directory itself — leaving an empty shell. MFA keys both commands off directory *existence*, so that state is unrecoverable via its CLI:
+
+- `server init` — refuses outright (`command_line/utils.py`, "The server directory already exists")
+- `server start` — sees the directory, so never calls `initialize_server()`, then runs `pg_ctl -D <empty dir> start` and fails
+
+Symptom is `DatabaseError: There was an error connecting to the global MFA database server`, and it will not self-heal. Fix by removing the empty `pg_mfa_global/` so `init` can run. `_ensure_mfa_server_running` in `src/voxkit/services/mfa.py` deliberately ignores return codes, which hides both failures — validate the data dir (`PG_VERSION`, `global/pg_control`) before `init` rather than trusting that the calls worked. When cleaning `~/.voxkit` by hand, stop the server first.
+
+**Developer Mode changes MFA's alignment code path.** At `alignment/multiprocessing.py` (MFA 3.3.x) MFA symlinks `ali.*.ark` → `ali_first_pass.*.ark`, with an `except OSError → shutil.copyfile` fallback for platforms that can't symlink. With Developer Mode **on**, `os.symlink` succeeds unprivileged, so the fallback never fires — and if anything in the process tree enforces redirection trust, the later `ali_path.exists()` fails with `OSError [WinError 448] untrusted mount point` and kills the run. Developer Mode **off** yields `WinError 1314`, which is an `OSError`, so MFA copies instead and the run completes. Don't assume the copy path is dead code; on a dev machine it may never execute.
