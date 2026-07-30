@@ -6,6 +6,8 @@ packages -- it is exercised by a manual integration run, not this suite.
 
 import sys
 
+import pytest
+
 from voxkit.services import mfa_provision
 
 
@@ -97,3 +99,20 @@ def test_provision_aligner_env_raises_when_lockfile_missing(monkeypatch, tmp_pat
         raise AssertionError("expected FileNotFoundError")
     except FileNotFoundError as exc:
         assert "lockfile" in str(exc).lower()
+
+
+def test_vendored_micromamba_ships_a_matching_msvc_runtime():
+    """The Windows CRT DLLs must sit beside micromamba.exe in the repo.
+
+    Without them the frozen build inherits PyInstaller's older _MEIPASS copy
+    of MSVCP140.dll and micromamba dies with an access violation, breaking
+    both provisioning and every `micromamba run` in services/mfa.py. Only the
+    frozen build fails, so nothing else in this suite would catch a
+    regression here. See docs/BUILD.md.
+    """
+    vendor_dir = mfa_provision._bundle_root() / "vendor" / "micromamba"
+    if not (vendor_dir / "micromamba.exe").exists():
+        pytest.skip("no vendored win-64 micromamba in this checkout")
+
+    for dll in ("msvcp140.dll", "vcruntime140.dll", "vcruntime140_1.dll"):
+        assert (vendor_dir / dll).exists(), f"{dll} missing from {vendor_dir}"

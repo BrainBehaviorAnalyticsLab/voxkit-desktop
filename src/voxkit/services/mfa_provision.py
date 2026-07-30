@@ -47,7 +47,18 @@ def _bundle_root() -> Path:
 
 
 def vendored_micromamba_path() -> Path:
-    """Path to the vendored micromamba binary for the current platform."""
+    """Path to the vendored micromamba binary for the current platform.
+
+    On Windows the binary is deliberately kept in its own directory next to
+    a matching MSVC runtime (`msvcp140.dll`, `vcruntime140.dll`,
+    `vcruntime140_1.dll`) -- see `docs/BUILD.md`. PyInstaller's bootloader
+    calls `SetDllDirectory(sys._MEIPASS)`, and that directory is inherited by
+    every child process VoxKit spawns, so `_MEIPASS` is searched ahead of
+    `System32`. Without the sibling copies, micromamba loads PyInstaller's
+    older bundled `MSVCP140.dll` and dies instantly with an access violation
+    (exit 0xC0000005), taking every MFA operation with it.
+    Windows searches an executable's own directory first, so the siblings win.
+    """
     name = "micromamba.exe" if sys.platform == "win32" else "micromamba"
     return _bundle_root() / "vendor" / "micromamba" / name
 

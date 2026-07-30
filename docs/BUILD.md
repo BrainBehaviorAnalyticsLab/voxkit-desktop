@@ -152,6 +152,44 @@ curl -L -o vendor\micromamba\micromamba.exe `
 Re-run the lockfile validation steps above afterward to confirm the new
 binary still provisions and invokes correctly.
 
+### The MSVC runtime DLLs beside it
+
+`vendor/micromamba/` also holds `msvcp140.dll`, `vcruntime140.dll` and
+`vcruntime140_1.dll`. **These are required -- the frozen build crashes
+without them**, and only the frozen build; dev runs are unaffected, which is
+what makes the failure easy to miss.
+
+PyInstaller's onefile bootloader calls `SetDllDirectory(sys._MEIPASS)`. That
+directory is inherited by every child process the app spawns, so `_MEIPASS`
+is searched *ahead of* `System32`. PyInstaller bundles its own MSVC runtime
+there (14.29.x, for CPython 3.11/PyQt6), while micromamba is built against
+14.4x. Left alone, micromamba loads the older `MSVCP140.dll` and is killed
+instantly with an access violation -- exit `0xC0000005`, no
+stdout, no stderr. That takes out provisioning *and* every `micromamba run`
+in `services/mfa.py` (align, adapt, dictionary download, server init).
+
+Windows searches an executable's own directory first, so a matching runtime
+sitting next to `micromamba.exe` wins over the inherited `_MEIPASS`. Relocating
+the binary is *not* a fix -- the inherited DLL directory follows it anywhere.
+
+To refresh them, take the x64 files from the
+[Microsoft Visual C++ Redistributable](https://aka.ms/vs/17/release/vc_redist.x64.exe)
+(or `%SystemRoot%\System32`, which is where its installer puts them) at a
+version **at least as new as** the toolchain micromamba was built with:
+
+```powershell
+foreach ($n in 'msvcp140.dll','vcruntime140.dll','vcruntime140_1.dll') {
+    Copy-Item "$env:SystemRoot\System32\$n" vendor\micromamba\$n -Force
+}
+Get-ChildItem vendor\micromamba\*.dll |
+    ForEach-Object { '{0}  {1}' -f $_.Name, $_.VersionInfo.FileVersion }
+```
+
+Verify after any micromamba bump by building and running an actual alignment
+from `dist/VoxKit.exe` -- not from dev, which cannot reproduce the fault. If
+it regresses, `Get-WinEvent -ProviderName 'Application Error'` names the
+faulting module and the `_MEI*` path it was loaded from.
+
 ## Building the VoxKit executable
 
 Unchanged from before this feature: `invoke windows-build` (or
