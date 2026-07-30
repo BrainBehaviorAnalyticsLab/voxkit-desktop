@@ -23,6 +23,7 @@
 ## Appendix
 
 - [ARCHITECTURE](./docs/ARCHITECTURE.md) - System layers and terminology
+- [BUILD](./docs/BUILD.md) - Building the executable and the bundled MFA environment
 - [RESEARCH](./docs/RESEARCH.md) - Papers and research background
 - [CONTRIBUTING](./docs/CONTRIBUTING.md) - Contribution guidelines
 
