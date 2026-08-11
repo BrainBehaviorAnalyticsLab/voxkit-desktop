@@ -84,6 +84,7 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QListWidget,
+    QListWidgetItem,
     QPushButton,
     QScrollArea,
     QVBoxLayout,
@@ -92,6 +93,7 @@ from PyQt6.QtWidgets import (
 
 from voxkit.gui.components import AnimatedStackedWidget
 from voxkit.gui.styles import Buttons, Containers, Labels
+from voxkit.storage import datasets
 
 if TYPE_CHECKING:
     from voxkit.config.pipeline_config import PipelineConfig
@@ -164,13 +166,18 @@ class PipelineFormStack(QWidget):
         # Store mapping of menu index to stacker for reload
         self.stacker_instances = []
 
+        # Store menu items by step id so availability can be toggled later
+        self._menu_items: dict[str, QListWidgetItem] = {}
+
         # Right side - Stacked widget for different pipeline pages
         self.stacked_widget = AnimatedStackedWidget()
 
         # Dynamically create menu items and stackers from configuration
         for step in self.config.enabled_steps:
             # Add menu item
-            self.menu_list.addItem(step.label)
+            menu_item = QListWidgetItem(step.label)
+            self.menu_list.addItem(menu_item)
+            self._menu_items[step.id] = menu_item
 
             # Get the stacker class from registry
             stacker_class = STACKER_REGISTRY.get(step.stacker_class)
@@ -264,6 +271,8 @@ class PipelineFormStack(QWidget):
         self.menu_list.currentRowChanged.connect(self.change_page)
         self.menu_list.setCurrentRow(0)
 
+        self._refresh_training_availability()
+
     def reload(self):
         """Reload models and datasets in the pipeline pages.
 
@@ -302,6 +311,32 @@ class PipelineFormStack(QWidget):
             elif stacker_class == "CorrectAlignmentsStacker":
                 if hasattr(stacker_widget, "reload_datasets"):
                     stacker_widget.reload_datasets()
+
+        self._refresh_training_availability()
+
+    def _refresh_training_availability(self):
+        """Gray out the Train Aligners step unless a dataset has a manual alignment.
+
+        Training only produces a meaningful model when it can learn from a
+        hand-corrected alignment, so this step is disabled until at least one
+        dataset qualifies. Why it's disabled is explained in the Ⓑ Train
+        Aligners section of the Pipeline Overview, not in the sidebar itself
+        (too narrow for an inline explanation).
+        """
+        menu_item = self._menu_items.get("training")
+        stacker_widget = next(
+            (widget for step_id, _, widget in self.stacker_instances if step_id == "training"),
+            None,
+        )
+        if menu_item is None or stacker_widget is None:
+            return
+
+        if datasets.any_dataset_has_manual_alignments():
+            menu_item.setFlags(menu_item.flags() | Qt.ItemFlag.ItemIsEnabled)
+            stacker_widget.setEnabled(True)
+        else:
+            menu_item.setFlags(menu_item.flags() & ~Qt.ItemFlag.ItemIsEnabled)
+            stacker_widget.setEnabled(False)
 
     def change_page(self, index):
         """Change the displayed page based on menu selection with animation"""

@@ -20,6 +20,7 @@ API
 - **create_dataset**: Create a new dataset with metadata and directories
 - **get_dataset_metadata**: Retrieve metadata for a specific dataset
 - **list_datasets_metadata**: List all existing datasets
+- **any_dataset_has_manual_alignments**: Whether any dataset has a hand alignment
 - **update_dataset_metadata**: Update metadata fields for a specific dataset
 - **delete_dataset**: Delete a registered dataset and its metadata
 - **export_dataset**: Export a dataset to a specified output path
@@ -319,6 +320,15 @@ def list_datasets_metadata() -> List[DatasetMetadata]:
     except Exception as e:
         print(f"Error listing datasets: {str(e)}")
         return []
+
+
+def any_dataset_has_manual_alignments() -> bool:
+    """Whether at least one registered dataset has a hand/manual alignment.
+
+    Training only produces a meaningful model when it can learn from a
+    manually-corrected alignment, so this gates the Train Aligners step.
+    """
+    return any(d.get("hand_alignments_path") for d in list_datasets_metadata())
 
 
 def update_dataset_metadata(

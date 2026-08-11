@@ -106,11 +106,11 @@ def build(args):
         # This is important because PyInstaller resolves paths relative to CWD
         project_root = Path(__file__).parent.parent
         original_cwd = Path.cwd()
-        
+
         if original_cwd != project_root:
                 print(f"[INFO] Changing working directory to project root: {project_root}")
                 os.chdir(project_root)
-        
+
         opts = []
 
         # Basic options
@@ -184,6 +184,14 @@ def build(args):
                 print("[INFO] Adding vendor folder to build assets")
                 opts.append(f'--add-data={vendor_dir}{sep}vendor')
 
+        # Add assets folder if it exists (branding images used for the in-app
+        # window icon and first-launch splash logo, resolved at runtime via
+        # voxkit.config.app_config.get_assets_root())
+        assets_dir = project_root / "assets"
+        if assets_dir.exists() and assets_dir.is_dir():
+                print("[INFO] Adding assets folder to build assets")
+                opts.append(f'--add-data={assets_dir}{sep}assets')
+
         for ad in args.add_data:
                 if sep in ad:
                         opts.append(f'--add-data={ad}')
@@ -217,7 +225,7 @@ def build(args):
                         print(f"   Run with: ./dist/{args.name}/{args.name}")
                 else:
                         print(f"\n⚠️  Expected build output not found at {app_path}")
-        
+
         # Restore original working directory
         if original_cwd != project_root:
                 os.chdir(original_cwd)

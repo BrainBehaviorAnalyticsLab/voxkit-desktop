@@ -158,6 +158,10 @@ GlobalStyleSheet = """
     QListWidget::item:hover {
         background-color: #b0cef2;
     }
+    QListWidget::item:disabled {
+        color: #a8a8a8;
+        background-color: transparent;
+    }
     QWidget#centralWidget {
         background-color: #f5f7fa;
     }
@@ -411,7 +415,10 @@ class VoxKitGUI(QMainWindow):
         webbrowser.open(mailto_url)
 
     def init_ui(self):
+        from voxkit.config.app_config import get_app_icon_path
+
         self.setWindowTitle(self.app_config.app_name)
+        self.setWindowIcon(QIcon(str(get_app_icon_path())))
         self.setMinimumSize(1200, 800)
 
         # Set application-wide stylesheet

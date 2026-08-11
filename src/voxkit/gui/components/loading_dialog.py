@@ -14,7 +14,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from voxkit.gui.styles import Colors
+from voxkit.gui.styles import Colors, Labels
 
 
 class _WaveformStrip(QWidget):
@@ -193,6 +193,16 @@ class LoadingDialog(QDialog):
         self.subtitle_label.setVisible(bool(subtitle))
         layout.addWidget(self.subtitle_label)
 
+        # Fine-print institutional credit
+        credit_label = QLabel(
+            "VoxKit is brought to you by the University of Wisconsin-Madison "
+            "and Arizona State University"
+        )
+        credit_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        credit_label.setWordWrap(True)
+        credit_label.setStyleSheet(Labels.CREDIT)
+        layout.addWidget(credit_label)
+
         # Card background: subtle vertical gradient (light tints of the app's
         # primary blue) with a primary-blue rounded border. Painted on the child
         # frame (not the translucent window) so it renders reliably.
@@ -210,7 +220,7 @@ class LoadingDialog(QDialog):
             """
         )
 
-        self.setFixedSize(420, 260)
+        self.setFixedSize(420, 290)
 
     def center_on_screen(self):
         """Center the dialog on the primary screen."""
