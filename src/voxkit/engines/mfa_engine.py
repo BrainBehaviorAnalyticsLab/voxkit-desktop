@@ -144,13 +144,14 @@ class MFAEngine(AlignmentEngine):
         if dataset_metadata is None:
             raise ValueError(f"Dataset '{dataset_id}' not found.")
 
-        corpus_path: Path | None = None
-
-        if bool(dataset_metadata["cached"]):
-            corpus_path = datasets._get_dataset_root(dataset_id)
-
-        else:
-            corpus_path = Path(dataset_metadata["original_path"])
+        # Must be the directory that *directly* contains the speaker subdirs --
+        # for a cached dataset that is <dataset_root>/cache, not <dataset_root>.
+        # MFA mirrors the corpus directory's structure into its output dir, so
+        # passing the dataset root here buries every TextGrid under a spurious
+        # extra "cache/" level that no downstream consumer expects.
+        corpus_path = datasets.get_dataset_data_path(dataset_metadata)
+        if corpus_path is None:
+            raise ValueError(f"Could not resolve data path for dataset '{dataset_id}'.")
 
         model_path = Path(model_metadata["model_path"])
 

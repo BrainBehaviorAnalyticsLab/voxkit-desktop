@@ -158,10 +158,13 @@ class W2TGEngine(AlignmentEngine):
 
         model_path = model_meta["model_path"]
         print(f"Using model path: {model_path}")
-        if dataset_meta["cached"]:
-            audio_root = datasets._get_dataset_root(dataset_id)
-        else:
-            audio_root = Path(dataset_meta["original_path"])
+        # The directory that *directly* contains the speaker subdirs -- for a
+        # cached dataset that is <dataset_root>/cache, not <dataset_root>.
+        # Same reason as MFA: the aligner mirrors this structure into the
+        # output dir, so the dataset root would add a bogus "cache/" level.
+        audio_root = datasets.get_dataset_data_path(dataset_meta)
+        if audio_root is None:
+            raise ValueError(f"Could not resolve data path for dataset '{dataset_id}'.")
 
         try:
             align_dirs(
