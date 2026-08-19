@@ -410,7 +410,7 @@ class TextGridTimeline(TimeAxisMixin, QWidget):
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.setFixedHeight(self.RULER_HEIGHT)
 
-    _TIER_ORDER = {"phones": 0, "words": 1}
+    _TIER_ORDER = {"words": 0, "phones": 1}
 
     def set_data(self, tiers: list[dict], duration: float) -> None:
         self._tiers = sorted(
@@ -1839,7 +1839,11 @@ class ViewerStacker(BaseStacker):
     def _update_active_segment_label(self, secs: float) -> None:
         if self._active_label and self._active_label.isVisible() and self._loaded_tiers:
             parts = []
-            for tier in self._loaded_tiers:
+            ordered_tiers = sorted(
+                self._loaded_tiers,
+                key=lambda t: TextGridTimeline._TIER_ORDER.get(t["name"].lower(), 2),
+            )
+            for tier in ordered_tiers:
                 if tier["class"] == "IntervalTier":
                     for iv in tier["intervals"]:
                         if iv["start"] <= secs < iv["end"] and iv["label"] not in _SILENCE_LABELS:
