@@ -36,6 +36,36 @@ def get_config_root() -> Path:
         return Path(__file__).parent.parent.parent.parent / "config"
 
 
+def get_assets_root() -> Path:
+    """Get the path to the assets root directory.
+
+    Returns the correct assets path whether running from source or as a
+    PyInstaller bundle.
+
+    Returns:
+        Path to the assets directory
+    """
+    if getattr(sys, "_MEIPASS", None):
+        return Path(getattr(sys, "_MEIPASS")) / "assets"
+    else:
+        return Path(__file__).parent.parent.parent.parent / "assets"
+
+
+def get_app_icon_path() -> Path:
+    """Get the best available runtime icon file for QIcon/QPixmap use.
+
+    Prefers the Windows .ico (multi-resolution, sharper in the taskbar/title
+    bar) when on Windows, falling back to the PNG everywhere else.
+
+    Returns:
+        Path to the icon file
+    """
+    root = get_assets_root()
+    if sys.platform == "win32" and (root / "vk.ico").exists():
+        return root / "vk.ico"
+    return root / "vk.png"
+
+
 def get_active_profile() -> str:
     """Get the active configuration profile name.
 
