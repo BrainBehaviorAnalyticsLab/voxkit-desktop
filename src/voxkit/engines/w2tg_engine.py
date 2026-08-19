@@ -85,7 +85,7 @@ AlignerConfiguration: SettingsConfig = SettingsConfig(
             name="use_speaker_adaptation",
             label="Use Speaker Adaptation",
             field_type=FieldType.CHECKBOX,
-            default_value=False,
+            default_value=True,
             tooltip="Enable speaker adaptation for better alignment results.",
         ),
         FieldConfig(
