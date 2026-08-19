@@ -38,7 +38,7 @@ pipeline:
 
       Training improves alignment accuracy by adapting models to your speakers, recording conditions, or dialect. Requires a dataset that already has alignments (from a pretrained model) to use as training data.
 
-      *Train Aligners is unavailable in the left sidebar until a dataset with manual alignments is registered.*
+      *Skip this step if using pretrained models is sufficient for your needs.*
 
       ---
 

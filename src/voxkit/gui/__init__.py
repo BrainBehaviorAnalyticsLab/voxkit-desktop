@@ -158,10 +158,6 @@ GlobalStyleSheet = """
     QListWidget::item:hover {
         background-color: #b0cef2;
     }
-    QListWidget::item:disabled {
-        color: #a8a8a8;
-        background-color: transparent;
-    }
     QWidget#centralWidget {
         background-color: #f5f7fa;
     }
