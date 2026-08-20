@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 from pathlib import Path
 from typing import Any, Union
@@ -27,6 +28,8 @@ from voxkit.gui.styles import Buttons, Containers, Inputs, Labels
 from voxkit.storage.utils import get_storage_root, save_json
 
 from .api import FieldConfig, FieldType, SettingsConfig
+
+logger = logging.getLogger(__name__)
 
 
 class GenericDialog(QDialog):
@@ -108,7 +111,7 @@ class GenericDialog(QDialog):
 
         defaults = {field.name: field.default_value for field in self.field_configs}
         save_json(self.store_values_path, defaults)
-        print(f"Default settings saved to {self.store_values_path}")
+        logger.debug("Default settings saved to %s", self.store_values_path)
 
     def _setup_overlay(self, parent) -> None:
         """
@@ -155,13 +158,12 @@ class GenericDialog(QDialog):
         - ComboBox: setCurrentIndex() matching saved text
         """
         if not os.path.exists(self.store_values_path):
-            print("Saved values json doesn't exist yet.")
+            logger.debug("No saved settings at %s yet", self.store_values_path)
             return
         try:
             with open(self.store_values_path, "r", encoding="utf-8") as f:
                 saved_values = json.load(f)
                 for name, value in saved_values.items():
-                    print(f"Loading saved value for {name}: {value}")
                     if name in self.field_widgets:
                         widget = self.field_widgets[name]
                         if isinstance(widget, (QCheckBox, ToggleSwitch)):
@@ -175,7 +177,7 @@ class GenericDialog(QDialog):
                             if index != -1:
                                 widget.setCurrentIndex(index)
         except (FileNotFoundError, json.JSONDecodeError):
-            print("Error loading saved values.")
+            logger.exception("Error loading saved values from %s", self.store_values_path)
 
     def _setup_ui(self, title: str, dims: tuple[int, int]):
         """
@@ -547,4 +549,4 @@ class GenericDialog(QDialog):
         """
         values = self.get_values()
         save_json(self.store_values_path, values)
-        print(f"Settings saved to {self.store_values_path}")
+        logger.debug("Settings saved to %s", self.store_values_path)

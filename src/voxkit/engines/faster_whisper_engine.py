@@ -22,6 +22,7 @@ Notes
 - See https://github.com/SYSTRAN/faster-whisper
 """
 
+import logging
 from pathlib import Path
 
 from faster_whisper import WhisperModel
@@ -34,6 +35,8 @@ from voxkit.gui.frameworks.settings_modal import (
 from voxkit.storage import datasets
 
 from .base import AlignmentEngine
+
+logger = logging.getLogger(__name__)
 
 TranscriberConfiguration: SettingsConfig = SettingsConfig(
     title="Faster Whisper Transcription Settings",
@@ -126,7 +129,7 @@ class FasterWhisperEngine(AlignmentEngine):
         compute_type = settings.get("compute_type", "int8")
         language = settings.get("language", "en") or None
 
-        print(f"[FasterWhisper] Loading model: {model_size} on {device} ({compute_type})")
+        logger.info("Loading model %s on %s (%s)", model_size, device, compute_type)
         model = WhisperModel(model_size, device=device, compute_type=compute_type)
 
         # Walk speaker directories and transcribe each .wav file
@@ -139,10 +142,10 @@ class FasterWhisperEngine(AlignmentEngine):
                 lab_path = wav_path.with_suffix(".lab")
 
                 if lab_path.exists():
-                    print(f"[FasterWhisper] Skipping (lab exists): {wav_path.name}")
+                    logger.debug("Skipping (lab exists): %s", wav_path.name)
                     continue
 
-                print(f"[FasterWhisper] Transcribing: {wav_path.name}")
+                logger.debug("Transcribing: %s", wav_path.name)
                 segments, _ = model.transcribe(
                     str(wav_path),
                     language=language,
@@ -151,7 +154,7 @@ class FasterWhisperEngine(AlignmentEngine):
 
                 transcript = " ".join(segment.text.strip() for segment in segments)
                 lab_path.write_text(transcript.strip(), encoding="utf-8")
-                print(f"[FasterWhisper] Wrote: {lab_path.name}")
+                logger.debug("Wrote: %s", lab_path.name)
 
     # -- Abstract method stubs (this engine does not provide align/train) --
 
@@ -172,12 +175,12 @@ class FasterWhisperEngine(AlignmentEngine):
     def _validate_transcribe_settings(self, settings: dict) -> bool:
         model_size = settings.get("model_size")
         if model_size not in ("tiny", "base", "small", "medium", "large-v3"):
-            print(f"Invalid model_size: {model_size}")
+            logger.error("Invalid model_size: %s", model_size)
             return False
         if not isinstance(settings.get("device"), str):
-            print("Invalid device setting. Must be a string.")
+            logger.error("Invalid device setting. Must be a string.")
             return False
         if not isinstance(settings.get("compute_type"), str):
-            print("Invalid compute_type setting. Must be a string.")
+            logger.error("Invalid compute_type setting. Must be a string.")
             return False
         return True

@@ -64,7 +64,6 @@ class AnalyzerManager:
     def list_analyzers(self) -> List[str]:
         """Return a list of registered analyzer IDs."""
         keys = list(self._analyzers.keys())
-        print(f"[AnalyzerManager] Registered analyzers: {keys}")
         return keys
 
     def get_analyzers(self) -> dict[str, DatasetAnalyzer]:

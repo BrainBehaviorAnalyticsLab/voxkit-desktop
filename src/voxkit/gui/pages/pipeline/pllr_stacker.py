@@ -15,6 +15,7 @@ Notes
 """
 
 import csv
+import logging
 import re
 from datetime import datetime
 from pathlib import Path
@@ -47,6 +48,8 @@ from voxkit.gui.utils import validate_path, validate_paths
 from voxkit.gui.workers.worker_thread import WorkerThread
 from voxkit.storage import alignments, datasets
 from voxkit.storage.utils import get_storage_root
+
+logger = logging.getLogger(__name__)
 
 FIELDS: list[FieldConfig] = [
     FieldConfig(
@@ -390,44 +393,34 @@ class PLLRStacker(QWidget):
 
     def on_extract_pllr(self):
         """Handle Extract PLLR button click"""
-        print("\n=== PLLR EXTRACTION STARTED ===")
-
         # Get selected dataset
         selected_index = self.pllr_dataset_dropdown.currentIndex()
         selected_dataset_id = self.pllr_dataset_dropdown.itemData(selected_index)
-        print(f"[DEBUG] Dataset index: {selected_index}, Dataset ID: {selected_dataset_id}")
 
         if not selected_dataset_id or selected_dataset_id == "No datasets registered":
-            print("[ERROR] No dataset selected or invalid dataset ID")
+            logger.warning("PLLR extraction aborted: no dataset selected")
             QMessageBox.warning(
                 self, "No Dataset Selected", "Please select a dataset from the dropdown."
             )
             return
 
-        print(f"[DEBUG] Dataset validated: {selected_dataset_id}")
-
         # Get selected alignment
         alignment_index = self.pllr_alignment_dropdown.currentIndex()
         selected_alignment_id = self.pllr_alignment_dropdown.itemData(alignment_index)
-        print(f"[DEBUG] Alignment index: {alignment_index}, Alignment ID: {selected_alignment_id}")
 
         if not selected_alignment_id:
-            print("[ERROR] No alignment selected or invalid alignment ID")
+            logger.warning("PLLR extraction aborted: no alignment selected")
             QMessageBox.warning(
                 self, "No Alignment Selected", "Please select an alignment from the dropdown."
             )
             return
 
-        print(f"[DEBUG] Alignment validated: {selected_alignment_id}")
-        print("[DEBUG] Fetching alignment metadata...")
-
         # Get alignment path
         alignment_data = alignments.get_alignment_metadata(
             selected_dataset_id, selected_alignment_id
         )
-        print(f"[DEBUG] Alignment data retrieved: {alignment_data}")
         if not alignment_data:
-            print(f"[ERROR] Could not find alignment data for ID: {selected_alignment_id}")
+            logger.error("Could not find alignment data for ID %s", selected_alignment_id)
             QMessageBox.warning(
                 self,
                 "Invalid Alignment",
@@ -446,11 +439,9 @@ class PLLRStacker(QWidget):
         # alignments are always local=True regardless of the dataset's own
         # cached flag, which is what exposed this.
         textgrid_path = alignment_data["tg_path"]
-        print(f"[DEBUG] TextGrid path from alignment: {textgrid_path}")
-        print("[DEBUG] Checking if TextGrid path exists...")
 
         if not textgrid_path or not Path(textgrid_path).exists():
-            print(f"[ERROR] TextGrid path does not exist: {textgrid_path}")
+            logger.error("TextGrid path does not exist: %s", textgrid_path)
             QMessageBox.warning(
                 self,
                 "Invalid Alignment Path",
@@ -458,62 +449,48 @@ class PLLRStacker(QWidget):
             )
             return
 
-        print(f"[DEBUG] TextGrid path validated: {textgrid_path}")
-        print("[DEBUG] Fetching dataset root path...")
-
         # Get dataset path
         dataset_meta = datasets.get_dataset_metadata(selected_dataset_id)
         if not dataset_meta:
+            logger.error("Could not find dataset metadata for ID %s", selected_dataset_id)
             QMessageBox.warning(self, "Invalid Dataset", "Could not find dataset metadata.")
             return
 
         wavlab_path: Path | str | None = datasets.get_dataset_data_path(dataset_meta)
 
-        print(f"[DEBUG] Dataset root path: {wavlab_path}")
-
         if not wavlab_path:
-            print(f"[ERROR] Could not find dataset path for ID: {selected_dataset_id}")
+            logger.error("Could not resolve dataset path for ID %s", selected_dataset_id)
             QMessageBox.warning(self, "Invalid Dataset", "Could not find path for dataset.")
             return
 
-        print(f"[DEBUG] Dataset path validated: {wavlab_path}")
-        print("[DEBUG] Validating all paths...")
-
         # Validate inputs
-
-        print("[DEBUG] Preparing paths for validation...")
-
         paths = {
             "TextGrid Path": textgrid_path,
             "Wav/lab Path": wavlab_path,
             "Output Path": self.extract_output_path.text(),
         }
 
-        print(f"[DEBUG] Paths to validate: {paths}")
-
         if not validate_paths(self, paths):
-            print("[ERROR] Path validation failed")
+            logger.warning("PLLR path validation failed: %s", paths)
             return
-
-        print("[DEBUG] All paths validated successfully")
 
         # Get current settings
         output_path = self.extract_output_path.text()
 
-        print("\n[INFO] Extract PLLR clicked!")
-        print(f"[INFO] TextGrid Path: {textgrid_path}")
-        print(f"[INFO] Wav/lab Path: {wavlab_path}")
-        print(f"[INFO] Output Path: {output_path}")
-        print(f"[INFO] Phonewise output: {Path(output_path) / 'phonewise_proba.csv'}")
-        print(f"[INFO] Framewise output: {Path(output_path) / 'framewise_proba.csv'}")
+        logger.info(
+            "Extracting PLLR: dataset=%s alignment=%s textgrids=%s wavlab=%s output=%s",
+            selected_dataset_id,
+            selected_alignment_id,
+            textgrid_path,
+            wavlab_path,
+            output_path,
+        )
 
         # Update UI
         self.extract_status.setText("Processing...")
         self.extract_status.setStyleSheet("color: #f39c12; font-size: 12px; margin-top: 5px;")
         self.extract_progress.setVisible(True)
         self.extract_btn.setEnabled(False)
-
-        print("[DEBUG] Starting worker thread...")
 
         # Start worker thread
         self.worker = WorkerThread(
@@ -523,71 +500,57 @@ class PLLRStacker(QWidget):
         )
         self.worker.finished.connect(self.on_extract_finished)
         self.worker.start()
-        print("[DEBUG] Worker thread started")
 
     def extract_pllr_logic(
         self, textgrid_path, wavlab_path, output_path, dataset_meta=None, alignment_data=None
     ):
         """Actual PLLR extraction logic"""
 
-        print("\n=== EXTRACT PLLR LOGIC ===")
-        print("[LOGIC] Starting PLLR extraction...")
-        print(f"[LOGIC] TextGrid Path: {textgrid_path}")
-        print(f"[LOGIC] Wav/lab Path: {wavlab_path}")
-        print(f"[LOGIC] Output Path: {output_path}")
-
         phonewise_path = str(Path(output_path) / "phonewise_proba.csv")
         framewise_path = str(Path(output_path) / "framewise_proba.csv")
 
-        print(f"[LOGIC] Phonewise output file: {phonewise_path}")
-        print(f"[LOGIC] Framewise output file: {framewise_path}")
-
-        # Check what files exist
-        print("[LOGIC] Checking TextGrid directory contents...")
+        # Input inventory -- the usual cause of an empty result is one of these
+        # directories not containing what the caller assumed.
         tg_path_obj = Path(textgrid_path)
         if tg_path_obj.is_dir():
-            tg_files = list(tg_path_obj.glob("*.TextGrid"))
-            print(f"[LOGIC] Found {len(tg_files)} .TextGrid files in {textgrid_path}")
-            if tg_files:
-                print(f"[LOGIC] First few TextGrid files: {[f.name for f in tg_files[:5]]}")
+            logger.debug(
+                "Found %d .TextGrid files in %s",
+                len(list(tg_path_obj.glob("*.TextGrid"))),
+                textgrid_path,
+            )
         else:
-            print(f"[LOGIC] TextGrid path is not a directory: {textgrid_path}")
+            logger.warning("TextGrid path is not a directory: %s", textgrid_path)
 
-        print("[LOGIC] Checking wav/lab directory contents...")
         wav_path_obj = Path(wavlab_path)
         if wav_path_obj.is_dir():
-            wav_files = list(wav_path_obj.glob("*.wav"))
-            print(f"[LOGIC] Found {len(wav_files)} .wav files in {wavlab_path}")
-            if wav_files:
-                print(f"[LOGIC] First few wav files: {[f.name for f in wav_files[:5]]}")
+            logger.debug(
+                "Found %d .wav files in %s", len(list(wav_path_obj.glob("*.wav"))), wavlab_path
+            )
         else:
-            print(f"[LOGIC] Wav/lab path is not a directory: {wavlab_path}")
+            logger.warning("Wav/lab path is not a directory: %s", wavlab_path)
 
         # READ THE SETTINGS FROM THE FILE
-        print("[LOGIC] Reading settings from file...")
         path_to_pllr_settings = get_storage_root() / "pllr_settings.json"
         pllr_settings = {}
         if path_to_pllr_settings.exists():
-            print(f"[LOGIC] Settings file found at: {path_to_pllr_settings}")
             from json import load as json_load
 
             with open(path_to_pllr_settings, "r", encoding="utf-8") as f:
                 pllr_settings = json_load(f)
-            print(f"[LOGIC] Settings loaded: {pllr_settings}")
+            logger.debug("Loaded PLLR settings from %s", path_to_pllr_settings)
         else:
-            print(f"[LOGIC] Settings file not found at: {path_to_pllr_settings}")
             config = get_pllr_settings_config()
             for key in config.fields:
                 pllr_settings[key.name] = key.default_value
-            print(f"[LOGIC] Default settings loaded: {pllr_settings}")
-        print("[LOGIC] Calling compute_pllr()...")
-        print("[LOGIC] Parameters:")
-        print(f"         tg_files_path={textgrid_path}")
-        print(f"         wav_files_path={wavlab_path}")
-        print("         phone_key='phones'")
-        print(f"         phonewise_proba_df={phonewise_path}")
-        print(f"         framewise_proba_df={framewise_path}")
-        print("         likelihood_dct=None")
+            logger.debug("No settings at %s; using defaults", path_to_pllr_settings)
+
+        logger.debug(
+            "Calling compute_pllr(tg=%s, wav=%s, phonewise=%s, framewise=%s)",
+            textgrid_path,
+            wavlab_path,
+            phonewise_path,
+            framewise_path,
+        )
 
         try:
             from pypllrcomputer.pypllr_compute import (
@@ -622,7 +585,7 @@ class PLLRStacker(QWidget):
                 likelihood_dct=pllr_settings.get("likelihood_dct", None),
                 aggregation_function=agg_fn,
             )
-            print("[LOGIC] compute_pllr() completed successfully")
+            logger.debug("compute_pllr() completed successfully")
 
             model_metadata = (alignment_data or {}).get("model_metadata") or {}
             now = datetime.now()
@@ -647,7 +610,7 @@ class PLLRStacker(QWidget):
             phonewise_stem = Path(phonewise_path).stem
             phonewise_outputs = list(Path(phonewise_path).parent.glob(f"{phonewise_stem}*.csv"))
             if not phonewise_outputs:
-                print(f"[WARN] No phonewise output CSVs found matching {phonewise_stem}*.csv")
+                logger.warning("No phonewise output CSVs found matching %s*.csv", phonewise_stem)
 
             output_paths = [*phonewise_outputs, Path(framewise_path)]
             renamed_paths = []
@@ -661,33 +624,27 @@ class PLLRStacker(QWidget):
                         date_stamp,
                     )
                 )
-            print(f"[LOGIC] Appended run metadata and renamed output CSVs: {renamed_paths}")
+            logger.info("Appended run metadata and renamed output CSVs: %s", renamed_paths)
 
             return "PLLR extracted successfully"
-        except Exception as e:
-            print(f"[ERROR] Exception in compute_pllr(): {type(e).__name__}")
-            print(f"[ERROR] Exception message: {str(e)}")
-            import traceback
-
-            print(f"[ERROR] Traceback:\n{traceback.format_exc()}")
+        except Exception:
+            # logger.exception records the traceback, so the manual
+            # traceback.format_exc() dance is no longer needed.
+            logger.exception("compute_pllr() failed")
             raise
 
     def on_extract_finished(self, success, message):
         """Handle completion of extract PLLR operation"""
-        print("\n=== PLLR EXTRACTION FINISHED ===")
-        print(f"[FINISHED] Success: {success}")
-        print(f"[FINISHED] Message: {message}")
-
         self.extract_btn.setEnabled(True)
         self.extract_progress.setVisible(False)
 
         if success:
-            print("[FINISHED] Extraction completed successfully")
+            logger.info("PLLR extraction finished: %s", message)
             self.extract_status.setText("✓ " + message)
             self.extract_status.setStyleSheet("color: #27ae60; font-size: 12px; margin-top: 5px;")
             QMessageBox.information(self, "Success", message)
         else:
-            print(f"[FINISHED] Extraction failed with error: {message}")
+            logger.error("PLLR extraction failed: %s", message)
             self.extract_status.setText("✗ Error occurred")
             self.extract_status.setStyleSheet("color: #e74c3c; font-size: 12px; margin-top: 5px;")
             QMessageBox.critical(self, "Error", f"An error occurred:\n{message}")

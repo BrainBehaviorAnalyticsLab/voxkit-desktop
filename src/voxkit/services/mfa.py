@@ -1,3 +1,4 @@
+import logging
 import os
 import shutil
 import subprocess
@@ -5,6 +6,8 @@ import sys
 from pathlib import Path
 
 from voxkit.services import mfa_provision
+
+log = logging.getLogger(__name__)
 
 
 def _no_window() -> dict:
@@ -14,7 +17,9 @@ def _no_window() -> dict:
     return {}
 
 
-def describe_process_failure(result: subprocess.CompletedProcess) -> str:
+def describe_process_failure(
+    result: subprocess.CompletedProcess | subprocess.CalledProcessError,
+) -> str:
     """Render a failed subprocess in a form that survives a hard crash.
 
     A process killed by the OS produces no stdout/stderr at all, so reporting
@@ -22,6 +27,9 @@ def describe_process_failure(result: subprocess.CompletedProcess) -> str:
     found" -- which is exactly how a micromamba access violation used to
     surface (see `mfa_provision.vendored_micromamba_path`). Always lead with
     the exit code, and name it as a crash when it looks like an NTSTATUS.
+
+    Accepts either a completed process or the exception raised by
+    ``check=True``; both expose ``returncode``/``stdout``/``stderr``.
     """
     code = result.returncode
     if sys.platform == "win32" and code is not None and code & 0xC0000000 == 0xC0000000:
@@ -151,7 +159,7 @@ def ensure_dictionary_downloaded(
     run_env = {**os.environ, **extra_env}
     download_cmd = [*prefix, "model", "download", "dictionary", dictionary_name]
 
-    print(f"[mfa] Ensuring dictionary '{dictionary_name}' is downloaded...")
+    log.info("Ensuring dictionary '%s' is downloaded", dictionary_name)
     result = subprocess.run(
         download_cmd, capture_output=True, text=True, env=run_env, **_no_window()
     )
@@ -169,9 +177,9 @@ def ensure_dictionary_downloaded(
             f"Download failed: {describe_process_failure(result)}\n"
             f"Listing dictionaries also failed: {describe_process_failure(list_result)}"
         )
-        print(f"[mfa] Dictionary '{dictionary_name}' already available.")
+        log.info("Dictionary '%s' already available", dictionary_name)
     else:
-        print(f"[mfa] Dictionary '{dictionary_name}' is ready.")
+        log.info("Dictionary '%s' is ready", dictionary_name)
 
 
 def _ensure_mfa_server_running(conda_path: str | None = None) -> None:
@@ -271,7 +279,7 @@ def run_mfa_align(
         cmd.append(eval_dir)
 
     try:
-        print(f"[mfa.run_mfa_align] Running MFA align with command: {' '.join(cmd)}")
+        log.debug("Running MFA align: %s", " ".join(cmd))
         subprocess.run(
             cmd,
             check=True,
@@ -280,10 +288,10 @@ def run_mfa_align(
             env={**os.environ, **extra_env},
             **_no_window(),
         )
-        print("[mfa.run_mfa_align] MFA alignment completed successfully.")
+        log.info("MFA alignment completed successfully")
     except subprocess.CalledProcessError as e:
         stderr_msg = e.stderr.strip() if e.stderr else "(no output captured)"
-        print(f"[mfa.run_mfa_align] MFA alignment failed:\n{stderr_msg}")
+        log.error("MFA alignment failed (exit %s):\n%s", e.returncode, stderr_msg)
         raise RuntimeError(f"MFA alignment failed (exit {e.returncode}):\n{stderr_msg}") from e
 
 
@@ -328,7 +336,7 @@ def run_mfa_adapt(
     ]
 
     try:
-        print(f"[mfa.run_mfa_adapt] Running MFA adapt with command: {' '.join(cmd)}")
+        log.debug("Running MFA adapt: %s", " ".join(cmd))
         subprocess.run(
             cmd,
             check=True,
@@ -337,11 +345,9 @@ def run_mfa_adapt(
             env={**os.environ, **extra_env},
             **_no_window(),
         )
-        print("[mfa.run_mfa_adapt] MFA adaptation completed successfully.")
+        log.info("MFA adaptation completed successfully")
     except subprocess.CalledProcessError as e:
-        print(f"[mfa.run_mfa_adapt] MFA adaptation failed with error: {e}")
-        if e.stderr:
-            print(f"[mfa.run_mfa_adapt] Error output: {e.stderr}")
+        log.error("MFA adaptation failed: %s", describe_process_failure(e))
         raise
 
 
@@ -355,11 +361,11 @@ def download_acoustic_model(release_path, output_file):
     url = f"https://github.com/MontrealCorpusTools/mfa-models/releases/download/{release_path}"
     cmd = ["curl", "-L", "-o", output_file, url]
     try:
-        print(f"[mfa.download_acoustic_model] Downloading model from {url} to {output_file}")
+        log.info("Downloading acoustic model from %s to %s", url, output_file)
         subprocess.run(cmd, check=True, **_no_window())
-        print("[mfa.download_acoustic_model] Model downloaded successfully.")
+        log.info("Acoustic model downloaded to %s", output_file)
     except subprocess.CalledProcessError as e:
-        print(f"[mfa.download_acoustic_model] Model download failed with error: {e}")
+        log.error("Acoustic model download failed: %s", describe_process_failure(e))
         raise
 
 

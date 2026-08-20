@@ -80,7 +80,7 @@ class AudioFormatProfileAnalyzer(DatasetAnalyzer):
                         "inconsistent_files": inconsistent,
                     }
                 )
-        except Exception as e:
-            print(f"Error analyzing dataset: {e}")
+        except Exception:
+            logger.exception("Error analyzing dataset")
 
         return results

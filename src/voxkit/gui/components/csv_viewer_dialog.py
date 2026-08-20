@@ -1,6 +1,7 @@
 """Modal dialog for viewing CSV files in a formatted table."""
 
 import csv
+import logging
 import os
 from pathlib import Path
 
@@ -17,6 +18,8 @@ from PyQt6.QtWidgets import (
 )
 
 from voxkit.gui.styles import Buttons, Containers, Labels
+
+logger = logging.getLogger(__name__)
 
 
 class CSVViewerDialog(QDialog):
@@ -126,19 +129,17 @@ class CSVViewerDialog(QDialog):
                 self.stats_label.setText(f"✅ {len(data)} rows × {len(headers)} columns")
 
         except Exception as e:
+            logger.exception("Failed to load CSV %s", self.csv_path)
             self.stats_label.setText(f"❌ Error loading CSV: {str(e)}")
 
     def closeEvent(self, event):
         """Handle dialog close event to remove blur effect."""
-        print("Dialog closed, removing blur effect from parent")
         if self._parent_widget:
-            print("Removing blur effect from parent")
             self._parent_widget.setGraphicsEffect(None)
         event.accept()
 
     def reject(self):
         """Handle dialog rejection to remove blur effect."""
         if self._parent_widget:
-            print("Removing blur effect from parent")
             self._parent_widget.setGraphicsEffect(None)
         super().reject()

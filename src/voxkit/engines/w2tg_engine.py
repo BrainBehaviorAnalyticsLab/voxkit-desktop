@@ -129,19 +129,18 @@ class W2TGEngine(AlignmentEngine):
         #     os.makedirs(os.path.dirname(config.store_file), exist_ok=True)
 
     def align(self, dataset_id: str, model_id: str) -> None:
-        print(f"Args received for align: dataset_id={dataset_id}, model_id={model_id}")
+        logger.info("Aligning dataset %s with model %s", dataset_id, model_id)
         settings = self.get_settings("align")
+        logger.debug("Align settings: %s", settings)
 
-        print(f"Validating align settings: {settings}")
         result, msg = alignments.create_alignment(
             engine_id=self.id,
             model_id=model_id,
             dataset_id=dataset_id,
         )
-        print(f"Alignment creation result: {result}, message: {msg}")
 
         if not result:
-            print(f"Alignment creation failed: {msg}")
+            logger.error("Alignment creation failed: %s", msg)
             return
 
         assert not isinstance(msg, str)
@@ -151,13 +150,15 @@ class W2TGEngine(AlignmentEngine):
             raise ValueError(f"Dataset '{dataset_id}' not found.")
         model_meta = models.get_model_metadata(self.id, model_id)
 
-        print(f"Aligning with settings: {settings}")
-        print(f"Dataset meta: {dataset_meta}")
-        print(f"Alignment meta: {alignment_meta}")
-        print(f"Model meta: {model_meta}")
+        logger.debug(
+            "Resolved metadata - dataset: %s, alignment: %s, model: %s",
+            dataset_meta,
+            alignment_meta,
+            model_meta,
+        )
 
         model_path = model_meta["model_path"]
-        print(f"Using model path: {model_path}")
+        logger.debug("Using model path: %s", model_path)
         # The directory that *directly* contains the speaker subdirs -- for a
         # cached dataset that is <dataset_root>/cache, not <dataset_root>.
         # Same reason as MFA: the aligner mirrors this structure into the
@@ -220,16 +221,21 @@ class W2TGEngine(AlignmentEngine):
 
             if base_model_path is None:
                 raise ValueError(f"Invalid base model specified: {base_model_id}. ")
-            print(
-                f"Args received for train_aligner: "
-                f"audio_root={audio_root}, textgrid_root={textgrid_root}, "
-                f"base_model_path={base_model_path}, model_path={model_path}, "
-                f"eval_path={eval_path}, new_model_id={new_model_id}, "
-                f"ntrain_epochs={settings.get('epochs', 50)}"
+            logger.info(
+                "Training aligner %s from base %s for %s epochs",
+                new_model_id,
+                base_model_id,
+                settings.get("epochs", 50),
             )
-
-            print(f"Training aligner with settings: {settings}")
-            print(f"Using base model path: {base_model_path}")
+            logger.debug(
+                "Train paths - audio=%s textgrid=%s base_model=%s model=%s eval=%s; settings=%s",
+                audio_root,
+                textgrid_root,
+                base_model_path,
+                model_path,
+                eval_path,
+                settings,
+            )
             train_aligner(
                 train_audio_dir=audio_root,
                 train_textgrid_dir=textgrid_root,
@@ -255,27 +261,27 @@ class W2TGEngine(AlignmentEngine):
 
     def _validate_align_settings(self, settings: dict) -> bool:
         if not isinstance(settings.get("use_speaker_adaptation"), bool):
-            print("Invalid use_speaker_adaptation setting. Must be a boolean.")
+            logger.error("Invalid use_speaker_adaptation setting. Must be a boolean.")
             return False
         if not isinstance(settings.get("file_type"), (str, type(None))):
-            print("Invalid file_type setting. Must be a string or None.")
+            logger.error("Invalid file_type setting. Must be a string or None.")
             return False
         if not isinstance(settings.get("use_gpu"), bool):
-            print("Invalid use_gpu setting. Must be a boolean.")
+            logger.error("Invalid use_gpu setting. Must be a boolean.")
             return False
         return True
 
     def _validate_train_settings(self, settings: dict) -> bool:
         if not isinstance(settings.get("start_from_scratch"), bool):
-            print("Invalid start_from_scratch setting. Must be a boolean.")
+            logger.error("Invalid start_from_scratch setting. Must be a boolean.")
             return False
         if not isinstance(settings.get("tokenizer_id"), (str, type(None))):
-            print("Invalid tokenizer_id setting. Must be a string or None.")
+            logger.error("Invalid tokenizer_id setting. Must be a string or None.")
             return False
         if not isinstance(settings.get("epochs"), int):
-            print("Invalid epochs setting. Must be an integer.")
+            logger.error("Invalid epochs setting. Must be an integer.")
             return False
         if not isinstance(settings.get("use_gpu"), bool):
-            print("Invalid use_gpu setting. Must be a boolean.")
+            logger.error("Invalid use_gpu setting. Must be a boolean.")
             return False
         return True

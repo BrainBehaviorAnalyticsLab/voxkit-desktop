@@ -25,6 +25,7 @@ Notes
 - See https://montreal-forced-aligner.readthedocs.io/
 """
 
+import logging
 from pathlib import Path
 
 from voxkit.gui.frameworks.settings_modal import (
@@ -37,6 +38,8 @@ from voxkit.storage import alignments, datasets, models
 
 from .base import AlignmentEngine
 from .constants import AVAILABLE_TOOLS
+
+logger = logging.getLogger(__name__)
 
 
 def _conda_path_field() -> FieldConfig:
@@ -136,7 +139,7 @@ class MFAEngine(AlignmentEngine):
         )
 
     def align(self, dataset_id: str, model_id: str) -> None:
-        print(f"Aligning with MFA using model: {model_id}")
+        logger.info("Aligning dataset %s with MFA model %s", dataset_id, model_id)
 
         model_metadata = models.get_model_metadata(self.id, model_id)
 
@@ -167,9 +170,11 @@ class MFAEngine(AlignmentEngine):
         assert not isinstance(msg, str)
         alignment_output_path = msg["tg_path"]
 
-        print(
-            f"Running MFA align with corpus: {corpus_path}, "
-            f"model: {model_path}, output: {alignment_output_path}"
+        logger.debug(
+            "Running MFA align with corpus=%s model=%s output=%s",
+            corpus_path,
+            model_path,
+            alignment_output_path,
         )
 
         try:
@@ -254,10 +259,12 @@ class MFAEngine(AlignmentEngine):
 
         new_model_path = new_metadata["model_path"]
 
-        print(
-            f"Training MFA model from base: {base_model_path} "
-            f"to new model: {new_model_path} with audio: {audio_root} "
-            f"and textgrids: {textgrid_root}"
+        logger.info(
+            "Training MFA model from base %s to %s (audio=%s, textgrids=%s)",
+            base_model_path,
+            new_model_path,
+            audio_root,
+            textgrid_root,
         )
 
         try:

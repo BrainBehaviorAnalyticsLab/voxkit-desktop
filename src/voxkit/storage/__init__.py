@@ -26,6 +26,8 @@ Notes
 - Failed operations clean up partial changes
 """
 
+import logging
+
 # Import utils but don't call get_storage_root() at module import time
 from . import alignments, datasets, models, utils
 
@@ -47,7 +49,7 @@ def _ensure_storage_root():
             storage_root.mkdir(parents=True, exist_ok=True)
         return storage_root
     except Exception as e:
-        print(f"Error initializing storage root: {e}")
+        logging.getLogger(__name__).exception("Error initializing storage root")
         raise e
 
 

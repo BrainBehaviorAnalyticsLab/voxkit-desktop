@@ -51,12 +51,12 @@ if __name__ == "__main__":
 
     # Regular button with text
     hf_button = HuggingFaceButton("Browse HuggingFace")
-    hf_button.clicked.connect(lambda: print("HuggingFace button clicked!"))
+    hf_button.clicked.connect(lambda: print("HuggingFace button clicked!"))  # noqa: T201
     layout.addWidget(hf_button)
 
     # Another variant
     hf_button2 = HuggingFaceButton("Import from HuggingFace")
-    hf_button2.clicked.connect(lambda: print("Import button clicked!"))
+    hf_button2.clicked.connect(lambda: print("Import button clicked!"))  # noqa: T201
     layout.addWidget(hf_button2)
 
     window.setWindowTitle("HuggingFace Button Demo")

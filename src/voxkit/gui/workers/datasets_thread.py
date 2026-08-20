@@ -8,10 +8,14 @@ Signals
 - ``progress(str)``: Emitted with status updates during registration
 """
 
+import logging
+
 from PyQt6.QtCore import QThread, pyqtSignal
 
 from voxkit.analyzers import ManageAnalyzers
 from voxkit.storage import datasets
+
+logger = logging.getLogger(__name__)
 
 
 class DatasetRegistrationWorker(QThread):
@@ -83,7 +87,7 @@ class DatasetRegistrationWorker(QThread):
             hand_alignments_path=self.hand_alignments_path,
         )
 
-        print(f"Dataset creation result: {success}, message: {message}")
+        logger.info("Dataset creation result: success=%s, message=%s", success, message)
 
         if not success:
             self.finished.emit(False, message)

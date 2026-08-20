@@ -73,7 +73,6 @@ class EngineManager:
     def list_engines(self) -> List[str]:
         """Return a list of registered engine IDs."""
         keys = list(self._engines.keys())
-        print(f"[engines.__init__] Registered engines: {keys}")
         return keys
 
     def get_engine(self, engine_id: str) -> AlignmentEngine:
