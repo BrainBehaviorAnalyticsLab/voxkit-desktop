@@ -24,6 +24,7 @@
 
 - [ARCHITECTURE](./docs/ARCHITECTURE.md) - System layers and terminology
 - [BUILD](./docs/BUILD.md) - Building the executable and the bundled MFA environment
+- [RELEASE](./docs/RELEASE.md) - Cutting a release, from version bump to website
 - [RESEARCH](./docs/RESEARCH.md) - Papers and research background
 - [CONTRIBUTING](./docs/CONTRIBUTING.md) - Contribution guidelines
 
