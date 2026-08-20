@@ -5,12 +5,6 @@ reference document for agents in the loop; i.e. how a version of this code is
 promoted to become the newest version source of truth. We use GitHub releases
 to host new versions/deployments of the app.
 
-> [!NOTE]
-> There is no tag-triggered build. A release.yml workflow existed once and was
-> deliberately removed in #96 ("remove release workflow in favor of more manual
-> steps"), so pushing a tag builds nothing and uploads nothing, you produce the
-> artifacts yourself and attach it by hand.
-
 ## Table of Contents
 
 - [What a release is](#what-a-release-is)
