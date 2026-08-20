@@ -301,6 +301,15 @@ class TrainingStacker(BaseStacker):
 
     def build_ui(self):
         """Build the training UI."""
+        note_label = QLabel(
+            "Note: training only makes sense for datasets with manual (hand-corrected) "
+            "alignments — models trained on machine-generated alignments alone tend to "
+            "just reinforce whatever errors are already there."
+        )
+        note_label.setWordWrap(True)
+        note_label.setStyleSheet(Labels.INFO)
+        self.content_layout.addWidget(note_label)
+
         # Model Selection Panel
         engines_dict = {
             engine_id: engine
