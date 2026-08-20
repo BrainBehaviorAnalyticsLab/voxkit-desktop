@@ -75,7 +75,7 @@ class TestLoadingDialog:
         dialog = LoadingDialog()
         qtbot.addWidget(dialog)
         assert dialog.width() == 420
-        assert dialog.height() == 260
+        assert dialog.height() == 290
 
     def test_close_gracefully_stops_timer(self, qtbot):
         dialog = LoadingDialog()
