@@ -110,8 +110,10 @@ if getattr(sys, 'frozen', False):
 
     log.info("[FROZEN] Environment configured for frozen app")
 
+from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QApplication
 from voxkit.config import STARTUP_SCRIPT
+from voxkit.config.app_config import get_app_icon_path
 from voxkit.gui import VoxKitGUI
 from voxkit.gui.workers.startup import execute_mfa_provisioning, execute_startup_script
 
@@ -135,6 +137,7 @@ def main():
 
     app = QApplication(sys.argv)
     app.setStyle("Fusion")
+    app.setWindowIcon(QIcon(str(get_app_icon_path())))
 
     # Execute startup script on first launch (before GUI initialization)
     log.info("Running startup script")
