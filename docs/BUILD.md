@@ -1,8 +1,12 @@
-# Building VoxKit and the bundled MFA environment
+# Building VoxKit
 
-This covers two things: how VoxKit's own executable is built, and how it
-provisions the Montreal Forced Aligner (MFA) so end users never have to
-install conda or run a conda command themselves.
+This covers how the bundling process works, especially the bundled MFA environment.
+
+> [!NOTE]
+> There is no tag-triggered build. A release.yml workflow existed once and was
+> deliberately removed in #96 ("remove release workflow in favor of more manual
+> steps"), so pushing a tag builds nothing and uploads nothing, you produce the
+> artifacts yourself and attach it by hand.
 
 ## Table of Contents
 
