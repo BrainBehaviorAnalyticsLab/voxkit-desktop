@@ -36,6 +36,7 @@ Notes
 """
 
 import json
+import logging
 import os
 import shutil
 from pathlib import Path
@@ -45,6 +46,8 @@ from .constants import ALIGNMENTS_ROOT, SUPERSET_AUDIO_EXTENSIONS
 from .datasets import _get_dataset_root, get_dataset_metadata
 from .models import ModelMetadata, get_model_metadata
 from .utils import generate_unique_id, readable_from_unique_id
+
+logger = logging.getLogger(__name__)
 
 HAND_ALIGNMENT_SENTINEL = "hand"
 """Sentinel value used for engine_id/model id on manually-created (hand) alignments."""
@@ -481,7 +484,7 @@ def get_alignment_metadata(dataset_id: str, alignment_id: str) -> AlignmentMetad
                 metadata["status"] = status_lower  # type: ignore[typeddict-item]
             return metadata
     except Exception as e:
-        print(f"Failed to load alignment metadata from '{metadata_path}': {str(e)}")
+        logger.exception("Failed to load alignment metadata from '%s'", metadata_path)
         raise e
 
 
@@ -568,8 +571,8 @@ def list_alignments(dataset_id: str) -> List[AlignmentMetadata]:
                         if "status" in metadata:
                             metadata["status"] = metadata["status"].lower()
                         alignments_found.append(metadata)
-                except Exception as e:
-                    print(f"Failed to load alignment metadata from '{metadata_path}': {str(e)}")
+                except Exception:
+                    logger.exception("Failed to load alignment metadata from '%s'", metadata_path)
 
     return alignments_found
 

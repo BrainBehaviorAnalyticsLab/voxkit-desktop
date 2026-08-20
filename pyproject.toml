@@ -95,6 +95,7 @@ select = [
     "F",   # pyflakes
     "I",   # isort (import sorting)
     "S",   # bandit (security)
+    "T20", # flake8-print (no print/pprint in shipped code)
 ]
 
 ignore = [
@@ -105,10 +106,16 @@ ignore = [
 fixable = ["ALL"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**/*.py" = ["S101"]
-"scripts/**/*.py" = ["S101","S603"] # Allow subprocess in scripts
+"tests/**/*.py" = ["S101", "T20"]
+# scripts/ and hooks/ run at build time with a real console attached, so print
+# is the correct output channel there. In the app itself it is not: a --windowed
+# PyInstaller build has no stdout (see main.py), so print() diagnostics are
+# discarded. Use voxkit.config.logging_config instead.
+"scripts/**/*.py" = ["S101","S603","T20"] # Allow subprocess and console output in scripts
+"tasks.py" = ["T20"] # invoke task runner: build-time CLI output
+"_frozen_patch.py" = ["T20"] # runs before logging is configured in frozen builds
 "src/voxkit/services/**/*.py" = ["S603", "S108"] # Allow subprocess and temp dirs in services
-"hooks/**/*.py" = ["E402"] # Allow imports after code in hooks
+"hooks/**/*.py" = ["E402", "T20"] # Allow imports after code, and console output, in hooks
 "src/voxkit/gui/pages/pipeline/evaluation_stacker.py" = ["S603", "S607"] # Allow subprocess in eval
 
 [tool.ruff.lint.isort]

@@ -73,8 +73,8 @@ class ClipDurationStatisticsAnalyzer(DatasetAnalyzer):
                             "max_duration_s": round(max(durations), 2),
                         }
                     )
-        except Exception as e:
-            print(f"Error analyzing dataset: {e}")
+        except Exception:
+            logger.exception("Error analyzing dataset")
 
         return results
 

@@ -27,19 +27,19 @@ Mode = Literal["MFAENGINE", "W2TGENGINE"]
 
 def startup_routine():
     """Example startup routine to be executed on first launch."""
-    print("[STARTUP] Initializing VoxKit...")
+    log.info("Initializing VoxKit...")
     time.sleep(1)  # Simulate initialization
 
     storage_root = get_storage_root()
-    print(f"[STARTUP] Storage root: {storage_root}")
+    log.info("Storage root: %s", storage_root)
 
-    print("[STARTUP] Creating required directories...")
+    log.info("Creating required directories...")
     (storage_root / "computed-likelihoods").mkdir(parents=True, exist_ok=True)
     (storage_root / "custom-likelihoods").mkdir(parents=True, exist_ok=True)
     time.sleep(1)  # Simulate directory setup
 
     # Download MFA models
-    print("[STARTUP] Downloading MFA models...")
+    log.info("Downloading MFA models...")
     mfa_models = [
         "acoustic-english_us_arpa-v3.0.0/english_us_arpa.zip",
         "acoustic-spanish_mfa-v3.3.0/spanish_mfa.zip",
@@ -51,12 +51,12 @@ def startup_routine():
             "MFAENGINE", model.split("/")[1].replace(".zip", "")
         )
         if not success:
-            print(f"[STARTUP] Failed to create model metadata for {model}. {metadata}")
+            log.error("Failed to create model metadata for %s: %s", model, metadata)
             continue
         assert not isinstance(metadata, str)
         model_dest = metadata.get("model_path")
         if not model_dest:
-            print(f"[STARTUP] Model path not found in metadata for {model}.")
+            log.error("Model path not found in metadata for %s", model)
             continue
 
         # Remove last part of path and relace with .zip
@@ -65,50 +65,49 @@ def startup_routine():
         try:
             download_acoustic_model(model, str(output_file))
             # Update metadata to reflect downloaded file
-            print(f"[STARTUP] MFA model {model} downloaded to: {output_file}")
             success, message = models.update_model_metadata(
                 "MFAENGINE", metadata["id"], {"model_path": str(output_file)}
             )
 
             if not success:
-                print(f"[STARTUP] Failed to update model metadata for {model}. {message}")
+                log.error("Failed to update model metadata for %s: %s", model, message)
 
-            print(f"[STARTUP] MFA model downloaded to: {output_file}")
-        except Exception as e:
-            print(f"[STARTUP] Failed to download MFA model {model}. Error: {e}")
+            log.info("MFA model %s downloaded to %s", model, output_file)
+        except Exception:
+            log.exception("Failed to download MFA model %s", model)
 
     # Download W2TG model from HuggingFace
-    print("[STARTUP] Downloading W2TG model from HuggingFace...")
+    log.info("Downloading W2TG model from HuggingFace...")
     # Create folder for W2TG model
     w2tg_path = storage_root / "W2TGENGINE" / MODELS_ROOT
     w2tg_path.mkdir(parents=True, exist_ok=True)
     success, metadata = models.create_model("W2TGENGINE", "default")
     if not success:
-        print(f"[STARTUP] Failed to create model metadata. {metadata}")
+        log.error("Failed to create W2TG model metadata: %s", metadata)
         return
     assert not isinstance(metadata, str)
     model_dest = metadata.get("model_path")
     if not model_dest:
-        print("[STARTUP] Model path not found in metadata.")
+        log.error("Model path not found in W2TG metadata")
         return
     result = download_and_copy_huggingface_model(
         model_path="pkadambi/Wav2TextGrid",
         destination=str(model_dest),
     )
     if result:
-        print(f"[STARTUP] W2TG model downloaded to: {result}")
+        log.info("W2TG model downloaded to %s", result)
     else:
-        print("[STARTUP] Failed to download W2TG model.")
+        log.error("Failed to download W2TG model")
 
     try:
         import nltk
 
         nltk.download("averaged_perceptron_tagger_eng")
 
-    except Exception as e:
-        print(f"[STARTUP] Failed to download NLTK resources. Error: {e}")
+    except Exception:
+        log.exception("Failed to download NLTK resources")
 
-    print("[STARTUP] Initialization complete!")
+    log.info("Initialization complete")
 
 
 def ensure_mfa_environment() -> bool:
@@ -145,7 +144,7 @@ def ensure_mfa_environment() -> bool:
         mfa_provision.provision_aligner_env()
     except subprocess.CalledProcessError as e:
         # CalledProcessError carries the same returncode/stdout/stderr trio.
-        log.error("MFA environment setup failed: %s", describe_process_failure(e))  # type: ignore[arg-type]
+        log.error("MFA environment setup failed: %s", describe_process_failure(e))
         return False
     except Exception:
         log.exception("MFA environment setup failed.")

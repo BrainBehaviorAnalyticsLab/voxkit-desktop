@@ -7,6 +7,7 @@ API
 - **ManageAlignersWidget**: CategoricalTableWidget for model CRUD operations
 """
 
+import logging
 from typing import Any
 
 from PyQt6.QtWidgets import QDialog, QMessageBox
@@ -24,6 +25,8 @@ from voxkit.storage.models import ModelMetadata
 
 from .import_dialog import ImportModelDialog
 from .utils import handle_delete, handle_export, handle_import
+
+logger = logging.getLogger(__name__)
 
 
 class ManageAlignersWidget(CategoricalTableWidget):
@@ -47,20 +50,20 @@ class ManageAlignersWidget(CategoricalTableWidget):
 
                 return model_dict
 
-            except Exception as e:
-                print(f"Error refreshing models: {e}")
+            except Exception:
+                logger.exception("Error refreshing models")
                 return {}
 
         def export_models_function(category: str, items: list[dict[Any, Any]]) -> tuple[bool, str]:
-            print(f"Export requested for category: {category}")
+            logger.debug("Export requested for category: %s", category)
             return handle_export(self, items, category)
 
         def import_model_function(category: str) -> tuple[bool, str]:
-            print(f"Import requested for category: {category}")
+            logger.debug("Import requested for category: %s", category)
             return handle_import(self, category)
 
         def delete_models_function(category: str, items: list[dict[Any, Any]]) -> tuple[bool, str]:
-            print(f"Delete requested for category: {category}, items: {items}")
+            logger.debug("Delete requested for category %s, items: %s", category, items)
             return handle_delete(self, items, category)
 
         super().__init__(
@@ -163,7 +166,7 @@ class ManageAlignersWidget(CategoricalTableWidget):
             else:
                 raise ValueError("Invalid mode")
 
-            print(f"Scrubbing training run for model: {items}")
+            logger.debug("Scrubbing training run for model: %s", items)
             models.delete_model(mode, items[model]["id"])
 
     def reload_models(self):
@@ -172,11 +175,11 @@ class ManageAlignersWidget(CategoricalTableWidget):
             self.set_items(engine, models.list_models(engine))
 
     def open_import_dialog(self, category):
-        print(f"Opening import dialog for category: {category}")
+        logger.debug("Opening import dialog for category: %s", category)
         dialog = ImportModelDialog(parent=self, engine_id=category)
         if dialog.exec():
             path = dialog.field_widgets["model_path"].text()
-            print(f"Importing {category} Model from {path}")
+            logger.info("Importing %s model from %s", category, path)
             self.reload_models()
         # Clean up
         self._parent_widget.setGraphicsEffect(None)
@@ -224,7 +227,7 @@ class ManageAlignersWidget(CategoricalTableWidget):
         if result == QDialog.DialogCode.Accepted:
             # Get values from dialog
             values = dialog.get_values()
-            print("Registration values:", values)
+            logger.debug("Registration values: %s", values)
             self.process_registration(values)
 
     def process_registration(self, values: dict):
@@ -243,9 +246,11 @@ class ManageAlignersWidget(CategoricalTableWidget):
             return
 
         # Start registration in worker thread
-        print(
-            f"Starting model registration with params: {model_path}, {model_name}, "
-            f"engine_id={engine_id}"
+        logger.info(
+            "Starting model registration: path=%s name=%s engine_id=%s",
+            model_path,
+            model_name,
+            engine_id,
         )
         self.registration_worker = ModelRegistrationWorker(model_path, model_name, engine_id)
 
@@ -258,7 +263,7 @@ class ManageAlignersWidget(CategoricalTableWidget):
 
     def show_progress(self, message):
         """Show progress message"""
-        print(message)
+        logger.info("%s", message)
 
     def registration_complete(self, success, message):
         """Handle registration completion"""

@@ -8,6 +8,7 @@ API
 """
 
 import csv as csv_mod
+import logging
 from pathlib import Path
 
 from PyQt6.QtCore import Qt
@@ -37,6 +38,8 @@ from voxkit.gui.workers import DatasetRegistrationWorker
 from voxkit.storage import alignments, datasets
 from voxkit.storage.alignments import HAND_ALIGNMENT_SENTINEL, AlignmentMetadata, get_alignment_type
 from voxkit.storage.datasets import DatasetMetadata
+
+logger = logging.getLogger(__name__)
 
 # Virtual engine ids that are not registered in the engines registry but may
 # appear as `engine_id` on alignment metadata. Extend this list to surface new
@@ -431,14 +434,12 @@ class DatasetsPage(QWidget):
         # Get dataset name from first column of selected row
         row = selected_items[0].row()
 
-        print(f"Dataset row selected: {row}")
+        logger.debug("Dataset row selected: %s", row)
         item = self.dataset_table.item(row, 0)  # The item we stored the ID on
-
-        print(item)
 
         if item:
             dataset_id = item.data(Qt.ItemDataRole.UserRole)
-            print(f"Selected dataset ID: {dataset_id}")
+            logger.debug("Selected dataset ID: %s", dataset_id)
             self.selected_dataset = dataset_id
             self._set_alignments_blur(False)  # Unblur when dataset selected
 
@@ -462,7 +463,7 @@ class DatasetsPage(QWidget):
     def _load_alignments(self, dataset_id: str) -> None:
         """Load alignments for the selected dataset"""
 
-        print(f"Loading alignments for dataset ID: {dataset_id}")
+        logger.debug("Loading alignments for dataset ID: %s", dataset_id)
         alignments_metadata: list = alignments.list_alignments(dataset_id)
 
         # Populate engine filter (block signals to prevent recursion)
@@ -486,8 +487,6 @@ class DatasetsPage(QWidget):
         """Display alignments in the table"""
         # Filter by engine if selected
 
-        print("Displaying alignments:")
-        print(alignments)
         engine_filter = self.engine_filter_combo.currentText()
         if engine_filter != "All Engines":
             alignments = [a for a in alignments if a["engine_id"] == engine_filter]
@@ -499,7 +498,6 @@ class DatasetsPage(QWidget):
 
         for row, alignment in enumerate(alignments):
             # Engine
-            print(alignment)
             engine_item = QTableWidgetItem(alignment["engine_id"])
             engine_item.setFlags(engine_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
             self.alignments_table.setItem(row, 0, engine_item)
@@ -762,7 +760,7 @@ class DatasetsPage(QWidget):
         if result == QDialog.DialogCode.Accepted:
             # Get values from dialog
             values = dialog.get_values()
-            print("Registration values:", values)
+            logger.debug("Registration values: %s", values)
             self.process_registration(values)
 
     def process_registration(self, values: dict):
@@ -798,10 +796,15 @@ class DatasetsPage(QWidget):
                 return
 
         # Start registration in worker thread
-        print(
-            f"Starting dataset registration with params: {dataset_path}, {dataset_name}, "
-            f"{description}, cache={cache}, anonymize={anonymize}, transcribed={transcribed}, "
-            f"analysis_method={analysis_method}"
+        logger.info(
+            "Starting dataset registration: path=%s name=%s cache=%s anonymize=%s "
+            "transcribed=%s analysis_method=%s",
+            dataset_path,
+            dataset_name,
+            cache,
+            anonymize,
+            transcribed,
+            analysis_method,
         )
         self.registration_worker = DatasetRegistrationWorker(
             dataset_path,
@@ -822,7 +825,7 @@ class DatasetsPage(QWidget):
 
     def show_progress(self, message):
         """Show progress message"""
-        print(message)
+        logger.info("%s", message)
 
     def registration_complete(self, success, message):
         """Handle registration completion"""
@@ -961,8 +964,8 @@ class DatasetsPage(QWidget):
             with open(csv_path, "r", encoding="utf-8") as f:
                 data = list(csv_mod.DictReader(f))
             visualization = analyzer.visualize(data)
-        except Exception as e:
-            print(f"Visualization failed for analyzer '{csv_files[0].stem}': {e}")
+        except Exception:
+            logger.exception("Visualization failed for analyzer '%s'", csv_files[0].stem)
 
         # Open viewer dialog (falls back to table if no visualization)
         dialog = CSVViewerDialog(csv_path, parent=self.parent_window, visualization=visualization)

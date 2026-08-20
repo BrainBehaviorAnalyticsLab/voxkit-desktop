@@ -13,6 +13,7 @@ Notes
 - Supported audio formats: .wav, .flac, .mp3, .ogg, .m4a
 """
 
+import logging
 import os
 from pathlib import Path
 from typing import Any, Dict, List
@@ -20,6 +21,8 @@ from typing import Any, Dict, List
 from voxkit.storage.constants import SUPERSET_AUDIO_EXTENSIONS
 
 from .base import DatasetAnalyzer
+
+logger = logging.getLogger(__name__)
 
 
 class DefaultAnalyzer(DatasetAnalyzer):
@@ -60,8 +63,8 @@ class DefaultAnalyzer(DatasetAnalyzer):
                     results.append(
                         {"speaker_id": speaker_name, "audio_file_count": len(audio_files)}
                     )
-        except Exception as e:
-            print(f"Error analyzing dataset: {e}")
+        except Exception:
+            logger.exception("Error analyzing dataset")
 
         return results
 

@@ -38,6 +38,7 @@ Notes
 
 import csv
 import json
+import logging
 import os
 import shutil
 from pathlib import Path
@@ -45,6 +46,8 @@ from typing import Any, List, Literal, Tuple, TypedDict
 
 from voxkit.storage.constants import ALIGNMENTS_ROOT, DATASETS_ROOT, SUPERSET_AUDIO_EXTENSIONS
 from voxkit.storage.utils import generate_unique_id, get_storage_root, readable_from_unique_id
+
+logger = logging.getLogger(__name__)
 
 
 class DatasetMetadata(TypedDict):
@@ -237,7 +240,7 @@ def create_dataset(
         if dataset_dir.exists():
             shutil.rmtree(dataset_dir, ignore_errors=False)
 
-        print("Error during dataset creation:", str(e))
+        logger.exception("Error during dataset creation")
         return False, f"Failed to create dataset metadata: {str(e)}"
 
 
@@ -284,8 +287,8 @@ def get_dataset_metadata(dataset_id: str) -> DatasetMetadata | None:
             raise FileNotFoundError(f"Metadata for dataset '{dataset_id}' not found.")
         return metadata
 
-    except Exception as e:
-        print(f"Error retrieving dataset metadata: {str(e)}")
+    except Exception:
+        logger.exception("Error retrieving dataset metadata")
         return None
 
 
@@ -316,8 +319,8 @@ def list_datasets_metadata() -> List[DatasetMetadata]:
                         datasets.append(metadata)
         return datasets
 
-    except Exception as e:
-        print(f"Error listing datasets: {str(e)}")
+    except Exception:
+        logger.exception("Error listing datasets")
         return []
 
 
@@ -469,7 +472,7 @@ def _rewrite_imported_alignments(new_dataset_path: Path) -> None:
             with open(metadata_file, "r", encoding="utf-8") as f:
                 alignment_metadata = json.load(f)
         except (OSError, json.JSONDecodeError) as e:
-            print(f"Skipping alignment metadata rewrite for '{metadata_file}': {e}")
+            logger.warning("Skipping alignment metadata rewrite for '%s': %s", metadata_file, e)
             continue
 
         if not alignment_metadata.get("local"):
@@ -479,8 +482,8 @@ def _rewrite_imported_alignments(new_dataset_path: Path) -> None:
         try:
             with open(metadata_file, "w", encoding="utf-8") as f:
                 json.dump(alignment_metadata, f, indent=4)
-        except OSError as e:
-            print(f"Failed to rewrite alignment metadata '{metadata_file}': {e}")
+        except OSError:
+            logger.exception("Failed to rewrite alignment metadata '%s'", metadata_file)
 
 
 def import_dataset(dataset_path: Path) -> Tuple[bool, str]:
@@ -521,7 +524,6 @@ def import_dataset(dataset_path: Path) -> Tuple[bool, str]:
 
     now = generate_unique_id()
 
-    print(now)
     dataset_dest = _get_datasets_root() / now
     try:
         # Change metadata accordingly
@@ -562,7 +564,7 @@ def import_dataset(dataset_path: Path) -> Tuple[bool, str]:
         # Cleanup on failure
         if dataset_dest.exists():
             shutil.rmtree(dataset_dest, ignore_errors=True)
-        print("Error during dataset import:", str(e))
+        logger.exception("Error during dataset import")
         return False, f"Failed to import dataset: {str(e)}"
 
 

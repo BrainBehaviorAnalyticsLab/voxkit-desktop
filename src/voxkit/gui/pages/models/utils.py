@@ -242,4 +242,4 @@ if __name__ == "__main__":
     #     ) and QMessageBox.information(widget, "Done", "Export complete")
     # )
 
-    print("Export handlers created successfully!")
+    print("Export handlers created successfully!")  # noqa: T201

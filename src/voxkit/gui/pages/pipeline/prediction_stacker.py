@@ -7,6 +7,8 @@ API
 - **PredictionStacker**: Alignment prediction workflow UI
 """
 
+import logging
+
 from PyQt6.QtWidgets import (
     QDialog,
     QLabel,
@@ -22,6 +24,8 @@ from voxkit.services import mfa_provision
 from voxkit.storage import datasets
 
 from .base_stacker import BaseStacker
+
+logger = logging.getLogger(__name__)
 
 
 class PredictionStacker(BaseStacker):
@@ -178,8 +182,9 @@ class PredictionStacker(BaseStacker):
             )
             return
 
-        print("Predict Alignments clicked!")
-        print(f"Engine: {self.model_panel.get_selected_engine()}")
+        logger.debug(
+            "Predict Alignments clicked (engine=%s)", self.model_panel.get_selected_engine()
+        )
 
         self.set_status("Processing...", "working")
         self.predict_btn.setEnabled(False)
@@ -194,8 +199,9 @@ class PredictionStacker(BaseStacker):
         selected_model_id = self.model_panel.get_selected_model_id()
         selected_engine = self.model_panel.get_selected_engine()
 
-        print(f"Selected engine: {selected_engine}")
-        print(f"Selected model ID: {selected_model_id}")
+        logger.info(
+            "Predicting alignments with engine=%s model=%s", selected_engine, selected_model_id
+        )
 
         # Get engine and call align method
         engine = self.engines.get_engine(selected_engine)

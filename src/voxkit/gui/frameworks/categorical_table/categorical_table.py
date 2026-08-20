@@ -644,27 +644,27 @@ if __name__ == "__main__":
     # Example callback functions
     def refresh_data():
         """Simulates fetching data from a database or API"""
-        print("Refreshing data...")
+        print("Refreshing data...")  # noqa: T201
         return sample_data
 
     def export_function(category, items):
         """Simulates exporting items"""
-        print(f"Exporting {len(items)} items from category '{category}':")
+        print(f"Exporting {len(items)} items from category '{category}':")  # noqa: T201
         for item in items:
-            print(f"  - {item}")
+            print(f"  - {item}")  # noqa: T201
         return True, f"Successfully exported {len(items)} item(s) from '{category}'"
 
     def import_function(category):
         """Simulates importing items"""
-        print(f"Importing items into category '{category}'")
+        print(f"Importing items into category '{category}'")  # noqa: T201
         # In real usage, this would add items to the data source
         return True, f"Successfully imported items into '{category}'"
 
     def delete_function(category, items):
         """Simulates deleting items"""
-        print(f"Deleting {len(items)} items from category '{category}':")
+        print(f"Deleting {len(items)} items from category '{category}':")  # noqa: T201
         for item in items:
-            print(f"  - {item}")
+            print(f"  - {item}")  # noqa: T201
         # In real usage, this would remove items from the data source
         return True, f"Successfully deleted {len(items)} item(s) from '{category}'"
 

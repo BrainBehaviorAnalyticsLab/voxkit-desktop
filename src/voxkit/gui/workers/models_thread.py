@@ -8,11 +8,14 @@ Signals
 - ``progress(str)``: Emitted with status updates during registration
 """
 
+import logging
 from pathlib import Path
 
 from PyQt6.QtCore import QThread, pyqtSignal
 
 from voxkit.storage import models
+
+logger = logging.getLogger(__name__)
 
 
 class ModelRegistrationWorker(QThread):
@@ -59,7 +62,7 @@ class ModelRegistrationWorker(QThread):
             source_path=self.model_path,
         )
 
-        print(f"Model creation result: {success}, message: {message}")
+        logger.info("Model creation result: success=%s, message=%s", success, message)
 
         if not success:
             self.finished.emit(False, message)

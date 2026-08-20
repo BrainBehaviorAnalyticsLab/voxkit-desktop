@@ -7,6 +7,7 @@ API
 - **TrainingStacker**: Model training workflow UI (dataset + alignment selection)
 """
 
+import logging
 from pathlib import Path
 
 from PyQt6.QtWidgets import (
@@ -27,6 +28,8 @@ from voxkit.gui.workers.worker_thread import WorkerThread
 from voxkit.storage import alignments, datasets, models
 
 from .base_stacker import BaseStacker
+
+logger = logging.getLogger(__name__)
 
 
 class TrainingStacker(BaseStacker):
@@ -70,8 +73,8 @@ class TrainingStacker(BaseStacker):
         if result == QDialog.DialogCode.Accepted:
             try:
                 self.settings_dialog.save()
-            except Exception as e:
-                print("Error syncing training settings:", e)
+            except Exception:
+                logger.exception("Error syncing training settings")
         # Clean up
         if self.parent():
             self.parent().setGraphicsEffect(None)
@@ -191,7 +194,7 @@ class TrainingStacker(BaseStacker):
             QMessageBox.warning(self, "Invalid Model Name", "Please enter a valid model name.")
             return
 
-        print(f"Checking if model name '{model_name}' is already taken in {mode}...")
+        logger.debug("Checking if model name '%s' is already taken in %s", model_name, mode)
         names_taken = models.list_models(mode)
         names_taken = [m["name"] for m in names_taken]
 
@@ -203,11 +206,13 @@ class TrainingStacker(BaseStacker):
             )
             return
 
-        print("Start Training clicked!")
-        print(f"Model: {mode}")
-        print(f"Training Audio Directory: {audio_path}")
-        print(f"Training TextGrid Directory: {textgrid_path}")
-        print(f"Model Name: {model_name}")
+        logger.info(
+            "Start training: engine=%s name=%s audio=%s textgrids=%s",
+            mode,
+            model_name,
+            audio_path,
+            textgrid_path,
+        )
 
         # Update UI
         self.set_status("Training...", "working")
@@ -222,7 +227,6 @@ class TrainingStacker(BaseStacker):
 
     def train_model_logic(self, audio_path, textgrid_path, model_name, model):
         """Actual model training logic"""
-        print("Training logic would be implemented here.")
 
         selected_engine = self.model_panel.get_selected_engine()
         base_model_id = self.model_panel.get_selected_model_id()

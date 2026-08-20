@@ -7,6 +7,7 @@ API
 - **ImportModelDialog**: GenericDialog subclass for HuggingFace model import
 """
 
+import logging
 from typing import Callable, Optional
 
 from PyQt6.QtWidgets import QMessageBox
@@ -19,6 +20,8 @@ from voxkit.gui.frameworks.settings_modal import (
 )
 from voxkit.storage import models
 from voxkit.storage.models import download_and_copy_huggingface_model
+
+logger = logging.getLogger(__name__)
 
 
 class ImportModelDialog(GenericDialog):
@@ -91,7 +94,7 @@ class ImportModelDialog(GenericDialog):
     def _placeholder_import(self, model_path: str):
         parts = model_path.split("/") if model_path else []
         model_name = parts[-1] if parts else (model_path or "NONE")
-        print(f"Creating destination for engine: {self.engine_id}, key: {model_name}")
+        logger.debug("Creating destination for engine %s, key %s", self.engine_id, model_name)
         success, message = models.create_model(
             engine_id=self.engine_id,
             model_name=model_name,
@@ -106,19 +109,19 @@ class ImportModelDialog(GenericDialog):
         result = download_and_copy_huggingface_model(model_path, destination=dest_model_path)
 
         if result is None:
-            print("Failed to download model")
+            logger.error("Failed to download model %s", model_path)
         else:
-            print(f"Model imported successfully to: {result}")
+            logger.info("Model imported successfully to %s", result)
 
 
 def main():
     # Example usage:
     def handle_import(engine: str, model_path: str):
         # Your actual import logic here
-        print(f"Importing {model_path} using {engine}")
+        print(f"Importing {model_path} using {engine}")  # noqa: T201
         # Download model, initialize, etc.
 
     dialog = ImportModelDialog(on_import=handle_import, engines=["Whisper", "Wav2Vec2", "Custom"])
 
     if dialog.exec():
-        print("Import completed!")
+        print("Import completed!")  # noqa: T201

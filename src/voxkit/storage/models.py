@@ -34,6 +34,7 @@ Notes
 """
 
 import json
+import logging
 import shutil
 from pathlib import Path
 from typing import Literal, Tuple, TypedDict
@@ -41,6 +42,8 @@ from typing import Literal, Tuple, TypedDict
 from voxkit.storage.utils import generate_unique_id, get_storage_root, readable_from_unique_id
 
 from .constants import MODELS_ROOT
+
+logger = logging.getLogger(__name__)
 
 
 class ModelMetadata(TypedDict):
@@ -133,7 +136,7 @@ def create_model(
 
     now = generate_unique_id()
     model_root = Path(f"{engine_models_root}/{now}")
-    print(f"Creating model at: {model_root}")
+    logger.debug("Creating model at: %s", model_root)
 
     try:
         model_path = model_root / "entrypoint.model"
@@ -185,7 +188,7 @@ def create_model(
         return True, model_metadata
 
     except Exception as e:
-        print(f"Exception occurred during model creation: {e}")
+        logger.exception("Exception occurred during model creation")
         # Clean up partially created model directory
         if model_root and model_root.exists():
             shutil.rmtree(model_root)
@@ -231,8 +234,8 @@ def update_model_metadata(engine_id: str, model_id: str, updates: dict) -> Tuple
 
         return True, "Model metadata updated successfully."
 
-    except Exception as e:
-        print(f"Exception occurred during model metadata update: {e}")
+    except Exception:
+        logger.exception("Exception occurred during model metadata update")
         return False, "Failed to update model metadata."
 
 
@@ -270,12 +273,12 @@ def list_models(engine_id: str) -> list[ModelMetadata]:
                             metadata = json.load(f)
                             models_found.append(metadata)
                     except json.JSONDecodeError as e:
-                        print(f"Skipping invalid JSON in {metadata_path}: {e}")
+                        logger.warning("Skipping invalid JSON in %s: %s", metadata_path, e)
                         continue
         return models_found
 
-    except Exception as e:
-        print(f"Error listing models: {e}")
+    except Exception:
+        logger.exception("Error listing models")
         return []
 
 
@@ -328,7 +331,7 @@ def download_and_copy_huggingface_model(
 
         # Validate model path format
         if not model_path or "/" not in model_path:
-            print(f"Invalid model path format: {model_path}")
+            logger.error("Invalid model path format: %s", model_path)
             return None
 
         # Download to HF cache (returns path to snapshot with symlinks)
@@ -336,7 +339,7 @@ def download_and_copy_huggingface_model(
             repo_id=model_path,
         )
 
-        print(f"Downloaded to cache: {cache_snapshot_path}")
+        logger.debug("Downloaded to cache: %s", cache_snapshot_path)
 
         # Create destination directory
         dest_path = Path(destination).expanduser()
@@ -354,7 +357,7 @@ def download_and_copy_huggingface_model(
                 actual_file = item.resolve()
                 dest_file = dest_path / item.name
                 shutil.copy2(actual_file, dest_file)
-                print(f"Copied: {item.name}")
+                logger.debug("Copied: %s", item.name)
             elif item.is_dir():
                 # Recursively copy directories
                 shutil.copytree(
@@ -364,19 +367,19 @@ def download_and_copy_huggingface_model(
                     dirs_exist_ok=True,
                 )
 
-        print(f"Successfully copied model to: {dest_path}")
+        logger.info("Successfully copied model to: %s", dest_path)
         return str(dest_path)
 
     except RepositoryNotFoundError:
-        print(f"Model not found: {model_path}")
+        logger.error("Model not found: %s", model_path)
         return None
 
-    except HfHubHTTPError as e:
-        print(f"HTTP error downloading model: {e}")
+    except HfHubHTTPError:
+        logger.exception("HTTP error downloading model %s", model_path)
         return None
 
-    except Exception as e:
-        print(f"Error downloading model {model_path}: {e}")
+    except Exception:
+        logger.exception("Error downloading model %s", model_path)
         return None
 
 
@@ -405,13 +408,13 @@ def delete_model(engine_id: str, model_id: str) -> Tuple[bool, str]:
     if not engine_id or not model_id:
         return False, "Engine ID and Model ID cannot be empty."
 
-    print(f"Attempting to delete model: engine_id={engine_id}, model_id={model_id}")
+    logger.debug("Attempting to delete model: engine_id=%s, model_id=%s", engine_id, model_id)
     model_path = _get_model_root(engine_id, model_id)
 
     if not model_path:
         return False, f"Model {model_id} not found"
 
-    print(f"Deleting model at path: {model_path}")
+    logger.debug("Deleting model at path: %s", model_path)
     shutil.rmtree(model_path)
     return True, "Model deleted successfully."
 
