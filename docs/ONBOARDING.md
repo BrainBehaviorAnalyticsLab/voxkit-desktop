@@ -17,6 +17,7 @@ it says so.
 - [1. What VoxKit is](#1-what-voxkit-is)
 - [2. Day one — get it running](#2-day-one--get-it-running)
 - [3. What you now own](#3-what-you-now-own)
+  - [3.1 The website deployment, which you cannot inherit](#31-the-website-deployment-which-you-cannot-inherit) — **time-sensitive**
 - [4. The mental model](#4-the-mental-model)
 - [5. What the product actually does](#5-what-the-product-actually-does)
 - [6. Your first week](#6-your-first-week)
@@ -147,11 +148,86 @@ VoxKit is not just this repository. The full footprint:
 | Thing | Where | Notes |
 |---|---|---|
 | This app | [`BrainBehaviorAnalyticsLab/voxkit-desktop`](https://github.com/BrainBehaviorAnalyticsLab/voxkit-desktop) | Public, MIT |
-| The website + docs host | [`BrainBehaviorAnalyticsLab/voxkit-web`](https://github.com/BrainBehaviorAnalyticsLab/voxkit-web) | Next.js on Vercel. Download page reads the GitHub releases API; API docs are pushed into it by CI |
+| The website + docs host | [`BrainBehaviorAnalyticsLab/voxkit-web`](https://github.com/BrainBehaviorAnalyticsLab/voxkit-web) | Next.js on Vercel. Download page reads the GitHub releases API; API docs are pushed into it by CI. **The deployment does not transfer — see §3.1** |
 | Product planning | [Jira (VOX board)](https://voxkit.atlassian.net/jira/software/projects/VOX/boards/2/) | Large features and direction |
 | Code planning | [GitHub Projects](https://github.com/orgs/BrainBehaviorAnalyticsLab/projects/1) | Issue triage |
 | PHI scanner | [`WISCLab/shred-guard`](https://github.com/WISCLab/shred-guard) | Pre-commit hook; patterns configured in `pyproject.toml` |
 | CI secret | `PRIVATE_REPO_TOKEN` | Repo secret. Every workflow needs it. **If it expires, all CI goes red at once.** |
+
+### 3.1 The website deployment, which you cannot inherit
+
+> **This is the one item on the handover that has a deadline attached.** Read it
+> before you need it.
+
+The website repository is org-owned and transfers cleanly. **The Vercel
+deployment does not.** The outgoing maintainer cannot transfer the Vercel
+project, so `https://voxkit-web.vercel.app` will continue to be served from an
+account you have no control over, until whenever that account or project goes
+away.
+
+**Why this is more serious than a website going dark.** That hostname is
+compiled into shipped builds. `DEFAULT_HELP_URL` in
+`src/voxkit/config/constants.py` and the `help_url` in every profile's
+`app_info.yaml` all point at it, and the in-app Help button opens it directly
+(`gui/__init__.py:402-403`). Every copy of VoxKit already installed on a
+researcher's machine — v0.4.x, v0.5.0, everything shipped to date — has that URL
+baked in and **cannot be updated**. If the Vercel project is deleted, the Help
+button breaks retroactively for every existing user, and no release you cut
+afterwards can fix the copies already out there.
+
+The download page also lives there, and it is where the install instructions
+send people.
+
+#### What to do, in order
+
+1. **Do not let the old project be deleted until the replacement is live.** This
+   is the only part that is genuinely time-sensitive, and it needs a conversation
+   with the outgoing maintainer rather than a commit. Agree on a date.
+
+2. **Stand up your own deployment.** No code migration is needed — the repo is
+   already org-owned. Create a new Vercel project pointed at
+   `BrainBehaviorAnalyticsLab/voxkit-web`. Prefer a **Vercel Team owned by the
+   lab** over a personal account, so the next maintainer does not repeat this
+   exercise.
+
+3. **Recreate the environment variables.** Per [RELEASE.md](./RELEASE.md),
+   `lib/releases.ts` builds the download page by fetching
+   `https://api.github.com/repos/$GITHUB_OWNER/$GITHUB_REPO/releases` at server
+   render. Those variables live in Vercel's project settings, not in the repo, so
+   a fresh project starts without them and the download page will come up empty.
+   Check the deployed site's live settings for the full list before you cut over —
+   this doc can only tell you what the desktop repo knows about.
+
+4. **Register a custom domain and point the app at that instead.** This is the
+   actual fix, and the reason to do it now rather than later: a domain the lab
+   owns can be re-pointed at any future deployment without touching the app, so
+   this problem never recurs. As long as the app hardcodes a `*.vercel.app`
+   hostname, the app is coupled to one specific Vercel account forever.
+
+5. **Then update the URL in this repo.** It appears 13 times across six files —
+   `git grep -c 'voxkit-web\.vercel\.app'` will confirm the count has not drifted:
+
+   | File | Refs |
+   |---|---|
+   | `src/voxkit/config/constants.py` (`DEFAULT_HELP_URL`) | 1 |
+   | `config/profiles/explanatory/app_info.yaml` | 2 |
+   | `config/profiles/default/app_info.yaml` | 2 |
+   | `config/profiles/default/pipeline_definitions.yaml` | 3 |
+   | `config/app_info.yaml` (legacy fallback) | 2 |
+   | `config/pipeline_definitions.yaml` (legacy fallback) | 3 |
+
+   A fourteenth reference is in `tests/config/test_app_config.py:104`, which
+   asserts the default help URL literally — so changing the constant without
+   changing the test turns CI red.
+   The active profile is `explanatory`, but change all of them — the others are
+   live fallbacks, not dead files.
+
+   A URL change only helps *future* installs. It does not rescue the copies
+   already deployed, which is why step 1 matters more than this one.
+
+**What is not affected:** `sync-docs.yml` pushes pdoc HTML from this repo into
+`voxkit-web/public/docs` via GitHub, repo to repo. That keeps working regardless
+of who deploys the site. Only the rendered result moves.
 
 ### Forked dependencies — read this twice
 
@@ -522,7 +598,8 @@ code.
 - [ ] **Read access to `pkadambi/PyPhonemePronunciationScorer`** — private, outside the lab, and a hard blocker on `uv sync`
 - [ ] A documented owner for each of the four forked dependencies, and — for the two `pkadambi/*` repos — a named contact who can restore a branch if one disappears
 - [ ] The `PRIVATE_REPO_TOKEN` CI secret: who owns it, when it expires, how to rotate it
-- [ ] Vercel access for the website deployment
+- [ ] **A replacement Vercel deployment for the website, and an agreed date before which the old one will not be deleted** — the existing project cannot be transferred, and its hostname is baked into every already-shipped copy of the app. See [§3.1](#31-the-website-deployment-which-you-cannot-inherit); this is the one handover item with a deadline
+- [ ] The Vercel environment variables the site needs (`GITHUB_OWNER`, `GITHUB_REPO`, and anything else in the live project settings) — they are not in the repo
 - [ ] Jira access (VOX board) and the GitHub Project board
 - [ ] Admin on the GitHub org, or a named person who has it
 - [ ] The support email in `config/profiles/*/app_info.yaml` — it currently points at the outgoing maintainer's personal address (`code@beckettfrey.com`), and it is what the in-app Feedback button opens. **Change this.**
