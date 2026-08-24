@@ -22,6 +22,7 @@
 
 ## Appendix
 
+- [ONBOARDING](./docs/ONBOARDING.md) - Start here if you are taking over the project
 - [ARCHITECTURE](./docs/ARCHITECTURE.md) - System layers and terminology
 - [BUILD](./docs/BUILD.md) - Building the executable and the bundled MFA environment
 - [RELEASE](./docs/RELEASE.md) - Cutting a release, from version bump to website
