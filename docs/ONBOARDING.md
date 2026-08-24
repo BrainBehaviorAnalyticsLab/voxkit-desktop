@@ -459,9 +459,12 @@ invoke dev             # and then actually click the thing you changed
 
 Pre-commit runs shredguard, ruff, ruff-format, mypy, and whitespace hooks on
 commit. **shredguard is a PHI scanner** — patterns are in `pyproject.toml`
-(`[[tool.shredguard.patterns]]`), currently phone numbers and patient IDs of the
-form `123_M_`. This is a clinical-data project; do not disable it, and never
-commit a real dataset path or participant identifier.
+(`[[tool.shredguard.patterns]]`), currently phone numbers and participant IDs of
+the form digits-underscore-sex-underscore. This is a clinical-data project; do
+not disable it, and never commit a real dataset path or participant identifier.
+
+(Deliberately paraphrased rather than shown literally: writing an example that
+matches the pattern makes the file itself trip the hook forever after.)
 
 CI runs tests on Ubuntu, macOS, and Windows plus a lint/format/mypy job. All four
 need `PRIVATE_REPO_TOKEN` to install dependencies.
