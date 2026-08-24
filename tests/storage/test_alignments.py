@@ -848,3 +848,84 @@ class TestGetAlignmentType:
 
         meta = {"engine_id": "MFAENGINE"}
         assert get_alignment_type(meta) == "automatic"
+
+
+class TestIsManualAlignment:
+    """Training data must come from a human, so this predicate gates the Train
+    Aligners dropdowns. It excludes "automatic" rather than allow-listing
+    {hand, corrected}, because alignment_type is a free-text field."""
+
+    def test_hand_and_corrected_are_manual(self):
+        from voxkit.storage.alignments import is_manual_alignment
+
+        for t in ("hand", "corrected"):
+            assert is_manual_alignment({"engine_id": "MFAENGINE", "alignment_type": t}) is True
+
+    def test_automatic_is_not_manual(self):
+        from voxkit.storage.alignments import is_manual_alignment
+
+        assert (
+            is_manual_alignment({"engine_id": "MFAENGINE", "alignment_type": "automatic"}) is False
+        )
+
+    def test_custom_correction_label_is_still_manual(self):
+        """create_corrected_alignment accepts any string -- the Correct Alignments
+        page exposes it as free text, so values like this reach storage. An
+        allow-list of {hand, corrected} would silently hide real corrected work."""
+        from voxkit.storage.alignments import is_manual_alignment
+
+        assert is_manual_alignment({"engine_id": "MFA (Nina)", "alignment_type": "corrected-v2"})
+
+    def test_legacy_alignments_without_the_field_are_classified_by_sentinel(self):
+        from voxkit.storage.alignments import HAND_ALIGNMENT_SENTINEL, is_manual_alignment
+
+        assert is_manual_alignment({"engine_id": HAND_ALIGNMENT_SENTINEL}) is True
+        assert is_manual_alignment({"engine_id": "MFAENGINE"}) is False
+
+
+class TestListManualAlignments:
+    """Filtering is layered over list_alignments, whose directory scan is covered
+    by TestListAlignments -- these patch it out to test the predicate alone."""
+
+    ALIGNMENTS = [
+        {"id": "a1", "engine_id": "MFAENGINE", "alignment_type": "automatic"},
+        {"id": "a2", "engine_id": "hand", "alignment_type": "hand"},
+        {"id": "a3", "engine_id": "MFAENGINE", "alignment_type": "automatic"},
+        {"id": "a4", "engine_id": "MFA (Nina)", "alignment_type": "corrected-v2"},
+    ]
+
+    def test_drops_automatic_and_preserves_order(self, monkeypatch):
+        from voxkit.storage import alignments as alignments_module
+
+        monkeypatch.setattr(alignments_module, "list_alignments", lambda _: self.ALIGNMENTS)
+
+        result = alignments_module.list_manual_alignments("ds1")
+
+        assert [a["id"] for a in result] == ["a2", "a4"]
+
+    def test_empty_when_every_alignment_is_automatic(self, monkeypatch):
+        from voxkit.storage import alignments as alignments_module
+
+        monkeypatch.setattr(
+            alignments_module,
+            "list_alignments",
+            lambda _: [{"id": "a1", "engine_id": "MFAENGINE", "alignment_type": "automatic"}],
+        )
+
+        assert alignments_module.list_manual_alignments("ds1") == []
+
+    def test_has_manual_alignments_reflects_the_filter(self, monkeypatch):
+        from voxkit.storage import alignments as alignments_module
+
+        monkeypatch.setattr(alignments_module, "list_alignments", lambda _: self.ALIGNMENTS)
+        assert alignments_module.has_manual_alignments("ds1") is True
+
+        monkeypatch.setattr(alignments_module, "list_alignments", lambda _: self.ALIGNMENTS[:1])
+        assert alignments_module.has_manual_alignments("ds1") is False
+
+    def test_has_manual_alignments_false_for_dataset_with_no_alignments(self, monkeypatch):
+        from voxkit.storage import alignments as alignments_module
+
+        monkeypatch.setattr(alignments_module, "list_alignments", lambda _: [])
+
+        assert alignments_module.has_manual_alignments("ds1") is False
