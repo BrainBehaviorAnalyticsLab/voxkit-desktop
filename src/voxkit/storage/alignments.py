@@ -22,8 +22,11 @@ API
   another alignment's boundaries, without ever mutating the source
 - **get_alignment_metadata**: Retrieve metadata for a specific alignment
 - **get_alignment_type**: Return an alignment's provenance (automatic/hand/corrected)
+- **is_manual_alignment**: True if a human produced or corrected the alignment
 - **update_alignment**: Update the status or details of an existing alignment
 - **list_alignments**: List all alignments for a given dataset
+- **list_manual_alignments**: List only hand/corrected alignments for a dataset
+- **has_manual_alignments**: True if a dataset has at least one manual alignment
 - **delete_alignment**: Remove an alignment from storage
 
 Notes
@@ -116,6 +119,21 @@ def get_alignment_type(meta: AlignmentMetadata) -> AlignmentType:
     if meta["engine_id"] == CORRECTED_ALIGNMENT_SENTINEL:
         return "corrected"
     return "automatic"
+
+
+def is_manual_alignment(meta: AlignmentMetadata) -> bool:
+    """Return True if a human produced or corrected this alignment.
+
+    Defined as "not machine-generated" rather than as a membership test against
+    {"hand", "corrected"} on purpose. ``create_corrected_alignment`` accepts an
+    arbitrary ``alignment_type`` string -- the Correct Alignments page exposes it
+    as a free-text field defaulting to "corrected", so real stored values include
+    things like "corrected-v2". Those are still hand-corrected work, and an
+    inclusion test would silently drop them. "automatic" is the one value written
+    by a machine path, and the one value ``get_alignment_type`` falls back to, so
+    excluding it is both narrower and more durable.
+    """
+    return get_alignment_type(meta) != "automatic"
 
 
 def _get_alignments_root(dataset_id: str) -> Path | None:
@@ -575,6 +593,27 @@ def list_alignments(dataset_id: str) -> List[AlignmentMetadata]:
                     logger.exception("Failed to load alignment metadata from '%s'", metadata_path)
 
     return alignments_found
+
+
+def list_manual_alignments(dataset_id: str) -> List[AlignmentMetadata]:
+    """List only the alignments a human produced or corrected.
+
+    Training against machine-generated alignments teaches a model whatever errors
+    those alignments already contain, so callers that feed training data want this
+    rather than ``list_alignments``.
+
+    Args:
+        dataset_id: Identifier of the dataset to list alignments for
+
+    Returns:
+        List of AlignmentMetadata dictionaries (empty list if none qualify)
+    """
+    return [a for a in list_alignments(dataset_id) if is_manual_alignment(a)]
+
+
+def has_manual_alignments(dataset_id: str) -> bool:
+    """Return True if a dataset has at least one hand or corrected alignment."""
+    return any(is_manual_alignment(a) for a in list_alignments(dataset_id))
 
 
 def delete_alignment(dataset_id: str, alignment_id: str) -> Tuple[bool, str]:

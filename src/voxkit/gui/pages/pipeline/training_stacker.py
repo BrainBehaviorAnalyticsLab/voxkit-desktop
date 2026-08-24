@@ -31,6 +31,15 @@ from .base_stacker import BaseStacker
 
 logger = logging.getLogger(__name__)
 
+# Shown inline above the dataset dropdown and repeated as its tooltip. Inline
+# rather than tooltip-only because it explains an *absence* -- a user whose
+# dataset is missing from the list has no reason to hover over a control to find
+# out why, and when the list is empty the dropdown is disabled anyway.
+MANUAL_ALIGNMENT_NOTICE = (
+    "Training aligners is only meaningful on datasets with manual alignments. "
+    "Only datasets with manual alignments will appear in the list below."
+)
+
 
 class TrainingStacker(BaseStacker):
     """Model training pipeline page.
@@ -83,8 +92,9 @@ class TrainingStacker(BaseStacker):
         """Handle dataset selection change and load corresponding alignments"""
         selected_dataset_id = self.train_dataset_dropdown.current_id()
 
-        # Load alignments for the selected dataset
-        alignments_meta = alignments.list_alignments(selected_dataset_id)
+        # Manual alignments only: a model trained against machine-generated
+        # alignments just relearns whatever errors those alignments contain.
+        alignments_meta = alignments.list_manual_alignments(selected_dataset_id)
 
         if alignments_meta:
             data = []
@@ -110,9 +120,9 @@ class TrainingStacker(BaseStacker):
 
         else:
             self.train_alignment_dropdown.set_data(
-                [{"id": None, "data": ("No alignments registered", "", "")}],
+                [{"id": None, "data": ("No manual alignments for this dataset", "", "")}],
                 ["Method", "Model", "Date", "Status"],
-                placeholder="No alignments registered",
+                placeholder="No manual alignments for this dataset",
             )
             self.train_alignment_dropdown.setEnabled(False)
 
@@ -273,24 +283,40 @@ class TrainingStacker(BaseStacker):
         if self.model_panel:
             self.model_panel.reload_models()
 
-    def reload_datasets(self):
-        """Reload datasets in the dropdown"""
-        datasets_meta = datasets.list_datasets_metadata()
-        if datasets_meta:
-            data = []
-            for d in datasets_meta:
-                data.append({"id": d["id"], "data": (d["name"], d["description"], d["id"])})
+    def _populate_dataset_dropdown(self):
+        """Fill the dataset dropdown with datasets that can actually be trained on.
+
+        Only datasets carrying at least one hand or corrected alignment are
+        listed -- see ``MANUAL_ALIGNMENT_NOTICE``, which tells the user this is
+        happening. The two empty states are distinct on purpose: "nothing
+        registered at all" and "nothing registered that qualifies" call for
+        different next steps from the user.
+        """
+        all_datasets = datasets.list_datasets_metadata()
+        trainable = [d for d in all_datasets if alignments.has_manual_alignments(d["id"])]
+        if trainable:
+            data = [
+                {"id": d["id"], "data": (d["name"], d["registration_date"], d["description"])}
+                for d in trainable
+            ]
             self.train_dataset_dropdown.set_data(
-                data, ["Name", "Description", "ID"], placeholder="Click to select a dataset"
+                data, ["Name", "Date", "Description"], placeholder="Click to select a dataset"
             )
             self.train_dataset_dropdown.setEnabled(True)
         else:
+            empty_message = (
+                "No datasets with manual alignments" if all_datasets else "No datasets registered"
+            )
             self.train_dataset_dropdown.set_data(
-                [{"id": None, "data": ("No datasets registered", "", "")}],
-                ["Name", "Description", "ID"],
-                placeholder="No datasets registered",
+                [{"id": None, "data": (empty_message, "", "")}],
+                ["Name", "Date", "Description"],
+                placeholder=empty_message,
             )
             self.train_dataset_dropdown.setEnabled(False)
+
+    def reload_datasets(self):
+        """Reload datasets in the dropdown"""
+        self._populate_dataset_dropdown()
 
         self.train_alignment_dropdown.set_data(
             [{"id": None, "data": ("Select a dataset first", "", "")}],
@@ -315,28 +341,16 @@ class TrainingStacker(BaseStacker):
         dataset_label.setStyleSheet(Labels.SECTION_LABEL)
         self.content_layout.addWidget(dataset_label)
 
+        manual_alignment_note = QLabel(MANUAL_ALIGNMENT_NOTICE)
+        manual_alignment_note.setStyleSheet(Labels.INFO)
+        manual_alignment_note.setWordWrap(True)
+        self.content_layout.addWidget(manual_alignment_note)
+
         self.train_dataset_dropdown = MultiColumnComboBox()
         self.train_dataset_dropdown.setStyleSheet(Containers.COMBOBOX_STANDARD)
+        self.train_dataset_dropdown.setToolTip(MANUAL_ALIGNMENT_NOTICE)
 
-        # Populate with registered datasets
-        datasets_meta = datasets.list_datasets_metadata()
-        if datasets_meta:
-            data = []
-            for d in datasets_meta:
-                data.append(
-                    {"id": d["id"], "data": (d["name"], d["registration_date"], d["description"])}
-                )
-            self.train_dataset_dropdown.set_data(
-                data, ["Name", "Date", "Description"], placeholder="Click to select a dataset"
-            )
-            self.train_dataset_dropdown.setEnabled(True)
-        else:
-            self.train_dataset_dropdown.set_data(
-                [{"id": None, "data": ("No datasets registered", "", "")}],
-                ["Name", "Date", "Description"],
-                placeholder="No datasets registered",
-            )
-            self.train_dataset_dropdown.setEnabled(False)
+        self._populate_dataset_dropdown()
 
         # Connect to selection handler
         self.train_dataset_dropdown.currentIndexChanged.connect(self.on_dataset_selected)
