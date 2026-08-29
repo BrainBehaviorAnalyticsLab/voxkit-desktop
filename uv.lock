@@ -3039,7 +3039,7 @@ requires-dist = [
     { name = "pytest", specifier = ">=8.4.2" },
     { name = "pyyaml", specifier = ">=6.0.0" },
     { name = "rich", specifier = ">=14.2.0" },
-    { name = "speechbrain", git = "https://github.com/BeckettFrey/speechbrain.git?branch=fix%2Fwindows-lazy-import-inspect-path" },
+    { name = "speechbrain", git = "https://github.com/BrainBehaviorAnalyticsLab/speechbrain.git?branch=fix%2Fwindows-lazy-import-inspect-path" },
     { name = "torch", specifier = "==2.8.0" },
     { name = "torchaudio", specifier = "==2.8.0" },
     { name = "wav2textgrid", git = "https://github.com/pkadambi/Wav2TextGrid?branch=voxkit-windows-variant" },
@@ -3823,7 +3823,7 @@ wheels = [
 [[package]]
 name = "speechbrain"
 version = "1.1.0"
-source = { git = "https://github.com/BeckettFrey/speechbrain.git?branch=fix%2Fwindows-lazy-import-inspect-path#a89d8ffd2354bdb47c22010676eaf79ac7498b0c" }
+source = { git = "https://github.com/BrainBehaviorAnalyticsLab/speechbrain.git?branch=fix%2Fwindows-lazy-import-inspect-path#a89d8ffd2354bdb47c22010676eaf79ac7498b0c" }
 dependencies = [
     { name = "huggingface-hub" },
     { name = "hyperpyyaml" },
